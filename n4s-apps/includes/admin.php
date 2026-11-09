@@ -653,7 +653,7 @@ function n4s_apps_render_review( $p ) {
 	echo '</div>';
 }
 
-/** Rahmen aller Tabs: Titel (Logo), Meldungen, Tab-Leiste, Inhalt, Plugin-Version unten rechts. */
+/** Rahmen aller Tabs: Titel (Logo mit Plugin-Version dahinter), Meldungen, Tab-Leiste, Inhalt. */
 function n4s_apps_shell( $tab ) {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return;
@@ -670,7 +670,7 @@ function n4s_apps_shell( $tab ) {
 		$tabs[ $k ] = array( $t['page'], $t['label'] );
 	}
 
-	echo '<div class="wrap"><h1 style="display:flex;align-items:center;font-weight:600"><span style="display:inline-flex;height:26px">' . n4s_apps_logo( false, ' height="26"' ) . '</span><span class="screen-reader-text">n4s</span></h1>';
+	echo '<div class="wrap"><h1 style="display:flex;align-items:center;font-weight:600"><span style="display:inline-flex;height:26px">' . n4s_apps_logo( false, ' height="26"' ) . '</span><span class="screen-reader-text">n4s</span><span style="margin-left:10px;font-size:11px;font-weight:400;line-height:1;opacity:.6;align-self:flex-end;padding-bottom:3px">' . n4s_apps_byline( N4S_APPS_VERSION ) . '</span></h1>'; // phpcs:ignore WordPress.Security.EscapeOutput
 
 	$nkey = 'n4s_apps_notice_' . get_current_user_id();
 	$note = get_transient( $nkey );
@@ -695,7 +695,7 @@ function n4s_apps_shell( $tab ) {
 		n4s_apps_tab_features();
 	}
 
-	echo '<div style="position:fixed;right:16px;bottom:8px;font-size:11px;opacity:.6;z-index:9">' . n4s_apps_byline( N4S_APPS_VERSION ) . '</div></div>'; // phpcs:ignore WordPress.Security.EscapeOutput
+	echo '</div>';
 }
 
 /** Tab Funktionen: Apps und Sicherheit einzeln ein-/ausschalten, Plugin-Update. */

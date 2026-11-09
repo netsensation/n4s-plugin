@@ -1,6 +1,6 @@
 # Arbeitsanweisung: n4s Apps (WordPress-Plugin)
 
-Stand: 09.11.2026 · Plugin-Version 2.8.1
+Stand: 09.11.2026 · Plugin-Version 2.8.2
 Gilt für jede Installation, auf der n4s Apps läuft (bisher netsensation.de, elco-systemloesungen.de, weitere folgen). Diese Datei ist in beiden Projekten **identisch**. Seitenspezifisches steht nur in der Umgebungs-Datei des jeweiligen Projekts. Änderungen immer in beiden Projekten übernehmen.
 
 ## 1. Zweck
@@ -51,7 +51,7 @@ wp-content/n4s-apps-data/apps/      EIGENE Apps, überstehen Plugin-Updates
 ## 3a. Versionen und Versionsanzeige
 Zwei getrennte Versionen, beide im Schema `Version: 1.2.0 by n4s` (kein Datum; „n4s" unsichtbar auf https://n4s.one verlinkt; klein und dezent):
 
-- **Plugin-Version** (`N4S_APPS_VERSION`): fest unten rechts auf der Seite „Apps" im Admin-Bereich.
+- **Plugin-Version** (`N4S_APPS_VERSION`): oben hinter dem n4s-Logo auf allen Tabs im Admin-Bereich (ab 2.8.2, vorher unten rechts auf der Seite „Apps").
 - **App-Version** (Dateikopf `Version:` der App): rechtsbündig als kleine Zeile unter jeder App. Der Shortcode hängt sie automatisch an (ab 2.5.1); Apps bauen sie nicht selbst ein. Ohne Version im Dateikopf keine Anzeige.
 - Dateiname gelieferter Apps immer mit Version: `slug_V<Major>_<Minor>_<Patch>.php`, z. B. `waermepumpen_V2_1_2.php` für 2.1.2 (muss zum Dateikopf passen).
 

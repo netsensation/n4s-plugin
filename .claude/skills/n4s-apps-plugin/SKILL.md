@@ -23,7 +23,7 @@ Gilt für jede WordPress-Installation, auf der n4s Apps läuft (bisher netsensat
 
 ## Versionen und Versionsanzeige
 Es gibt zwei getrennte Versionen, beide im selben Schema: Version: 1.2.0 by n4s. Kein Datum. n4s ist unsichtbar verlinkt auf https://n4s.one (ohne Unterstreichung, Farbe vererbt). Klein und dezent (ca. 11 px, Deckkraft 0,6). Die Zeile erzeugt n4s_apps_byline( $version ).
-- Plugin-Version (N4S_APPS_VERSION): fest unten rechts auf der Seite Apps im Admin-Bereich.
+- Plugin-Version (N4S_APPS_VERSION): oben hinter dem n4s-Logo auf allen Tabs im Admin-Bereich (ab 2.8.2).
 - App-Version (Dateikopf Version der jeweiligen App): rechtsbündig als kleine Zeile unter der Ausgabe jeder App. Der Plugin-Shortcode hängt sie ab Plugin 2.5.1 automatisch an. Apps bauen sie nicht selbst ein (keine Doppelung; liefert eine App die Klasse n4s-app-ver selbst, wird nichts angehängt). Apps ohne Version im Dateikopf zeigen nichts, deshalb hat jede neu gebaute App einen Dateikopf mit Version.
 - Beim Bauen einer App immer prüfen: Dateikopf mit App Name und Version vorhanden, Version bei jeder Änderung erhöht.
 
