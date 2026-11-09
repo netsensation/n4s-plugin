@@ -5,7 +5,7 @@ Beschreibt, wie das Plugin n4s Apps (ab 2.8.0, `includes/catalog.php`) Apps von 
 ## Grundsätze
 - **Opt-in je App:** Geprüft werden nur installierte eigene Apps mit dem Dateikopf `Update URI: https://host` (genau ein Slug je Datei). Der Katalog (Liste, Installation) wird nur auf Klick geladen.
 - **Nur https** (Ausnahme Entwicklung: Filter `n4s_apps_allow_http`). Download-Adressen müssen denselben Host wie die Quelle haben, Weiterleitungen werden nicht verfolgt.
-- **Zugangsschlüssel** für private Apps: Header `Authorization: Bearer <Schlüssel>`, gesendet nur an den Host der eingestellten Quelle (Option `n4s_apps_catalog` oder Konstanten `N4S_APPS_CATALOG_SOURCE` / `N4S_APPS_CATALOG_KEY`).
+- **Zugangsschlüssel** für private Apps: Header `Authorization: Bearer <Schlüssel>` und zusätzlich `X-N4S-Key: <Schlüssel>` (Fallback, falls ein Server den Authorization-Header entfernt), gesendet nur an den Host der eingestellten Quelle (Option `n4s_apps_catalog` oder Konstanten `N4S_APPS_CATALOG_SOURCE` / `N4S_APPS_CATALOG_KEY`).
 - **Signatur Pflicht:** Eine Datei wird nur installiert, wenn SHA-256 und Ed25519-Signatur stimmen. Ohne hinterlegten Schlüssel (`includes/trust.php`, Konstante `N4S_APPS_TRUSTED_KEYS`, Filter `n4s_apps_trusted_keys`) sind Katalog-Installationen aus.
 - Anschließend dieselbe statische Prüfung wie beim manuellen Upload (Größe bis 1024 KB, `<?php`, `n4s_register_app` mit festem Slug, `ABSPATH`-Schutz, Syntax), Slug und Version der Datei müssen zum Eintrag passen, die Version muss höher sein, die vorherige Datei bleibt als `.bak`.
 
