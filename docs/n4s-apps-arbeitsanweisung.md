@@ -1,6 +1,6 @@
 # Arbeitsanweisung: n4s Apps (WordPress-Plugin)
 
-Stand: 09.11.2026 · Plugin-Version 2.7.3
+Stand: 09.11.2026 · Plugin-Version 2.8.0
 Gilt für jede Installation, auf der n4s Apps läuft (bisher netsensation.de, elco-systemloesungen.de, weitere folgen). Diese Datei ist in beiden Projekten **identisch**. Seitenspezifisches steht nur in der Umgebungs-Datei des jeweiligen Projekts. Änderungen immer in beiden Projekten übernehmen.
 
 ## 1. Zweck
@@ -12,6 +12,9 @@ wp-content/plugins/n4s-apps/        wird bei Plugin-Updates komplett ersetzt
 ├── n4s-apps.php                    Rahmen: Registry, Loader, Shortcode, Übersetzung n4s_t()
 ├── includes/admin.php              Verwaltungsbereich (Menü n4s, Tabs, Upload, Update, Löschen)
 ├── includes/security.php           Funktion Sicherheit (Anmeldeschutz, Härtung)
+├── includes/appfiles.php           Prüfung und Dateikopf der Apps (immer geladen)
+├── includes/catalog.php            App-Katalog: Updates, Installation, Signatur, Cron (immer geladen)
+├── includes/trust.php              vertrauenswürdige öffentliche Signaturschlüssel
 ├── assets/icon.svg                 Icon in der WordPress-Aktualisierungsliste
 ├── includes/updater.php            Update über WordPress, Quelle GitHub-Releases
 └── apps/hello.php                  mitgelieferte Beispiel-App
@@ -34,6 +37,9 @@ wp-content/n4s-apps-data/apps/      EIGENE Apps, überstehen Plugin-Updates
   - Anderer App-Name (Slug) im Update: Abbruch, nichts wird verändert.
   - Warnung (Häkchen nötig): abweichender Anzeigename oder Dateiname, gleiche oder ältere Version, Update ohne Version bei versionierter App.
   - Hinweis (kein Häkchen): ältere App ohne Version, dann wird nur der Name verglichen.
+- **Update-Buttons:** Der Button „Update" einer App erscheint erst, wenn eine Datei ausgewählt wurde (gilt auch für „App hochladen" und das Plugin-ZIP). Gibt es ein Update aus dem Katalog, steht bei genau dieser App „Update verfügbar: x.y.z" mit Button „Aktualisieren".
+- **App-Katalog (ab 2.8.0):** Abschnitt im Tab Apps. Apps mit Dateikopf `Update URI: https://n4s.one` werden alle 12 Stunden geprüft („Updates jetzt prüfen" sofort). Je App lässt sich „Automatisch" einschalten (Standard aus). „Katalog laden" zeigt die Apps der Quelle, „Installieren" holt eine neue App. Quelle (Standard https://n4s.one) und Zugangsschlüssel für private Apps stehen im selben Abschnitt. Installiert wird nur mit gültiger Signatur; ist in `includes/trust.php` kein Schlüssel hinterlegt, sind Katalog-Updates und -Installationen aus. Protokoll: `docs/n4s-katalog-protokoll.md`.
+- **Tab-Erweiterung:** Apps können per Filter `n4s_apps_tabs` einen eigenen Tab und Menüpunkt einhängen (Schlüssel, `page`, `label`, `render`).
 - **Deaktivieren/Aktivieren:** für alle Apps, auch mitgelieferte
 - **Löschen:** erst möglich, wenn die App deaktiviert ist (Button ausgegraut, serverseitig erzwungen). Gilt auch für mitgelieferte Apps; die kommen nach einem Plugin-Update deaktiviert zurück.
 - **Plugin-Update über WordPress (ab 2.6.0):** Neue Versionen erscheinen wie bei jedem Plugin unter Plugins und Dashboard → Aktualisierungen (auch automatische Updates). Quelle: neueste Release im GitHub-Repository `netsensation/n4s-plugin` mit der Datei `n4s-apps-plugin.zip`. Im Tab Funktionen stehen die neueste Version, „Jetzt prüfen" und bei neuer Version der Button „Jetzt aktualisieren" (startet das normale WordPress-Update). Das Repository ist öffentlich, ein Token ist nicht nötig (ein Eingabefeld ist bewusst nicht vorhanden; kommt ggf. in n4s-plugin-admin). Das ZIP wird vor der Installation wie beim manuellen Update geprüft.
@@ -85,6 +91,7 @@ Für JavaScript mit REST-Zugriff: Nonce per `wp_create_nonce( 'wp_rest' )` ins H
 
 ## 5. Regeln für Apps
 - **Schutz vor Reverse-Engineering:** Berechnungen, Bewertungslogik, Schwellenwerte und Entscheidungsregeln nur serverseitig in PHP über einen REST-Endpunkt (`n4s-apps/v1`). Das Browser-JavaScript schickt nur Eingaben und zeigt das Ergebnis an; keine Formeln, Konstanten oder Zwischenwerte in JavaScript, `data-`-Attributen oder Inline-Skripten. Der Endpunkt prüft Rechte und Nonce und liefert nur das Ergebnis. Bei öffentlichen Apps Massenabfragen bremsen (Rate-Begrenzung per Transient je IP).
+- Apps, die über einen Katalog verteilt werden, tragen zusätzlich `Update URI: https://n4s.one` im Dateikopf (Opt-in; ohne diese Zeile gibt es keine Verbindung) und werden vor der Veröffentlichung mit `tools/n4s-sign.php` signiert.
 - Jede App hat im Dateikopf `App Name:` und `Version:` (Schema `1.0.0`, bei jeder Änderung erhöhen); der App-Name (Slug) in `n4s_register_app()` steht als feste Zeichenkette und ändert sich nie, sonst greift der Update-Abgleich nicht.
 - Alle sichtbaren Texte zweisprachig (Deutsch, Englisch) über `n4s_t()`; JavaScript-Texte als `data-`-Attribute übergeben.
 - Datei beginnt nach dem Kopf mit `defined( 'ABSPATH' ) || exit;` (wird beim Upload geprüft) und kommt ohne weitere Dateien aus: CSS/JS inline per `wp_add_inline_*`.

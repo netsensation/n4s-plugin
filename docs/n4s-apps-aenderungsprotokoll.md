@@ -1,6 +1,6 @@
 # n4s Apps: Änderungsprotokoll
 
-Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.7.3.
+Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.8.0.
 
 | Datum | Version | Änderung |
 |---|---|---|
@@ -20,3 +20,4 @@ Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Di
 | 09.11.2026 | 2.7.1 | Update-Icon in der WordPress-Aktualisierungsliste (Datei `assets/icon.svg` statt data:-Adresse, die WordPress entfernt) |
 | 09.11.2026 | 2.7.2 | Menüpunkt heißt „Plugin“ (Logo n4s als Icon), nicht mehr doppelt „n4s“ |
 | 09.11.2026 | 2.7.3 | „Jetzt prüfen“ bleibt im Tab Funktionen; bei neuer Version Button „Jetzt aktualisieren“ (WordPress-Update direkt); Token-Eingabe entfernt (kommt in n4s-plugin-admin) |
+| 09.11.2026 | 2.8.0 | App-Katalog (Client): Updates und Installation von Apps aus einem Katalog (Dateikopf `Update URI`), Signatur Ed25519 + SHA-256, Zugangsschlüssel für private Apps, automatische Updates je App (Cron), Tab-Erweiterungspunkt `n4s_apps_tabs`; Update-Buttons je App erst nach Dateiauswahl oder bei verfügbarem Update; Werkzeuge `tools/n4s-keygen.php`, `tools/n4s-sign.php`; Protokoll in `docs/n4s-katalog-protokoll.md` |

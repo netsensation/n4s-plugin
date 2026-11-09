@@ -64,121 +64,6 @@ function n4s_apps_verify( $action ) {
 	}
 }
 
-/** Gültiger App-Dateiname (index.php ist für den Verzeichnisschutz reserviert). */
-function n4s_apps_valid_name( $name ) {
-	return (bool) preg_match( '/^[a-z0-9_-]+\.php$/', $name ) && 'index.php' !== $name;
-}
-
-/** Ordner für eigene Apps anlegen und vor direktem Aufruf schützen. */
-function n4s_apps_prepare_dir() {
-	if ( ! wp_mkdir_p( N4S_APPS_USER_DIR ) ) {
-		return false;
-	}
-	$root = dirname( rtrim( N4S_APPS_USER_DIR, '/' ) );
-	if ( ! file_exists( $root . '/.htaccess' ) ) {
-		file_put_contents( $root . '/.htaccess', "<IfModule mod_authz_core.c>\nRequire all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\nDeny from all\n</IfModule>\n" );
-	}
-	foreach ( array( $root, rtrim( N4S_APPS_USER_DIR, '/' ) ) as $d ) {
-		if ( ! file_exists( $d . '/index.php' ) ) {
-			file_put_contents( $d . '/index.php', "<?php\n// Silence is golden.\n" );
-		}
-	}
-	return true;
-}
-
-/** Prüft den Code einer App, ohne ihn auszuführen. Gibt true oder eine Fehlermeldung zurück. */
-function n4s_apps_validate_code( $code ) {
-	if ( strlen( $code ) > 1048576 ) {
-		return n4s_t( 'Die Datei ist größer als 1024 KB.', 'The file is larger than 1024 KB.' );
-	}
-	if ( false === strpos( $code, '<?php' ) ) {
-		return n4s_t( 'Das ist keine PHP-Datei (<?php fehlt).', 'This is not a PHP file (<?php missing).' );
-	}
-	if ( false === strpos( $code, 'n4s_register_app' ) ) {
-		return n4s_t( 'Die Datei registriert keine App (n4s_register_app fehlt).', 'The file does not register an app (n4s_register_app missing).' );
-	}
-	if ( ! preg_match( '/defined\s*\(\s*[\'"]ABSPATH[\'"]\s*\)/', $code ) ) {
-		return n4s_t( 'Aus Sicherheitsgründen muss die Datei mit defined( \'ABSPATH\' ) || exit; geschützt sein, damit sie nicht direkt aufrufbar ist.', 'For security, the file must be protected with defined( \'ABSPATH\' ) || exit; so it cannot be called directly.' );
-	}
-	if ( ! n4s_apps_meta( $code )['slugs'] ) {
-		return n4s_t( 'Der App-Name (Slug) muss in n4s_register_app( \'name\', … ) als feste Zeichenkette stehen.', 'The app slug must be a literal string in n4s_register_app( \'name\', … ).' );
-	}
-	try {
-		token_get_all( $code, TOKEN_PARSE );
-	} catch ( ParseError $e ) {
-		return n4s_t( 'PHP-Syntaxfehler in Zeile ', 'PHP syntax error on line ' ) . $e->getLine() . ': ' . $e->getMessage();
-	}
-	return true;
-}
-
-/** Liest Slugs, Anzeigename und Version einer App aus dem Quelltext (ohne Ausführung). */
-function n4s_apps_meta( $code ) {
-	$head = substr( $code, 0, 8192 );
-	$out  = array( 'slugs' => array(), 'name' => '', 'version' => '' );
-	if ( preg_match( '/^[ \t\/*#@]*App Name:[ \t]*([^\r\n]+)/mi', $head, $m ) ) {
-		$out['name'] = trim( $m[1], " \t*/" );
-	}
-	if ( preg_match( '/^[ \t\/*#@]*Version:[ \t]*([^\r\n]+)/mi', $head, $m ) ) {
-		$out['version'] = trim( $m[1], " \t*/" );
-	}
-	if ( preg_match_all( '/n4s_register_app\s*\(\s*([\'"])([A-Za-z0-9_-]+)\1/', $code, $m ) ) {
-		$out['slugs'] = array_values( array_unique( array_map( 'sanitize_key', $m[2] ) ) );
-		sort( $out['slugs'] );
-	}
-	return $out;
-}
-
-/** Alle installierten Slugs mit Dateischlüssel (statisch gelesen). */
-function n4s_apps_installed_slugs() {
-	$map = array();
-	foreach ( n4s_apps_files() as $f ) {
-		$meta = n4s_apps_meta( (string) file_get_contents( $f['file'] ) );
-		foreach ( $meta['slugs'] as $s ) {
-			$map[ $s ] = $f['source'] . ':' . basename( $f['file'] );
-		}
-	}
-	return $map;
-}
-
-/**
- * Abgleich installierte App gegen Update.
- * Rückgabe: array( 'error' => string|'', 'warnings' => string[], 'old' => meta, 'new' => meta, 'cmp' => int )
- */
-function n4s_apps_compare( $old_code, $new_code, $target, $upload_name ) {
-	$old = n4s_apps_meta( $old_code );
-	$new = n4s_apps_meta( $new_code );
-	$res = array( 'error' => '', 'warnings' => array(), 'notes' => array(), 'old' => $old, 'new' => $new, 'cmp' => 0 );
-
-	if ( $old['slugs'] !== $new['slugs'] ) {
-		$res['error'] = n4s_t(
-			'Das Update gehört nicht zu dieser App. Installiert: ' . implode( ', ', $old['slugs'] ) . ' · Hochgeladen: ' . implode( ', ', $new['slugs'] ) . '. Es wurde nichts verändert.',
-			'This update does not belong to this app. Installed: ' . implode( ', ', $old['slugs'] ) . ' · Uploaded: ' . implode( ', ', $new['slugs'] ) . '. Nothing was changed.'
-		);
-		return $res;
-	}
-	if ( $old['name'] && $new['name'] && 0 !== strcasecmp( $old['name'], $new['name'] ) ) {
-		$res['warnings'][] = n4s_t( 'Der App-Name weicht ab: „' . $old['name'] . '" → „' . $new['name'] . '".', 'The app name differs: "' . $old['name'] . '" → "' . $new['name'] . '".' );
-	}
-	if ( $upload_name && $upload_name !== $target ) {
-		$res['warnings'][] = n4s_t( 'Der Dateiname weicht ab: ' . $target . ' → ' . $upload_name . '. Gespeichert wird als ' . $target . '.', 'The file name differs: ' . $target . ' → ' . $upload_name . '. It will be saved as ' . $target . '.' );
-	}
-	if ( '' === $new['version'] && '' === $old['version'] ) {
-		$res['notes'][] = n4s_t( 'Weder die installierte App noch das Update haben eine Versionsangabe (ältere App). Verglichen wurde nur der App-Name. Tipp: „Version:" und „App Name:" im Dateikopf ergänzen, dann ist künftig ein Versionsabgleich möglich.', 'Neither the installed app nor the update has a version (older app). Only the app name was compared. Tip: add "Version:" and "App Name:" to the file header to enable version comparison in future.' );
-	} elseif ( '' === $new['version'] ) {
-		$res['warnings'][] = n4s_t( 'Das Update enthält keine Versionsangabe („Version:" im Dateikopf), die installierte App hat Version ' . $old['version'] . '.', 'The update has no version ("Version:" in the file header), the installed app has version ' . $old['version'] . '.' );
-	} elseif ( '' === $old['version'] ) {
-		$res['notes'][] = n4s_t( 'Die installierte App hat keine Versionsangabe, ein Versionsvergleich ist nicht möglich.', 'The installed app has no version, so versions cannot be compared.' );
-	} else {
-		$res['cmp'] = version_compare( $new['version'], $old['version'] );
-		if ( 0 === $res['cmp'] ) {
-			$res['warnings'][] = n4s_t( 'Gleiche Version wie installiert (' . $old['version'] . ').', 'Same version as installed (' . $old['version'] . ').' );
-		} elseif ( $res['cmp'] < 0 ) {
-			$res['warnings'][] = n4s_t( 'ACHTUNG: Das Update ist ÄLTER als die installierte Version (' . $new['version'] . ' < ' . $old['version'] . ').', 'WARNING: The update is OLDER than the installed version (' . $new['version'] . ' < ' . $old['version'] . ').' );
-		}
-	}
-	return $res;
-}
-
 function n4s_apps_read_upload( $key, $max_bytes ) {
 	if ( empty( $_FILES[ $key ]['tmp_name'] ) ) {
 		return n4s_t( 'Bitte eine Datei auswählen.', 'Please choose a file.' );
@@ -223,8 +108,30 @@ add_action(
 		if ( n4s_feature_on( 'security' ) ) {
 			add_submenu_page( 'n4s', 'n4s – ' . n4s_t( 'Sicherheit', 'Security' ), n4s_t( 'Sicherheit', 'Security' ), 'manage_options', 'n4s-security', function () { n4s_apps_shell( 'security' ); } );
 		}
+		foreach ( n4s_apps_extra_tabs() as $k => $t ) {
+			add_submenu_page( 'n4s', 'n4s – ' . $t['label'], $t['label'], 'manage_options', $t['page'], function () use ( $k ) { n4s_apps_shell( $k ); } );
+		}
 	}
 );
+
+/**
+ * Zusätzliche Tabs, die Apps oder Erweiterungen einhängen (Filter n4s_apps_tabs):
+ * add_filter( 'n4s_apps_tabs', function ( $t ) { $t['admin'] = array( 'page' => 'n4s-admin', 'label' => 'Admin', 'render' => 'meine_funktion' ); return $t; } );
+ */
+function n4s_apps_extra_tabs() {
+	$out = array();
+	foreach ( (array) apply_filters( 'n4s_apps_tabs', array() ) as $k => $t ) {
+		$k = sanitize_key( $k );
+		if ( $k && ! in_array( $k, array( 'features', 'apps', 'security' ), true ) && is_array( $t ) && ! empty( $t['page'] ) && ! empty( $t['label'] ) && ! empty( $t['render'] ) && is_callable( $t['render'] ) ) {
+			$out[ $k ] = array(
+				'page'   => sanitize_key( $t['page'] ),
+				'label'  => (string) $t['label'],
+				'render' => $t['render'],
+			);
+		}
+	}
+	return $out;
+}
 
 /* -------------------------------------------------------------- Aktionen */
 
@@ -505,6 +412,150 @@ add_action(
 	}
 );
 
+/* ---------------------------------------------------------------- App-Katalog */
+
+/** Quelle und Zugangsschlüssel des Katalogs speichern. */
+add_action(
+	'admin_post_n4s_catalog_save',
+	function () {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			n4s_apps_deny();
+		}
+		n4s_apps_verify( 'n4s_catalog_save' );
+		$src = n4s_apps_base( isset( $_POST['source'] ) ? sanitize_text_field( wp_unslash( $_POST['source'] ) ) : '' );
+		if ( '' === $src ) {
+			n4s_apps_notice( 'error', n4s_t( 'Ungültige Quelle. Erlaubt ist eine https-Adresse, z. B. https://n4s.one.', 'Invalid source. An https address is required, e.g. https://n4s.one.' ) );
+			n4s_apps_back();
+		}
+		$old = get_option( 'n4s_apps_catalog', array() );
+		$key = isset( $old['key'] ) ? $old['key'] : '';
+		if ( ! empty( $_POST['key_clear'] ) ) {
+			$key = '';
+		}
+		$new = isset( $_POST['key'] ) ? preg_replace( '/[^A-Za-z0-9_.-]/', '', wp_unslash( $_POST['key'] ) ) : '';
+		if ( '' !== $new ) {
+			$key = $new;
+		}
+		update_option( 'n4s_apps_catalog', array( 'source' => $src, 'key' => $key ), false );
+		delete_transient( 'n4s_apps_updates' );
+		delete_transient( 'n4s_apps_cat_' . get_current_user_id() );
+		n4s_apps_notice( 'success', n4s_t( 'Katalog-Zugang gespeichert.', 'Catalog access saved.' ) );
+		n4s_apps_back();
+	}
+);
+
+/** Updates für Apps mit Update-Quelle jetzt prüfen. */
+add_action(
+	'admin_post_n4s_catalog_check',
+	function () {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			n4s_apps_deny();
+		}
+		n4s_apps_verify( 'n4s_catalog_check' );
+		if ( ! n4s_apps_update_sources() ) {
+			n4s_apps_notice( 'error', n4s_t( 'Keine App hat eine Update-Quelle (Dateikopf „Update URI:“).', 'No app has an update source ("Update URI:" in the file header).' ) );
+			n4s_apps_back();
+		}
+		$r = n4s_apps_updates( true );
+		if ( $r['errors'] ) {
+			n4s_apps_notice( 'error', n4s_t( 'Update-Prüfung fehlgeschlagen: ', 'Update check failed: ' ) . implode( ' · ', $r['errors'] ) );
+		} else {
+			$n = count( n4s_apps_pending_updates( false, true ) );
+			n4s_apps_notice( 'success', $n ? sprintf( n4s_t( '%d App-Update(s) verfügbar.', '%d app update(s) available.' ), $n ) : n4s_t( 'Alle Apps mit Update-Quelle sind aktuell.', 'All apps with an update source are up to date.' ) );
+		}
+		n4s_apps_back();
+	}
+);
+
+/** Katalog der Quelle laden (nur auf Klick). */
+add_action(
+	'admin_post_n4s_catalog_list',
+	function () {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			n4s_apps_deny();
+		}
+		n4s_apps_verify( 'n4s_catalog_list' );
+		$l = n4s_apps_catalog_list();
+		if ( is_wp_error( $l ) ) {
+			n4s_apps_notice( 'error', n4s_t( 'Katalog konnte nicht geladen werden: ', 'Could not load the catalog: ' ) . $l->get_error_message() );
+		} else {
+			set_transient( 'n4s_apps_cat_' . get_current_user_id(), $l, 600 );
+		}
+		n4s_apps_back();
+	}
+);
+
+/** Neue App aus dem geladenen Katalog installieren. */
+add_action(
+	'admin_post_n4s_catalog_install',
+	function () {
+		if ( ! n4s_apps_can_files() ) {
+			n4s_apps_deny();
+		}
+		n4s_apps_verify( 'n4s_catalog_install' );
+		$slug = isset( $_POST['slug'] ) ? sanitize_key( wp_unslash( $_POST['slug'] ) ) : '';
+		$list = (array) get_transient( 'n4s_apps_cat_' . get_current_user_id() );
+		$hit  = null;
+		foreach ( $list as $e ) {
+			if ( is_array( $e ) && isset( $e['slug'] ) && $e['slug'] === $slug ) {
+				$hit = $e;
+			}
+		}
+		if ( ! $hit ) {
+			n4s_apps_notice( 'error', n4s_t( 'Die Katalog-Liste ist abgelaufen. Bitte „Katalog laden“ erneut ausführen.', 'The catalog list expired. Please run "Load catalog" again.' ) );
+			n4s_apps_back();
+		}
+		$r = n4s_apps_catalog_apply( $hit, 'new' );
+		n4s_apps_notice( is_wp_error( $r ) ? 'error' : 'success', is_wp_error( $r ) ? $r->get_error_message() : n4s_t( 'App installiert: ', 'App installed: ' ) . $r['name'] . ' (' . $r['version'] . ')' );
+		n4s_apps_back();
+	}
+);
+
+/** Verfügbares Update einer App installieren. */
+add_action(
+	'admin_post_n4s_app_catalog_update',
+	function () {
+		if ( ! n4s_apps_can_files() ) {
+			n4s_apps_deny();
+		}
+		n4s_apps_verify( 'n4s_app_catalog_update' );
+		$slug    = isset( $_POST['slug'] ) ? sanitize_key( wp_unslash( $_POST['slug'] ) ) : '';
+		$pending = n4s_apps_pending_updates( false, true );
+		if ( ! isset( $pending[ $slug ] ) ) {
+			n4s_apps_notice( 'error', n4s_t( 'Kein Update bekannt. Bitte „Updates jetzt prüfen“ ausführen.', 'No update known. Please run "Check for updates".' ) );
+			n4s_apps_back();
+		}
+		$r = n4s_apps_catalog_apply( $pending[ $slug ], 'update' );
+		n4s_apps_notice( is_wp_error( $r ) ? 'error' : 'success', is_wp_error( $r ) ? $r->get_error_message() : n4s_t( 'App aktualisiert: ', 'App updated: ' ) . $r['name'] . ' (' . $r['version'] . ')' );
+		n4s_apps_back();
+	}
+);
+
+/** Automatische Updates einer App ein-/ausschalten. */
+add_action(
+	'admin_post_n4s_app_autoupdate',
+	function () {
+		if ( ! n4s_apps_can_files() ) {
+			n4s_apps_deny();
+		}
+		n4s_apps_verify( 'n4s_app_autoupdate' );
+		$slug = isset( $_POST['slug'] ) ? sanitize_key( wp_unslash( $_POST['slug'] ) ) : '';
+		if ( ! isset( n4s_apps_update_sources()[ $slug ] ) ) {
+			n4s_apps_back();
+		}
+		$list = (array) get_option( 'n4s_apps_autoupdate', array() );
+		if ( in_array( $slug, $list, true ) ) {
+			$list = array_diff( $list, array( $slug ) );
+			n4s_apps_notice( 'success', n4s_t( 'Automatische Updates ausgeschaltet: ', 'Automatic updates switched off: ' ) . $slug );
+		} else {
+			$list[] = $slug;
+			n4s_apps_notice( 'success', n4s_t( 'Automatische Updates eingeschaltet: ', 'Automatic updates switched on: ' ) . $slug );
+		}
+		update_option( 'n4s_apps_autoupdate', array_values( array_unique( $list ) ), false );
+		n4s_apps_back();
+	}
+);
+
 /** Update-Quelle GitHub: sofort prüfen (Cache leeren, WordPress-Update-Prüfung anstoßen). */
 add_action(
 	'admin_post_n4s_gh_check',
@@ -547,13 +598,14 @@ function n4s_apps_post_form( $action, $fields, $label, $class = 'button', $confi
 		. '>' . esc_html( $label ) . '</button></form>';
 }
 
+/** Upload-Formular. Der Button erscheint erst, wenn eine Datei ausgewählt wurde. */
 function n4s_apps_upload_form( $action, $fields, $input, $accept, $label ) {
 	n4s_apps_form_head( $action, true, 'display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap' );
 	foreach ( $fields as $k => $v ) {
 		echo '<input type="hidden" name="' . esc_attr( $k ) . '" value="' . esc_attr( $v ) . '">';
 	}
-	echo '<input type="file" name="' . esc_attr( $input ) . '" accept="' . esc_attr( $accept ) . '" required>';
-	echo '<button type="submit" class="button">' . esc_html( $label ) . '</button></form>';
+	echo '<input type="file" name="' . esc_attr( $input ) . '" accept="' . esc_attr( $accept ) . '" required onchange="var b=this.form.querySelector(\'.n4s-rev\');if(b){b.style.display=this.files.length?\'inline-block\':\'none\';}">';
+	echo '<button type="submit" class="button n4s-rev" style="display:none">' . esc_html( $label ) . '</button></form>';
 }
 
 /** Bestätigungsseite für ein Update: Vergleich installiert ↔ Update. */
@@ -613,6 +665,10 @@ function n4s_apps_shell( $tab ) {
 	if ( n4s_feature_on( 'security' ) ) {
 		$tabs['security'] = array( 'n4s-security', n4s_t( 'Sicherheit', 'Security' ) );
 	}
+	$extra = n4s_apps_extra_tabs();
+	foreach ( $extra as $k => $t ) {
+		$tabs[ $k ] = array( $t['page'], $t['label'] );
+	}
 
 	echo '<div class="wrap"><h1 style="display:flex;align-items:center;font-weight:600"><span style="display:inline-flex;height:26px">' . n4s_apps_logo( false, ' height="26"' ) . '</span><span class="screen-reader-text">n4s</span></h1>';
 
@@ -633,6 +689,8 @@ function n4s_apps_shell( $tab ) {
 		n4s_apps_tab_apps();
 	} elseif ( 'security' === $tab && isset( $tabs['security'] ) && function_exists( 'n4s_sec_render' ) ) {
 		n4s_sec_render();
+	} elseif ( isset( $extra[ $tab ] ) ) {
+		call_user_func( $extra[ $tab ]['render'] );
 	} else {
 		n4s_apps_tab_features();
 	}
@@ -709,6 +767,65 @@ function n4s_apps_update_section() {
 	}
 }
 
+/** Abschnitt „App-Katalog“ im Apps-Tab: Zugang, Update-Prüfung, Katalog laden und Apps installieren. */
+function n4s_apps_catalog_section( $can, $sigok ) {
+	$cfg = n4s_apps_catalog_cfg();
+	$cur = get_option( 'n4s_apps_catalog', array() );
+	$has = ! empty( $cur['key'] );
+	$upd = n4s_apps_updates( false, true );
+	echo '<h2>' . esc_html( n4s_t( 'App-Katalog', 'App catalog' ) ) . '</h2>';
+	echo '<p>' . esc_html( n4s_t(
+		'Apps mit dem Dateikopf „Update URI:“ werden alle 12 Stunden beim Katalog auf neue Versionen geprüft (nur Name und Version der App werden gesendet). Der Katalog wird nur auf Klick geladen. Dateien werden nur installiert, wenn ihre Signatur stimmt.',
+		'Apps with the file header "Update URI:" are checked against the catalog for new versions every 12 hours (only app name and version are sent). The catalog is only loaded on click. Files are only installed if their signature is valid.'
+	) ) . '</p>';
+	if ( ! $sigok ) {
+		echo '<div class="notice notice-warning inline"><p>' . esc_html( n4s_t( 'Es ist kein Signaturschlüssel hinterlegt (includes/trust.php). Updates und Installationen aus dem Katalog sind deaktiviert.', 'No signing key is configured (includes/trust.php). Updates and installations from the catalog are disabled.' ) ) . '</p></div>';
+	}
+	if ( current_user_can( 'manage_options' ) ) {
+		n4s_apps_form_head( 'n4s_catalog_save', false, 'display:block;margin-bottom:8px' );
+		echo '<p><label>' . esc_html( n4s_t( 'Quelle: ', 'Source: ' ) ) . '<input type="url" name="source" value="' . esc_attr( $cfg['source'] ) . '" class="regular-text"></label> ';
+		echo '<label>' . esc_html( n4s_t( 'Zugangsschlüssel (für private Apps): ', 'Access key (for private apps): ' ) ) . '<input type="password" name="key" autocomplete="off" class="regular-text" placeholder="' . esc_attr( $has ? n4s_t( 'gespeichert, leer lassen zum Behalten', 'saved, leave empty to keep' ) : '' ) . '"></label> ';
+		if ( $has ) {
+			echo '<label><input type="checkbox" name="key_clear" value="1"> ' . esc_html( n4s_t( 'Schlüssel entfernen', 'Remove key' ) ) . '</label> ';
+		}
+		submit_button( n4s_t( 'Speichern', 'Save' ), 'secondary', 'submit', false );
+		echo '</p></form>';
+		echo '<p style="display:flex;gap:6px;flex-wrap:wrap">';
+		n4s_apps_post_form( 'n4s_catalog_check', array(), n4s_t( 'Updates jetzt prüfen', 'Check for updates' ) );
+		n4s_apps_post_form( 'n4s_catalog_list', array(), n4s_t( 'Katalog laden', 'Load catalog' ) );
+		echo '</p>';
+	}
+	if ( ! empty( $upd['checked'] ) ) {
+		echo '<p class="description">' . esc_html( n4s_t( 'Zuletzt geprüft: ', 'Last checked: ' ) . wp_date( 'd.m.Y H:i', $upd['checked'] ) ) . ( $upd['errors'] ? ' · <span style="color:#b32d2e">' . esc_html( implode( ' · ', $upd['errors'] ) ) . '</span>' : '' ) . '</p>';
+	}
+	$autolog = get_option( 'n4s_apps_autolog', array() );
+	if ( ! empty( $autolog['log'] ) ) {
+		$parts = array();
+		foreach ( $autolog['log'] as $s => $m ) {
+			$parts[] = $s . ': ' . $m;
+		}
+		echo '<p class="description">' . esc_html( n4s_t( 'Letzte automatische Updates (', 'Last automatic updates (' ) . wp_date( 'd.m.Y H:i', (int) $autolog['time'] ) . '): ' . implode( ' · ', $parts ) ) . '</p>';
+	}
+	$list = get_transient( 'n4s_apps_cat_' . get_current_user_id() );
+	if ( is_array( $list ) ) {
+		$have = n4s_apps_installed_slugs();
+		echo '<table class="widefat striped" style="margin-top:8px"><thead><tr><th>' . esc_html( n4s_t( 'App', 'App' ) ) . '</th><th>' . esc_html( n4s_t( 'Version', 'Version' ) ) . '</th><th>' . esc_html( n4s_t( 'Zugang', 'Access' ) ) . '</th><th>' . esc_html( n4s_t( 'Beschreibung', 'Description' ) ) . '</th><th></th></tr></thead><tbody>';
+		if ( ! $list ) {
+			echo '<tr><td colspan="5">' . esc_html( n4s_t( 'Der Katalog enthält keine Apps (für diesen Zugang).', 'The catalog contains no apps (for this access).' ) ) . '</td></tr>';
+		}
+		foreach ( $list as $e ) {
+			echo '<tr><td><strong>' . esc_html( $e['name'] ) . '</strong><br><code>' . esc_html( $e['slug'] ) . '</code></td><td>' . esc_html( $e['version'] ) . '</td><td>' . esc_html( 'private' === $e['access'] ? n4s_t( 'privat', 'private' ) : n4s_t( 'öffentlich', 'public' ) ) . '</td><td>' . esc_html( $e['description'] . ( $e['license'] ? ' (' . $e['license'] . ')' : '' ) ) . '</td><td>';
+			if ( isset( $have[ $e['slug'] ] ) ) {
+				echo '<span class="description">' . esc_html( n4s_t( 'installiert', 'installed' ) ) . '</span>';
+			} elseif ( $can ) {
+				n4s_apps_post_form( 'n4s_catalog_install', array( 'slug' => $e['slug'] ), n4s_t( 'Installieren', 'Install' ), 'button button-primary', '', ! $sigok, $sigok ? '' : n4s_t( 'Kein Signaturschlüssel hinterlegt.', 'No signing key configured.' ) );
+			}
+			echo '</td></tr>';
+		}
+		echo '</tbody></table>';
+	}
+}
+
 /** Tab Apps. */
 function n4s_apps_tab_apps() {
 	$can      = n4s_apps_can_files();
@@ -735,7 +852,11 @@ function n4s_apps_tab_apps() {
 		echo '<th>' . esc_html( $h ) . '</th>';
 	}
 	echo '</tr></thead><tbody>';
-	$files = n4s_apps_files();
+	$files   = n4s_apps_files();
+	$usrc    = n4s_apps_update_sources();
+	$pending = $usrc ? n4s_apps_pending_updates( false, true ) : array();
+	$auto    = (array) get_option( 'n4s_apps_autoupdate', array() );
+	$sigok   = (bool) n4s_apps_trusted_keys();
 	if ( ! $files ) {
 		echo '<tr><td colspan="9">' . esc_html( n4s_t( 'Noch keine Apps vorhanden.', 'No apps yet.' ) ) . '</td></tr>';
 	}
@@ -776,7 +897,23 @@ function n4s_apps_tab_apps() {
 			);
 		}
 		if ( 'user' === $f['source'] && $can ) {
-			echo '<br>';
+			$s1 = ( 1 === count( $slugs ) ) ? $slugs[0] : '';
+			if ( $s1 && isset( $pending[ $s1 ] ) ) {
+				echo '<div style="margin:8px 0;padding:6px 8px;background:#f0f6fc;border-left:3px solid #2271b1"><strong>' . esc_html( n4s_t( 'Update verfügbar: ', 'Update available: ' ) . $pending[ $s1 ]['version'] ) . '</strong>';
+				if ( $pending[ $s1 ]['changelog'] ) {
+					echo '<br><span class="description">' . esc_html( $pending[ $s1 ]['changelog'] ) . '</span>';
+				}
+				echo '<br>';
+				n4s_apps_post_form( 'n4s_app_catalog_update', array( 'slug' => $s1 ), n4s_t( 'Aktualisieren', 'Update now' ), 'button button-primary', '', ! $sigok, $sigok ? '' : n4s_t( 'Kein Signaturschlüssel hinterlegt.', 'No signing key configured.' ) );
+				echo '</div>';
+			}
+			if ( $s1 && isset( $usrc[ $s1 ] ) ) {
+				echo '<div class="description" style="margin:4px 0">' . esc_html( n4s_t( 'Update-Quelle: ', 'Update source: ' ) . n4s_apps_host( $usrc[ $s1 ]['base'] ) ) . ' · ';
+				n4s_apps_post_form( 'n4s_app_autoupdate', array( 'slug' => $s1 ), in_array( $s1, $auto, true ) ? n4s_t( 'Automatisch: an', 'Automatic: on' ) : n4s_t( 'Automatisch: aus', 'Automatic: off' ), 'button-link' );
+				echo '</div>';
+			} else {
+				echo '<br>';
+			}
 			n4s_apps_upload_form( 'n4s_app_save', array( 'mode' => 'update', 'target' => $name ), 'n4s_app_file', '.php', 'Update' );
 		} elseif ( 'bundled' === $f['source'] ) {
 			echo '<br><span class="description">' . esc_html( n4s_t( 'Update über Plugin-Update', 'Updated via plugin update' ) ) . '</span>';
@@ -784,6 +921,8 @@ function n4s_apps_tab_apps() {
 		echo '</td></tr>';
 	}
 	echo '</tbody></table>';
+
+	n4s_apps_catalog_section( $can, $sigok );
 
 	if ( $can ) {
 		echo '<h2>' . esc_html( n4s_t( 'Neue App hinzufügen', 'Add new app' ) ) . '</h2>';
