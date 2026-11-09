@@ -1,6 +1,6 @@
 # n4s Apps: Änderungsprotokoll
 
-Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.7.1.
+Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.7.2.
 
 | Datum | Version | Änderung |
 |---|---|---|
@@ -18,3 +18,4 @@ Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Di
 | 09.11.2026 | 2.6.0 | Update über den normalen WordPress-Update-Prozess, Quelle GitHub-Releases (`n4s-apps-plugin.zip`, Token optional); manuelles ZIP-Update bleibt; Release-Workflow auf GitHub |
 | 09.11.2026 | 2.7.0 | Menü „n4s“ (Logo) mit Unterpunkten Funktionen, Apps, Sicherheit; Tabs im Plugin; neue Funktion Sicherheit (Anmeldeschutz, Härtung, aus der App `security`); Tab Funktionen schaltet Apps und Sicherheit ein/aus; Sicherheits-Mail mit Zusammenfassung gesperrter IPs und häufigster Anmeldenamen |
 | 09.11.2026 | 2.7.1 | Update-Icon in der WordPress-Aktualisierungsliste (Datei `assets/icon.svg` statt data:-Adresse, die WordPress entfernt) |
+| 09.11.2026 | 2.7.2 | Menüpunkt heißt „Plugin“ (Logo n4s als Icon), nicht mehr doppelt „n4s“ |

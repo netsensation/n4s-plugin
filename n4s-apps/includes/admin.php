@@ -215,7 +215,7 @@ function n4s_apps_pending_key() {
 add_action(
 	'admin_menu',
 	function () {
-		add_menu_page( 'n4s', 'n4s', 'manage_options', 'n4s', '', 'none', 58 ); // Seite liefert der erste Unterpunkt (Funktionen)
+		add_menu_page( 'n4s', 'Plugin', 'manage_options', 'n4s', '', 'none', 58 ); // Seite liefert der erste Unterpunkt (Funktionen)
 		add_submenu_page( 'n4s', 'n4s – ' . n4s_t( 'Funktionen', 'Features' ), n4s_t( 'Funktionen', 'Features' ), 'manage_options', 'n4s', function () { n4s_apps_shell( 'features' ); } );
 		if ( n4s_feature_on( 'apps' ) ) {
 			add_submenu_page( 'n4s', 'n4s – Apps', 'Apps', 'manage_options', 'n4s-apps', function () { n4s_apps_shell( 'apps' ); } );
