@@ -14,7 +14,8 @@ Gilt für jede WordPress-Installation, auf der n4s Apps läuft (bisher netsensat
 
 ## Plugin-Aufbau (Ordner n4s-apps)
 - n4s-apps.php: Header (Plugin Name: n4s Apps, Version), Konstante N4S_APPS_VERSION, n4s_register_app( $slug, $render, $login ), n4s_t( $de, $en ), n4s_apps_byline( $version ), Loader (fatale Fehler deaktivieren die Datei automatisch), Shortcode [n4s_app name=...].
-- includes/admin.php: Menü Apps, Liste, Upload, Update mit Abgleich und Bestätigungsseite, Löschen nur nach Deaktivierung, Plugin-Selbstupdate per ZIP, Versionsanzeige des Plugins.
+- includes/admin.php: Menü Apps, Liste, Upload, Update mit Abgleich und Bestätigungsseite, Löschen nur nach Deaktivierung, Plugin-Selbstupdate per ZIP, Update-Quelle GitHub (Jetzt prüfen, Token), Versionsanzeige des Plugins.
+- includes/updater.php (ab 2.6.0, immer geladen): Update über WordPress aus GitHub-Releases (Update URI, update_plugins_github.com, plugins_api, upgrader_pre_download mit ZIP-Prüfung). Privates Repository: Token per N4S_APPS_GITHUB_TOKEN oder Option.
 - apps/hello.php: Beispiel-App mit öffentlichem REST-Endpunkt (auf Produktivseiten deaktivieren und löschen).
 - Eigene Apps liegen in wp-content/n4s-apps-data/apps/ und überstehen Plugin-Updates. REST-Namespace: n4s-apps/v1.
 
@@ -40,7 +41,8 @@ Es gibt zwei getrennte Versionen, beide im selben Schema: Version: 1.2.0 by n4s.
 2. Beide Versionsanzeigen prüfen (Admin-Seite und App-Zeile).
 3. php -l für alle Dateien, bei Logik-Änderungen kleine Stub-Tests (Vergleich, Slugs, n4s_t, Versions-Auslesen). Optisches (Icon, Titel) per Playwright rendern. Bei Ersetzungen mit sed die Zahlen genau prüfen (524288 kommt auch in 5242880 vor).
 4. ZIP bauen und ausliefern: Die Datei heißt immer n4s-apps-plugin.zip (nicht n4s-apps.zip). Der Ordner im ZIP bleibt n4s-apps (Pflicht für den Selbstupdate-Check und den Plugin-Ordner): zip -rq n4s-apps-plugin.zip n4s-apps -x '*/.*' (nur Ordner n4s-apps/, höchstens 5 MB), dann mit SendUserFile liefern. Auch in Texten an den Benutzer die Datei n4s-apps-plugin.zip nennen.
-5. Änderungsprotokoll im Projekt ergänzen (Datum, Version, Änderung). Bei Regeländerungen die Arbeitsanweisung aktualisieren. Das Google-Doc lässt sich über den Drive-Connector nicht überschreiben: neues Doc anlegen (HTML-Upload) und Benutzer die Quelle umstellen lassen. Das Feld Anweisungen im Projekt kann Claude nicht ändern: Text liefern.
+5. Nach dem Merge auf main legt der Workflow Release die GitHub-Release v<Version> mit n4s-apps-plugin.zip an; die Seiten bieten das Update dann über WordPress an. Notiz der Release = Zeile der Version im Änderungsprotokoll (docs/n4s-apps-aenderungsprotokoll.md), also dort vor dem Merge eintragen.
+6. Änderungsprotokoll im Projekt ergänzen (Datum, Version, Änderung). Bei Regeländerungen die Arbeitsanweisung aktualisieren. Das Google-Doc lässt sich über den Drive-Connector nicht überschreiben: neues Doc anlegen (HTML-Upload) und Benutzer die Quelle umstellen lassen. Das Feld Anweisungen im Projekt kann Claude nicht ändern: Text liefern.
 
 ## Erkenntnisse (Fehler vermeiden)
 - Menü-Icon: Ein SVG als Data-URI wird vom WordPress-Skript nachträglich einfarbig umgefärbt. Bei Farbe das Icon per CSS als Hintergrund von div.wp-menu-image setzen (center, 22px) und das :before ausblenden. Alternative: PNG 20x20 und 40x40, oder einfarbiges weißes SVG (viewBox 0 0 20 20, 20x20 px). Ob es in WordPress passt, ist ohne Screenshot des Benutzers nicht prüfbar.

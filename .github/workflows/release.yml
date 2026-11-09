@@ -1,0 +1,33 @@
+name: Release
+# Erzeugt bei jeder neuen Plugin-Version auf main eine GitHub-Release v<Version> mit n4s-apps-plugin.zip.
+# Die WordPress-Installationen holen sich das Update daraus (n4s-apps/includes/updater.php).
+on:
+  push:
+    branches: [main]
+    paths: ['n4s-apps/**']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: '8.2' }
+      - id: v
+        name: Version prüfen
+        run: |
+          v=$(sed -n "s/^define( 'N4S_APPS_VERSION', '\(.*\)' );/\1/p" n4s-apps/n4s-apps.php)
+          h=$(sed -n 's/^ \* Version: *//p' n4s-apps/n4s-apps.php | head -1)
+          [ -n "$v" ] && [ "$v" = "$h" ] || { echo "Version ungleich: Header '$h', Konstante '$v'"; exit 1; }
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+      - run: ./build.sh
+      - name: Release anlegen (nur wenn neu)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          V: ${{ steps.v.outputs.version }}
+        run: |
+          if gh release view "v$V" >/dev/null 2>&1; then echo "Release v$V existiert bereits"; exit 0; fi
+          notes=$(grep -F "| $V |" docs/n4s-apps-aenderungsprotokoll.md | head -1 | cut -d'|' -f4- | sed 's/|[[:space:]]*$//;s/^[[:space:]]*//;s/[[:space:]]*$//')
+          gh release create "v$V" dist/n4s-apps-plugin.zip --target "$GITHUB_SHA" --title "n4s Apps $V" --notes "${notes:-n4s Apps $V}"

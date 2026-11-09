@@ -2,7 +2,7 @@
 /**
  * n4s Apps / Verwaltungsbereich (Menüpunkt in der Admin-Sidebar), zweisprachig DE/EN.
  * Funktionen: App hinzufügen, App aktualisieren (mit Abgleich + Bestätigung), löschen (nur deaktiviert),
- * (de)aktivieren, Plugin per ZIP aktualisieren (nur neuere Version).
+ * (de)aktivieren, Plugin per ZIP aktualisieren (nur neuere Version), Update-Quelle GitHub anzeigen/prüfen.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -174,43 +174,6 @@ function n4s_apps_compare( $old_code, $new_code, $target, $upload_name ) {
 		}
 	}
 	return $res;
-}
-
-/** Prüft ein Plugin-ZIP. Gibt array( 'version' => ... ) oder eine Fehlermeldung zurück. */
-function n4s_apps_inspect_zip( $path ) {
-	if ( ! class_exists( 'ZipArchive' ) ) {
-		return n4s_t( 'ZipArchive fehlt auf dem Server. Bitte über Plugins → Installieren → Hochladen aktualisieren.', 'ZipArchive is missing on the server. Please update via Plugins → Add New → Upload.' );
-	}
-	$z = new ZipArchive();
-	if ( true !== $z->open( $path ) ) {
-		return n4s_t( 'Die ZIP-Datei ist nicht lesbar.', 'The ZIP file is not readable.' );
-	}
-	$dir   = basename( untrailingslashit( N4S_APPS_DIR ) );
-	$total = 0;
-	for ( $i = 0; $i < $z->numFiles; $i++ ) {
-		$s = $z->statIndex( $i );
-		if ( 0 !== strpos( $s['name'], $dir . '/' ) || false !== strpos( $s['name'], '..' ) ) {
-			$z->close();
-			return n4s_t( 'Das ZIP enthält Dateien außerhalb von ' . $dir . '/ und wird nicht installiert.', 'The ZIP contains files outside ' . $dir . '/ and will not be installed.' );
-		}
-		$total += (int) $s['size'];
-	}
-	if ( $total > 20971520 ) {
-		$z->close();
-		return n4s_t( 'Das ZIP ist entpackt größer als 20 MB.', 'The ZIP is larger than 20 MB unpacked.' );
-	}
-	$main = $z->getFromName( $dir . '/n4s-apps.php' );
-	$z->close();
-	if ( false === $main ) {
-		return n4s_t( 'Im ZIP fehlt ' . $dir . '/n4s-apps.php.', $dir . '/n4s-apps.php is missing in the ZIP.' );
-	}
-	if ( ! preg_match( '/^[ \t\/*#@]*Plugin Name:\s*n4s Apps\s*$/mi', $main ) ) {
-		return n4s_t( 'Das ZIP ist kein n4s-Apps-Plugin.', 'The ZIP is not an n4s Apps plugin.' );
-	}
-	if ( ! preg_match( '/^[ \t\/*#@]*Version:\s*(\S+)/mi', $main, $m ) ) {
-		return n4s_t( 'Im ZIP wurde keine Version gefunden.', 'No version found in the ZIP.' );
-	}
-	return array( 'version' => $m[1] );
 }
 
 function n4s_apps_read_upload( $key, $max_bytes ) {
@@ -512,6 +475,49 @@ add_action(
 	}
 );
 
+/** Update-Quelle GitHub: sofort prüfen (Cache leeren, WordPress-Update-Prüfung anstoßen). */
+add_action(
+	'admin_post_n4s_gh_check',
+	function () {
+		if ( ! current_user_can( 'update_plugins' ) ) {
+			n4s_apps_deny();
+		}
+		n4s_apps_verify( 'n4s_gh_check' );
+		$r = n4s_apps_gh_release( true );
+		delete_site_transient( 'update_plugins' );
+		wp_update_plugins();
+		if ( ! empty( $r['error'] ) ) {
+			n4s_apps_notice( 'error', n4s_t( 'Update-Prüfung fehlgeschlagen: ', 'Update check failed: ' ) . $r['error'] );
+		} elseif ( version_compare( $r['version'], N4S_APPS_VERSION, '>' ) ) {
+			n4s_apps_notice( 'success', n4s_t( 'Neue Version ' . $r['version'] . ' verfügbar. Aktualisieren unter Plugins oder Dashboard → Aktualisierungen.', 'New version ' . $r['version'] . ' available. Update under Plugins or Dashboard → Updates.' ) );
+		} else {
+			n4s_apps_notice( 'success', n4s_t( 'n4s Apps ist aktuell (' . N4S_APPS_VERSION . ').', 'n4s Apps is up to date (' . N4S_APPS_VERSION . ').' ) );
+		}
+		n4s_apps_back();
+	}
+);
+
+/** GitHub-Token speichern oder entfernen (nur nötig bei privatem Repository, Konstante hat Vorrang). */
+add_action(
+	'admin_post_n4s_gh_token',
+	function () {
+		if ( ! current_user_can( 'manage_options' ) || ! current_user_can( 'update_plugins' ) ) {
+			n4s_apps_deny();
+		}
+		n4s_apps_verify( 'n4s_gh_token' );
+		$t = isset( $_POST['token'] ) ? preg_replace( '/[^A-Za-z0-9_]/', '', wp_unslash( $_POST['token'] ) ) : '';
+		if ( '' === $t ) {
+			delete_option( 'n4s_apps_github_token' );
+			n4s_apps_notice( 'success', n4s_t( 'GitHub-Token entfernt.', 'GitHub token removed.' ) );
+		} else {
+			update_option( 'n4s_apps_github_token', $t, false );
+			n4s_apps_notice( 'success', n4s_t( 'GitHub-Token gespeichert.', 'GitHub token saved.' ) );
+		}
+		delete_site_transient( 'n4s_apps_gh_release' );
+		n4s_apps_back();
+	}
+);
+
 /* ----------------------------------------------------------------- Seite */
 
 function n4s_apps_form_head( $action, $multipart = false, $style = 'display:inline' ) {
@@ -678,10 +684,51 @@ function n4s_apps_render_page() {
 			'Upload a PHP file with n4s_register_app(), the defined( \'ABSPATH\' ) guard and optionally the header "App Name:" / "Version:". The code is syntax-checked but not executed. File name: lowercase letters, digits, - and _. An app name that is already in use is rejected.'
 		) ) . '</p>';
 		n4s_apps_upload_form( 'n4s_app_save', array( 'mode' => 'new' ), 'n4s_app_file', '.php', n4s_t( 'App hochladen', 'Upload app' ) );
+	}
 
+	if ( current_user_can( 'update_plugins' ) ) {
 		echo '<h2>' . esc_html( n4s_t( 'n4s Apps aktualisieren', 'Update n4s Apps' ) ) . '</h2>';
-		echo '<p>' . esc_html( n4s_t( 'Installierte Version: ', 'Installed version: ' ) ) . '<strong>' . esc_html( N4S_APPS_VERSION ) . '</strong>. '
-			. esc_html( n4s_t( 'Lade das neue Plugin-ZIP (n4s-apps.zip) hoch. Es wird nur eine neuere Version installiert; das Plugin bleibt aktiv, eigene Apps bleiben erhalten.', 'Upload the new plugin ZIP (n4s-apps.zip). Only a newer version is installed; the plugin stays active and custom apps are kept.' ) ) . '</p>';
+		echo '<p>' . esc_html( n4s_t( 'Installierte Version: ', 'Installed version: ' ) ) . '<strong>' . esc_html( N4S_APPS_VERSION ) . '</strong></p>';
+
+		/* Automatisch über WordPress (GitHub) */
+		$r = n4s_apps_gh_release();
+		echo '<h3>' . esc_html( n4s_t( 'Über WordPress-Updates (GitHub)', 'Via WordPress updates (GitHub)' ) ) . '</h3><p>';
+		echo esc_html( n4s_t( 'Quelle: ', 'Source: ' ) ) . '<code>github.com/' . esc_html( N4S_APPS_GITHUB_REPO ) . '</code> (' . esc_html( n4s_t( 'Release-Datei ', 'release file ' ) . N4S_APPS_ASSET ) . '). ';
+		if ( ! empty( $r['error'] ) ) {
+			echo '<span style="color:#b32d2e">' . esc_html( $r['error'] ) . '</span>';
+		} elseif ( version_compare( $r['version'], N4S_APPS_VERSION, '>' ) ) {
+			echo '<strong>' . esc_html( n4s_t( 'Neue Version verfügbar: ', 'New version available: ' ) . $r['version'] ) . '</strong> · <a href="' . esc_url( self_admin_url( 'update-core.php' ) ) . '">' . esc_html( n4s_t( 'Jetzt aktualisieren', 'Update now' ) ) . '</a>';
+		} else {
+			echo esc_html( n4s_t( 'Neueste Version: ', 'Latest version: ' ) . $r['version'] . n4s_t( ' (aktuell)', ' (up to date)' ) );
+		}
+		if ( ! empty( $r['checked'] ) ) {
+			echo ' <span class="description">' . esc_html( n4s_t( 'Geprüft: ', 'Checked: ' ) . wp_date( 'd.m.Y H:i', $r['checked'] ) ) . '</span>';
+		}
+		echo '</p><p>';
+		n4s_apps_post_form( 'n4s_gh_check', array(), n4s_t( 'Jetzt prüfen', 'Check now' ) );
+		echo '</p><p class="description">' . esc_html( n4s_t(
+			'Das Update erscheint wie bei jedem anderen Plugin unter Plugins und Dashboard → Aktualisierungen; automatische Updates lassen sich dort einschalten. Das ZIP wird vor der Installation geprüft.',
+			'The update appears like for any other plugin under Plugins and Dashboard → Updates, where automatic updates can be enabled. The ZIP is checked before installation.'
+		) ) . '</p>';
+
+		if ( current_user_can( 'manage_options' ) ) {
+			if ( defined( 'N4S_APPS_GITHUB_TOKEN' ) && N4S_APPS_GITHUB_TOKEN ) {
+				echo '<p class="description">' . esc_html( n4s_t( 'GitHub-Token: aus wp-config.php (N4S_APPS_GITHUB_TOKEN).', 'GitHub token: from wp-config.php (N4S_APPS_GITHUB_TOKEN).' ) ) . '</p>';
+			} else {
+				$has = '' !== (string) get_option( 'n4s_apps_github_token', '' );
+				n4s_apps_form_head( 'n4s_gh_token', false, 'display:block' );
+				echo '<p><label>' . esc_html( n4s_t( 'GitHub-Token (nur bei privatem Repository, Leserecht „Contents"): ', 'GitHub token (private repository only, read access "Contents"): ' ) )
+					. '<input type="password" name="token" autocomplete="off" class="regular-text" placeholder="' . esc_attr( $has ? n4s_t( 'gespeichert – leer lassen zum Entfernen', 'saved – leave empty to remove' ) : 'github_pat_…' ) . '"></label> ';
+				submit_button( n4s_t( 'Token speichern', 'Save token' ), 'secondary', 'submit', false );
+				echo '</p><p class="description">' . esc_html( n4s_t( 'Alternativ in wp-config.php: define( \'N4S_APPS_GITHUB_TOKEN\', \'...\' );', 'Alternatively in wp-config.php: define( \'N4S_APPS_GITHUB_TOKEN\', \'...\' );' ) ) . '</p></form>';
+			}
+		}
+	}
+
+	if ( $can ) {
+		/* Manuell per ZIP */
+		echo '<h3>' . esc_html( n4s_t( 'Manuell per ZIP', 'Manually via ZIP' ) ) . '</h3>';
+		echo '<p>' . esc_html( n4s_t( 'Lade das neue Plugin-ZIP (n4s-apps-plugin.zip) hoch. Es wird nur eine neuere Version installiert; das Plugin bleibt aktiv, eigene Apps bleiben erhalten.', 'Upload the new plugin ZIP (n4s-apps-plugin.zip). Only a newer version is installed; the plugin stays active and custom apps are kept.' ) ) . '</p>';
 		n4s_apps_upload_form( 'n4s_self_update', array(), 'n4s_zip', '.zip', n4s_t( 'Plugin aktualisieren', 'Update plugin' ) );
 	}
 
