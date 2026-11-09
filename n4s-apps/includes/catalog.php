@@ -112,6 +112,7 @@ function n4s_apps_request( $url, $base, $max ) {
 	);
 	if ( '' !== $cfg['key'] && n4s_apps_host( $base ) === n4s_apps_host( $cfg['source'] ) ) {
 		$headers['Authorization'] = 'Bearer ' . $cfg['key'];
+		$headers['X-N4S-Key']     = $cfg['key']; // Fallback: manche Server entfernen den Authorization-Header
 	}
 	$res = wp_safe_remote_get(
 		$url,
