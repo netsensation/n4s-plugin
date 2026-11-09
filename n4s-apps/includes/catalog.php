@@ -98,12 +98,18 @@ function n4s_apps_check_signature( $slug, $version, $sha256, $sig ) {
 /**
  * GET auf eine Katalog-Adresse. Nur gleicher Host wie die Basis, keine Weiterleitungen,
  * Zugangsschlüssel nur an den Host der eingestellten Quelle. Gibt array( 'body' => ... ) oder WP_Error zurück.
+ * Filter n4s_apps_pre_request: Ein Katalog-Server im selben WordPress (Admin-App auf n4s.one) kann die Anfrage
+ * im Prozess selbst beantworten, ohne HTTP-Aufruf an die eigene Adresse (array( 'body' => ... ) oder WP_Error).
  */
 function n4s_apps_request( $url, $base, $max ) {
 	$u = wp_parse_url( $url );
 	$b = wp_parse_url( $base );
 	if ( empty( $u['scheme'] ) || empty( $b['scheme'] ) || $u['scheme'] !== $b['scheme'] || n4s_apps_host( $url ) !== n4s_apps_host( $base ) ) {
 		return new WP_Error( 'n4s_catalog', n4s_t( 'Ungültige Adresse im Katalog (anderer Host).', 'Invalid address in the catalog (different host).' ) );
+	}
+	$pre = apply_filters( 'n4s_apps_pre_request', null, $url, $base );
+	if ( null !== $pre ) {
+		return $pre;
 	}
 	$cfg     = n4s_apps_catalog_cfg();
 	$headers = array(

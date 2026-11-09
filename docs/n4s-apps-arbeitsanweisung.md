@@ -1,6 +1,6 @@
 # Arbeitsanweisung: n4s Apps (WordPress-Plugin)
 
-Stand: 09.11.2026 · Plugin-Version 2.8.2
+Stand: 09.11.2026 · Plugin-Version 2.8.3
 Gilt für jede Installation, auf der n4s Apps läuft (bisher netsensation.de, elco-systemloesungen.de, weitere folgen). Diese Datei ist in beiden Projekten **identisch**. Seitenspezifisches steht nur in der Umgebungs-Datei des jeweiligen Projekts. Änderungen immer in beiden Projekten übernehmen.
 
 ## 1. Zweck

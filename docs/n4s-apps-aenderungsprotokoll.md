@@ -1,6 +1,6 @@
 # n4s Apps: Änderungsprotokoll
 
-Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.8.2.
+Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.8.3.
 
 | Datum | Version | Änderung |
 |---|---|---|
@@ -23,3 +23,4 @@ Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Di
 | 09.11.2026 | 2.8.0 | App-Katalog (Client): Updates und Installation von Apps aus einem Katalog (Dateikopf `Update URI`), Signatur Ed25519 + SHA-256, Zugangsschlüssel für private Apps, automatische Updates je App (Cron), Tab-Erweiterungspunkt `n4s_apps_tabs`; Update-Buttons je App erst nach Dateiauswahl oder bei verfügbarem Update; Werkzeuge `tools/n4s-keygen.php`, `tools/n4s-sign.php`; Protokoll in `docs/n4s-katalog-protokoll.md` |
 | 09.11.2026 | 2.8.1 | Katalog-Client sendet den Zugangsschlüssel zusätzlich als Header `X-N4S-Key` (Fallback bei Servern, die `Authorization` entfernen) |
 | 09.11.2026 | 2.8.2 | Plugin-Version oben hinter dem Logo auf allen Tabs (statt fest unten rechts) |
+| 09.11.2026 | 2.8.3 | Filter `n4s_apps_pre_request`: ein Katalog-Server im selben WordPress (Admin-App auf n4s.one) beantwortet Anfragen im Prozess, ohne HTTP-Aufruf an die eigene Adresse (Admin-App wird so selbst über den Katalog aktualisiert) |
