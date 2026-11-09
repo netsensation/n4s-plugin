@@ -120,9 +120,33 @@ Für JavaScript mit REST-Zugriff: Nonce per `wp_create_nonce( 'wp_rest' )` ins H
 
 ## 8. Was Claude per MCP kann und nicht kann
 - Kann: Seiten und Beiträge anlegen und ändern, Menüs, Medien, freigegebene Optionen, Vorschau-Links, Rendering prüfen, Seiten in den Papierkorb legen.
-- Kann nicht: Plugins installieren, aktivieren oder deaktivieren, PHP- oder Server-Dateien schreiben, Apps hochladen.
+- Kann nicht: Plugins installieren, aktivieren oder deaktivieren, PHP- oder Server-Dateien schreiben, Apps hochladen, n4s.one direkt aufrufen (die Sandbox erreicht die Domain nicht; Rendern nur über die MCP-Prüfung der Seite).
+- Kann zusätzlich über GitHub: Branches, Pull Requests und Merge auf Zuruf in `netsensation/n4s-plugin` und `netsensation/n4s-plugin-admin`, Releases und Workflow-Läufe ansehen.
+- Die Seitenvorlage (`_wp_page_template`) ist per MCP geschützt und nicht änderbar. Die Vorlage „Hero" hat keinen Header und Footer. Neue Seiten deshalb per `wp_clone_post_as_draft` von einer Seite mit Standardvorlage anlegen und danach Titel und Inhalt ersetzen.
 - Theme-Schreibrechte (Custom CSS) sind in Royal MCP gesperrt, solange „Allow AI to modify theme appearance" aus ist; CSS dann als Style-Block in die Seite legen.
 - Solange ein Wartungsmodus aktiv ist, kann Claude Seiten nicht rendern und prüfen.
+
+## 8a. Apps über den Katalog verteilen (erprobter Ablauf)
+Getestet am 09.11.2026 mit der Test-App `n4s-test` (1.0.0 → 1.0.1), bis zum Update-Button auf netsensation.de. Betrieb der Admin-App: `docs/n4s-admin.md` im Repository n4s-plugin-admin, Protokoll: `docs/n4s-katalog-protokoll.md`.
+
+**Einmalig eingerichtet:** Schlüsselpaar mit `tools/n4s-keygen.html` (Browser, ohne PHP), öffentlicher Schlüssel in `n4s-apps/includes/trust.php`, privater nur als GitHub-Secret `N4S_SIGNING_KEY` in n4s-plugin-admin; Plugin ab 2.8.1 und Admin-App `n4s-admin_V1_0_0.php` (manuell hochgeladen, Updates der Admin-App ebenfalls manuell) auf n4s.one; GitHub-Token (fine-grained, nur n4s-plugin-admin, „Contents: Read-only“, mit Ablaufdatum) im Tab Admin.
+
+**Pro App-Version:**
+1. App bauen (Abschnitt 4 und 5, Dateikopf mit `Update URI: https://n4s.one`), im Repository n4s-plugin-admin unter `apps/<slug>/app.php` und `app.json` ablegen, Version erhöhen, Pull Request. Bei Pull Requests läuft nur die Syntaxprüfung, der Release-Job wird übersprungen.
+2. Nach dem Merge auf `main` signiert der Workflow (etwa 30 Sekunden) und legt die Release `app-<slug>-v<Version>` an. Eine geänderte Datei bei gleicher Version bricht den Workflow ab. Prüfen: Releases im Repository ansehen.
+3. n4s.one: Tab Admin → „Jetzt abgleichen“ (sonst stündlich) → Version „Freigeben“. Neue Apps sind zuerst privat, „Öffentlich schalten“ ist ein bewusster Klick.
+4. Seiten mit dem n4s Plugin: Tab Apps → „Updates jetzt prüfen“ (sonst alle 12 Stunden) → „Aktualisieren“, oder „Automatisch“ je App. Neue Apps: „Katalog laden“ → „Installieren“; private nur mit Zugangsschlüssel.
+
+**Fehlerbilder:**
+| Meldung oder Symptom | Ursache und Abhilfe |
+|---|---|
+| Abgleich: „GitHub HTTP 401/404“ | Token fehlt, abgelaufen oder falsches Repository. Neues Token im Tab Admin eintragen. |
+| „Signatur stimmt nicht mit einem vertrauenswürdigen Schlüssel überein“ | Secret `N4S_SIGNING_KEY` und öffentlicher Schlüssel in `trust.php` gehören nicht zusammen, oder die Datei wurde nach dem Signieren verändert. |
+| „Kein Signaturschlüssel hinterlegt“ | `trust.php` ist leer oder das Plugin zu alt (unter 2.8.0). |
+| Workflow: „Version nicht erhöht“ | Datei geändert, Version im Dateikopf gleich geblieben. Version erhöhen. |
+| Seite: „Zugriff verweigert“ | Zugangsschlüssel falsch oder widerrufen, oder die App ist privat und es ist keiner eingetragen. |
+| Kein Update-Button | „Updates jetzt prüfen“ klicken (Cache); App ohne `Update URI` im Dateikopf; Version nicht freigegeben; nur manuell hochgeladene (unsignierte) Versionen werden nicht verteilt. |
+| Schlüssel kommt nicht an | Manche Server entfernen den Header `Authorization`. Seit 2.8.1 sendet das Plugin zusätzlich `X-N4S-Key`. |
 
 ## 9. Arbeitsweise
 - Antworten kurz, Rückfragen nur als Text im Chat, Umsetzungsdetails selbst entscheiden.

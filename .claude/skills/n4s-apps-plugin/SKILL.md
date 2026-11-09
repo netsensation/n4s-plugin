@@ -10,7 +10,7 @@ Gilt für jede WordPress-Installation, auf der n4s Apps läuft (bisher netsensat
 ## Arbeitsweise
 - Antworten kurz. Rückfragen nur als Text im Chat (keine Auswahlkarten). Umsetzungsdetails selbst entscheiden. Keine Unteragenten-Läufe. Tokenverbrauch nur auf Nachfrage, nur als Zahl.
 - Zuerst lesen: Arbeitsanweisung (Google-Doc n4s Apps Arbeitsanweisung, im Projekt verknüpft) und claude/n4s-apps-changelog.md.
-- Per MCP geht: Seiten, Menüs, Medien, Vorschau-Links, Rendering prüfen. Nicht möglich: Plugins installieren, Serverdateien schreiben. Der Benutzer lädt App-Dateien und Plugin-ZIPs im Admin-Menü Apps hoch. Bei aktivem Wartungsmodus ist kein Rendering-Check per MCP möglich.
+- Per MCP geht: Seiten, Menüs, Medien, Vorschau-Links, Rendering prüfen. Nicht möglich: Plugins installieren, Serverdateien schreiben. Apps für den Katalog legt Claude als Pull Request im Repository n4s-plugin-admin an (Abschnitt „Apps über den Katalog verteilen“); nur die Admin-App selbst und Erstinstallationen lädt der Benutzer im Admin-Menü Apps hoch. n4s.one ist aus der Sandbox nicht erreichbar, Rendering nur per MCP-Prüfung. Bei aktivem Wartungsmodus ist kein Rendering-Check per MCP möglich.
 
 ## Plugin-Aufbau (Ordner n4s-apps)
 - n4s-apps.php: Header (Plugin Name: n4s Apps, Version), Konstante N4S_APPS_VERSION, n4s_register_app( $slug, $render, $login ), n4s_t( $de, $en ), n4s_apps_byline( $version ), Loader (fatale Fehler deaktivieren die Datei automatisch), Shortcode [n4s_app name=...].
@@ -39,6 +39,12 @@ Es gibt zwei getrennte Versionen, beide im selben Schema: Version: 1.2.0 by n4s.
 6. Mit php -l prüfen, als Datei mit Versionsnummer im Namen liefern. Danach per MCP Entwurfsseite mit dem Shortcode anlegen und Rendering prüfen (die Versionszeile unter der App muss erscheinen).
 7. Update einer vorhandenen App: gleicher Slug, höhere Version. Der Upload prüft Slug, Anzeigename, Dateiname und Version und zeigt eine Bestätigungsseite (anderer Slug bricht ab, gleiche oder ältere Version nur mit Häkchen). Ältere Apps ohne Dateikopf funktionieren weiter und zeigen nur einen Hinweis; sie bekommen die Versionszeile beim nächsten Update mit Dateikopf.
 
+## Apps über den Katalog verteilen (erprobt am 09.11.2026)
+1. App wie oben bauen (Dateikopf mit Update URI: https://n4s.one), im Repository netsensation/n4s-plugin-admin unter apps/<slug>/app.php und app.json (description de/en, license, changelog) ablegen, Version erhöhen, Pull Request. Zugang öffentlich/privat nie im Repo: neue Apps sind auf n4s.one zuerst privat.
+2. Auf „merge“ mergen (Checks vorher prüfen, expectedHeadSha ist die volle 40-stellige SHA). Der Workflow signiert (Secret N4S_SIGNING_KEY) und legt die Release app-<slug>-v<Version> an; mit list_releases prüfen. Warten per Bash run_in_background (Vordergrund-sleep ist blockiert), das private Repo ist nur über die GitHub-MCP-Tools lesbar.
+3. Der Benutzer gleicht im Tab Admin auf n4s.one ab, gibt frei (und schaltet ggf. öffentlich) und prüft auf einer Seite „Updates jetzt prüfen“ → „Aktualisieren“. Fehlerbilder und Einrichtung: docs/n4s-apps-arbeitsanweisung.md Abschnitt 8a und docs/n4s-admin.md im Repository n4s-plugin-admin.
+4. Das Repository n4s-plugin-admin ist privat: Zugriff per add_repo mit access push, ein leeres Repo braucht einen ersten Commit auf main (sonst gibt es keine Pull Requests), beim Klonen git fetch origin '+refs/heads/main:refs/remotes/origin/main'.
+
 ## Release des Plugins (jedes Mal)
 1. Version in n4s-apps.php an zwei Stellen erhöhen (Header und N4S_APPS_VERSION). Das Plugin-ZIP wird nur bei höherer Version installiert.
 2. Beide Versionsanzeigen prüfen (Admin-Seite und App-Zeile).
@@ -54,4 +60,8 @@ Es gibt zwei getrennte Versionen, beide im selben Schema: Version: 1.2.0 by n4s.
 - Uploads nur statisch prüfen (Größe bis 1024 KB, php-Tag, n4s_register_app, ABSPATH-Schutz, token_get_all mit TOKEN_PARSE), nie ausführen. Upload-Limit des Servers (upload_max_filesize) liegt über der Dateigrenze, Plugin-ZIP höchstens 5 MB.
 - Löschen nur für deaktivierte Apps (Button ausgegraut, serverseitig erzwungen) mit Browser-Bestätigung; mitgelieferte Apps kommen nach einem Plugin-Update deaktiviert zurück.
 - Custom CSS per MCP ist gesperrt, solange Allow AI to modify theme appearance aus ist; CSS dann als Style-Block in die Seite legen.
+- Neue Seiten auf n4s.one: _wp_page_template ist per MCP geschützt, die Vorlage Hero hat keinen Header und Footer. Neue Seiten per wp_clone_post_as_draft von einer Standardseite (z. B. Web App Entwicklung) anlegen, dann wp_update_page; Texte auf bestehenden Seiten mit wp_replace_in_page und expected_count ändern; danach mit wp_verify_rendered_page prüfen (Selektor .n4s-fig, .n4s-catalog …).
+- Dunkel ist auf n4s.one der Standard (Zusätzliches CSS, body:not(.n4s-scheme-light):not(.n4s-hero-page)); die Website ist auf noindex gestellt (blog_public 0).
+- Browser-Tests (Playwright) gegen WordPress: submit_button() erzeugt input[type=submit], WordPress überschreibt [hidden] bei .button (Verstecken per style), ein home_url-Filter auf n4s.one bricht Admin-JS und wp_safe_redirect (allowed_redirect_hosts ergänzen). Der Update-Test läuft lokal mit pre_http_request-Ersatz und rest_do_request.
+- Befehle mit rm und Shell-Variable werden blockiert: feste Pfade oder "${VAR:?}" nutzen.
 - n4s-Schriftzug als SVG: hell mit Buchstaben #0C0E10, dunkel mit #fff, die 4 immer #00CCFF.

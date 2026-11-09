@@ -28,10 +28,23 @@ Stand: 09.11.2026 · Plugin-Version 2.8.1. Ergänzt die Arbeitsanweisung um das 
 - Kann: Seiten, Menüs, Medien, Vorschau-Links, Rendering prüfen. Kann nicht: Plugins installieren, Serverdateien schreiben, Apps hochladen. Custom CSS per MCP gesperrt, solange „Allow AI to modify theme appearance" aus ist. Bei Wartungsmodus kein Rendering-Check.
 - Das Google-Doc „n4s Apps Arbeitsanweisung" lässt sich per Drive-Connector nicht überschreiben (nur Metadaten): neues Doc anlegen, Quelle in den Projekten umstellen. Das Feld „Anweisungen" im Projekt kann nur der Benutzer ändern.
 
+## Erfahrungen aus dem Praxistest (09.11.2026)
+- **Ganzer Weg bestätigt:** Test-App `n4s-test` 1.0.0 und 1.0.1: Release etwa 30 Sekunden nach dem Merge, Abgleich, Freigabe, Installation und Update per Button auf netsensation.de. Auto-Update per Cron und private Apps mit Schlüssel sind lokal getestet, live noch nicht.
+- **Repository n4s-plugin-admin war leer:** Pull Requests brauchen eine `main`. Erster Commit (README) direkt auf `main`, Arbeit danach auf einem Branch. Zugriff auf das private Repository über `add_repo` mit `access: push`; beim Klonen eines leeren Repositorys `git fetch origin '+refs/heads/main:refs/remotes/origin/main'`, sonst gibt es `origin/main` nicht.
+- **Workflow:** Der Release-Job läuft nur bei Push auf `main`, nicht bei Pull Requests (dort Lint). Fehlendes Secret führt zu einer klaren Fehlermeldung, die Schleife über `apps/*/` ist mit einem `gh`-Ersatz getestet (neu, unverändert, Datei geändert bei gleicher Version).
+- **Lokaler Test mit nachgestelltem Katalog:** WordPress mit wp-cli und MariaDB, `pre_http_request` als Ersatz für GitHub und n4s.one, REST per `rest_do_request` (kein Selbstaufruf, `php -S` ist single-threaded). Testartefakte, keine Fehler der App: ein `home_url`-Filter auf n4s.one bricht das Admin-JavaScript (REST-Adresse) und `wp_safe_redirect` (Filter `allowed_redirect_hosts` nötig).
+- **Abgleich:** Releases werden älteste zuerst verarbeitet (Versionen müssen steigen); schon verarbeitete Release-Tags werden gemerkt (`seen`), fehlerhafte nicht, sie werden erneut versucht; ältere Versionen einmal als übersprungen gemeldet.
+- **Oberfläche:** `.button` überschreibt in WordPress `[hidden]`, der Button wird deshalb mit `style="display:none"` versteckt. `submit_button()` erzeugt `input[type=submit]`, kein `button` (wichtig für Browser-Tests).
+- **n4s.one:** Die Vorlage „Hero“ hat keinen Header und Footer, `_wp_page_template` ist per MCP geschützt, deshalb neue Seiten per Klon einer Standardseite. Das dunkle Design gilt als Standard über das Zusätzliche CSS (`body:not(.n4s-scheme-light):not(.n4s-hero-page)`), Hell wäre eine Option, sobald der Code `n4s-ci-farbschema.php` ins Theme übernommen wird. Die Website steht auf „Suchmaschinen davon abhalten“ (`blog_public` = 0).
+- **Rechtstexte:** Impressum und Datenschutz sind um App-Katalog, Downloads, Zugangsschlüssel und den serverseitigen GitHub-Abgleich ergänzt (Haftung: eigene Verantwortung, ohne Gewähr, Haftung nur bei Vorsatz und grober Fahrlässigkeit, soweit gesetzlich zulässig). Eine rechtliche Prüfung steht aus.
+
 ## Offene Punkte
+- Live noch nicht geprüft: Auto-Update per Cron (alle 12 Stunden) und private Apps mit Zugangsschlüssel auf einer echten Seite.
+- Die Test-App `n4s-test` aus dem Katalog nehmen (privat schalten oder löschen), sobald echte Apps da sind.
+- Das GitHub-Token (Tab Admin) läuft ab: Ablaufdatum notieren, dann neues eintragen.
+- Option: GitHub-Webhook für sofortigen Abgleich statt stündlich.
+- Option: Farbschema Hell im Theme n4s CI (Code `n4s-ci-farbschema.php`) und „Suchmaschinen“-Einstellung für den öffentlichen Katalog klären.
 - Signaturschlüssel: öffentlicher Schlüssel ist in `n4s-apps/includes/trust.php` eingetragen (09.11.2026). Der private Schlüssel gehört nur als GitHub-Secret `N4S_SIGNING_KEY` in n4s-plugin-admin.
-- Folgeschritte: Admin-App `n4s-admin` (Repository n4s-plugin-admin), Katalogseite und Rechtstexte auf n4s.one.
-- Erste Release entsteht beim Merge von 2.6.0 nach `main`; danach auf jeder Seite einmal „Jetzt prüfen".
 - Ist api.wordpress.org nicht erreichbar, bricht WordPress die gesamte Plugin-Update-Prüfung ab, also auch die GitHub-Prüfung; dann manuell per ZIP.
 - Zentrierung des Menü-Icons und die Versionsanzeige (Admin, unter Apps) in WordPress per Screenshot prüfen.
 - Beispiel-App `hello` hat einen öffentlichen REST-Endpunkt: auf Produktivseiten (ELCO) deaktivieren und löschen.
