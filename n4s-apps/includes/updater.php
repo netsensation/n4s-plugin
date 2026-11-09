@@ -4,8 +4,7 @@
  *
  * - Neueste Release von N4S_APPS_GITHUB_REPO (Asset n4s-apps-plugin.zip) wird abgefragt (6 h Cache).
  * - WordPress zeigt das Update unter Dashboard → Aktualisierungen und Plugins (auch Auto-Updates).
- * - Öffentliches Repository: kein Token nötig. Optional (privates Repository oder höheres API-Limit):
- *   Token per Konstante N4S_APPS_GITHUB_TOKEN (wp-config.php) oder im Menü Apps.
+ * - Öffentliches Repository: kein Token nötig (optional nur per Konstante N4S_APPS_GITHUB_TOKEN in wp-config.php).
  * - Das heruntergeladene ZIP wird vor der Installation wie beim manuellen Update geprüft.
  * Wird immer geladen (nicht nur im Admin), damit Auto-Updates per Cron funktionieren.
  */
@@ -54,12 +53,9 @@ function n4s_apps_inspect_zip( $path ) {
 	return array( 'version' => $m[1] );
 }
 
-/** GitHub-Token: Konstante hat Vorrang vor der Option aus dem Menü Apps. */
+/** Optionaler GitHub-Token nur per Konstante (kein Eintrag im Menü). */
 function n4s_apps_gh_token() {
-	if ( defined( 'N4S_APPS_GITHUB_TOKEN' ) && N4S_APPS_GITHUB_TOKEN ) {
-		return (string) N4S_APPS_GITHUB_TOKEN;
-	}
-	return (string) get_option( 'n4s_apps_github_token', '' );
+	return ( defined( 'N4S_APPS_GITHUB_TOKEN' ) && N4S_APPS_GITHUB_TOKEN ) ? (string) N4S_APPS_GITHUB_TOKEN : '';
 }
 
 function n4s_apps_gh_headers( $accept = 'application/vnd.github+json' ) {
@@ -100,7 +96,7 @@ function n4s_apps_gh_release( $force = false ) {
 		$data['error'] = $res->get_error_message();
 	} elseif ( 200 !== $code ) {
 		$data['error'] = 'GitHub HTTP ' . $code . ( in_array( $code, array( 401, 403, 404 ), true )
-			? n4s_t( ' (noch keine Release vorhanden, API-Limit erreicht oder Token ungültig)', ' (no release yet, API limit reached or invalid token)' )
+			? n4s_t( ' (noch keine Release vorhanden oder API-Limit erreicht)', ' (no release yet or API limit reached)' )
 			: '' );
 	} else {
 		$j       = json_decode( wp_remote_retrieve_body( $res ), true );

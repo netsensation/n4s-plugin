@@ -523,28 +523,7 @@ add_action(
 		} else {
 			n4s_apps_notice( 'success', n4s_t( 'n4s Apps ist aktuell (' . N4S_APPS_VERSION . ').', 'n4s Apps is up to date (' . N4S_APPS_VERSION . ').' ) );
 		}
-		n4s_apps_back();
-	}
-);
-
-/** GitHub-Token speichern oder entfernen (optional, Repository ist öffentlich; Konstante hat Vorrang). */
-add_action(
-	'admin_post_n4s_gh_token',
-	function () {
-		if ( ! current_user_can( 'manage_options' ) || ! current_user_can( 'update_plugins' ) ) {
-			n4s_apps_deny();
-		}
-		n4s_apps_verify( 'n4s_gh_token' );
-		$t = isset( $_POST['token'] ) ? preg_replace( '/[^A-Za-z0-9_]/', '', wp_unslash( $_POST['token'] ) ) : '';
-		if ( '' === $t ) {
-			delete_option( 'n4s_apps_github_token' );
-			n4s_apps_notice( 'success', n4s_t( 'GitHub-Token entfernt.', 'GitHub token removed.' ) );
-		} else {
-			update_option( 'n4s_apps_github_token', $t, false );
-			n4s_apps_notice( 'success', n4s_t( 'GitHub-Token gespeichert.', 'GitHub token saved.' ) );
-		}
-		delete_site_transient( 'n4s_apps_gh_release' );
-		n4s_apps_back();
+		n4s_apps_back( false, 'n4s' );
 	}
 );
 
@@ -700,7 +679,14 @@ function n4s_apps_update_section() {
 		if ( ! empty( $r['error'] ) ) {
 			echo '<span style="color:#b32d2e">' . esc_html( $r['error'] ) . '</span>';
 		} elseif ( version_compare( $r['version'], N4S_APPS_VERSION, '>' ) ) {
-			echo '<strong>' . esc_html( n4s_t( 'Neue Version verfügbar: ', 'New version available: ' ) . $r['version'] ) . '</strong> · <a href="' . esc_url( self_admin_url( 'update-core.php' ) ) . '">' . esc_html( n4s_t( 'Jetzt aktualisieren', 'Update now' ) ) . '</a>';
+			$base = plugin_basename( N4S_APPS_FILE );
+			$ut   = get_site_transient( 'update_plugins' );
+			echo '<strong>' . esc_html( n4s_t( 'Neue Version verfügbar: ', 'New version available: ' ) . $r['version'] ) . '</strong>';
+			if ( $ut && isset( $ut->response[ $base ] ) ) {
+				echo ' <a class="button button-primary" href="' . esc_url( wp_nonce_url( self_admin_url( 'update.php?action=upgrade-plugin&plugin=' . rawurlencode( $base ) ), 'upgrade-plugin_' . $base ) ) . '">' . esc_html( n4s_t( 'Jetzt aktualisieren', 'Update now' ) ) . '</a>';
+			} else {
+				echo ' <span class="description">' . esc_html( n4s_t( '(zum Aktualisieren bitte „Jetzt prüfen“ klicken)', '(click "Check now" to update)' ) ) . '</span>';
+			}
 		} else {
 			echo esc_html( n4s_t( 'Neueste Version: ', 'Latest version: ' ) . $r['version'] . n4s_t( ' (aktuell)', ' (up to date)' ) );
 		}
@@ -713,19 +699,6 @@ function n4s_apps_update_section() {
 			'Das Update erscheint wie bei jedem anderen Plugin unter Plugins und Dashboard → Aktualisierungen; automatische Updates lassen sich dort einschalten. Das ZIP wird vor der Installation geprüft.',
 			'The update appears like for any other plugin under Plugins and Dashboard → Updates, where automatic updates can be enabled. The ZIP is checked before installation.'
 		) ) . '</p>';
-
-		if ( current_user_can( 'manage_options' ) ) {
-			if ( defined( 'N4S_APPS_GITHUB_TOKEN' ) && N4S_APPS_GITHUB_TOKEN ) {
-				echo '<p class="description">' . esc_html( n4s_t( 'GitHub-Token: aus wp-config.php (N4S_APPS_GITHUB_TOKEN).', 'GitHub token: from wp-config.php (N4S_APPS_GITHUB_TOKEN).' ) ) . '</p>';
-			} else {
-				$has = '' !== (string) get_option( 'n4s_apps_github_token', '' );
-				n4s_apps_form_head( 'n4s_gh_token', false, 'display:block' );
-				echo '<p><label>' . esc_html( n4s_t( 'GitHub-Token (optional, nur bei privatem Repository oder erreichtem API-Limit; Leserecht „Contents"): ', 'GitHub token (optional, only for a private repository or when the API limit is reached; read access "Contents"): ' ) )
-					. '<input type="password" name="token" autocomplete="off" class="regular-text" placeholder="' . esc_attr( $has ? n4s_t( 'gespeichert – leer lassen zum Entfernen', 'saved – leave empty to remove' ) : 'github_pat_…' ) . '"></label> ';
-				submit_button( n4s_t( 'Token speichern', 'Save token' ), 'secondary', 'submit', false );
-				echo '</p><p class="description">' . esc_html( n4s_t( 'Alternativ in wp-config.php: define( \'N4S_APPS_GITHUB_TOKEN\', \'...\' );', 'Alternatively in wp-config.php: define( \'N4S_APPS_GITHUB_TOKEN\', \'...\' );' ) ) . '</p></form>';
-			}
-		}
 	}
 
 	if ( $can ) {
