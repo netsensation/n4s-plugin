@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: n4s Apps
- * Description: Rahmen für eigene PHP-Apps mit Verwaltung im WordPress-Menü / Framework for custom PHP apps with admin management. Shortcode [n4s_app name="..."].
- * Version: 2.6.0
+ * Description: n4s: Rahmen für eigene PHP-Apps und Sicherheit (Anmeldeschutz, Härtung), Funktionen einzeln schaltbar / Framework for custom PHP apps and security (login protection, hardening), features switchable. Shortcode [n4s_app name="..."].
+ * Version: 2.7.0
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: n4s
@@ -13,7 +13,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'N4S_APPS_VERSION', '2.6.0' );
+define( 'N4S_APPS_VERSION', '2.7.0' );
 define( 'N4S_APPS_FILE', __FILE__ );
 define( 'N4S_APPS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'N4S_APPS_URL', plugin_dir_url( __FILE__ ) );
@@ -26,6 +26,31 @@ define( 'N4S_APPS_USER_DIR', trailingslashit( WP_CONTENT_DIR ) . 'n4s-apps-data/
  */
 function n4s_t( $de, $en ) {
 	return ( 0 === strpos( determine_locale(), 'de' ) ) ? $de : $en;
+}
+
+/**
+ * Funktionen des Plugins (Tab Funktionen): 'apps' und 'security' einzeln ein-/ausschaltbar.
+ * Standard: Apps an. Sicherheit an, wenn die Einstellungen der früheren Security-App schon da sind
+ * (Datei security.php aktiv oder Option n4s_lla_settings), sonst aus, damit ein Update nichts Neues aktiviert.
+ */
+function n4s_features() {
+	$v = get_option( 'n4s_features', null );
+	if ( ! is_array( $v ) ) {
+		$old = ( file_exists( N4S_APPS_USER_DIR . 'security.php' ) && ! in_array( 'user:security.php', (array) get_option( 'n4s_apps_disabled', array() ), true ) )
+			|| false !== get_option( 'n4s_lla_settings', false );
+		$v   = array( 'apps' => 1, 'security' => $old ? 1 : 0 );
+	}
+	return wp_parse_args( $v, array( 'apps' => 1, 'security' => 0 ) );
+}
+
+function n4s_feature_on( $key ) {
+	$f = n4s_features();
+	return ! empty( $f[ $key ] );
+}
+
+/** Die frühere App-Datei security.php wird nicht mehr geladen (Funktion steckt jetzt im Plugin). */
+function n4s_apps_replaced( $key ) {
+	return 'user:security.php' === $key;
 }
 
 /** Versionszeile: Version: 1.2.0 by n4s (n4s unsichtbar verlinkt auf n4s.one). */
@@ -93,6 +118,9 @@ function n4s_apps_disable_key( $key ) {
 add_action(
 	'plugins_loaded',
 	function () {
+		if ( ! n4s_feature_on( 'apps' ) ) {
+			return;
+		}
 		register_shutdown_function(
 			function () {
 				$cur = isset( $GLOBALS['n4s_loading'] ) ? $GLOBALS['n4s_loading'] : null;
@@ -106,7 +134,7 @@ add_action(
 		$disabled = (array) get_option( 'n4s_apps_disabled', array() );
 		foreach ( n4s_apps_files() as $f ) {
 			$key = $f['source'] . ':' . basename( $f['file'] );
-			if ( in_array( $key, $disabled, true ) ) {
+			if ( in_array( $key, $disabled, true ) || n4s_apps_replaced( $key ) ) {
 				continue;
 			}
 			$before                = array_keys( $GLOBALS['n4s_apps'] );
@@ -133,6 +161,11 @@ add_shortcode(
 		$slug = sanitize_key( $atts['name'] );
 		$apps = $GLOBALS['n4s_apps'];
 
+		if ( ! n4s_feature_on( 'apps' ) ) {
+			return current_user_can( 'manage_options' )
+				? '<p>n4s: ' . esc_html( n4s_t( 'Apps sind unter n4s → Funktionen ausgeschaltet.', 'Apps are switched off under n4s → Features.' ) ) . '</p>'
+				: '';
+		}
 		if ( ! isset( $apps[ $slug ] ) ) {
 			return current_user_can( 'manage_options' )
 				? '<p>n4s Apps: ' . esc_html( n4s_t( 'App "' . $slug . '" nicht gefunden oder deaktiviert.', 'App "' . $slug . '" not found or disabled.' ) ) . '</p>'
@@ -153,6 +186,11 @@ add_shortcode(
 
 /** Update über WordPress (Quelle GitHub); immer laden, damit Auto-Updates per Cron laufen. */
 require_once N4S_APPS_DIR . 'includes/updater.php';
+
+/** Sicherheit (Anmeldeschutz, Härtung): nur, wenn unter n4s → Funktionen eingeschaltet. */
+if ( n4s_feature_on( 'security' ) ) {
+	require_once N4S_APPS_DIR . 'includes/security.php';
+}
 
 if ( is_admin() ) {
 	require_once N4S_APPS_DIR . 'includes/admin.php';

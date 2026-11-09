@@ -15,6 +15,7 @@ Gilt für jede WordPress-Installation, auf der n4s Apps läuft (bisher netsensat
 ## Plugin-Aufbau (Ordner n4s-apps)
 - n4s-apps.php: Header (Plugin Name: n4s Apps, Version), Konstante N4S_APPS_VERSION, n4s_register_app( $slug, $render, $login ), n4s_t( $de, $en ), n4s_apps_byline( $version ), Loader (fatale Fehler deaktivieren die Datei automatisch), Shortcode [n4s_app name=...].
 - includes/admin.php: Menü Apps, Liste, Upload, Update mit Abgleich und Bestätigungsseite, Löschen nur nach Deaktivierung, Plugin-Selbstupdate per ZIP, Update-Quelle GitHub (Jetzt prüfen, Token), Versionsanzeige des Plugins.
+- includes/security.php (ab 2.7.0): Funktion Sicherheit (Anmeldeschutz, Härtung), Tab/Menü „Sicherheit“; Menü n4s hat Tabs Funktionen/Apps/Sicherheit, Funktionen schaltbar über n4s_features(). Die App-Datei security.php wird nicht mehr geladen.
 - includes/updater.php (ab 2.6.0, immer geladen): Update über WordPress aus GitHub-Releases (Update URI, update_plugins_github.com, plugins_api, upgrader_pre_download mit ZIP-Prüfung). Repository öffentlich, kein Token nötig; optional per N4S_APPS_GITHUB_TOKEN oder Option.
 - apps/hello.php: Beispiel-App mit öffentlichem REST-Endpunkt (auf Produktivseiten deaktivieren und löschen).
 - Eigene Apps liegen in wp-content/n4s-apps-data/apps/ und überstehen Plugin-Updates. REST-Namespace: n4s-apps/v1.
