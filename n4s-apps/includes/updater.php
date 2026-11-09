@@ -151,9 +151,9 @@ add_filter(
 			'package'      => $r['package'],
 			'requires_php' => '7.4',
 		);
-		if ( function_exists( 'n4s_apps_logo' ) ) {
-			$out['icons'] = array( 'svg' => 'data:image/svg+xml;base64,' . base64_encode( n4s_apps_logo( false ) ) );
-		}
+		// Icon als Datei: data:-Adressen entfernt WordPress beim Ausgeben (esc_url), das Bild bliebe leer.
+		$icon = plugins_url( 'assets/icon.svg', N4S_APPS_FILE );
+		$out['icons'] = array( 'svg' => $icon, '1x' => $icon, '2x' => $icon );
 		return $out;
 	},
 	10,
