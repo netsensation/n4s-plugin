@@ -1,6 +1,6 @@
 # Arbeitsanweisung: n4s Apps (WordPress-Plugin)
 
-Stand: 09.11.2026 · Plugin-Version 2.6.0
+Stand: 09.11.2026 · Plugin-Version 2.7.0
 Gilt für jede Installation, auf der n4s Apps läuft (bisher netsensation.de, elco-systemloesungen.de, weitere folgen). Diese Datei ist in beiden Projekten **identisch**. Seitenspezifisches steht nur in der Umgebungs-Datei des jeweiligen Projekts. Änderungen immer in beiden Projekten übernehmen.
 
 ## 1. Zweck
@@ -10,7 +10,8 @@ Rahmen-Plugin für eigene PHP-Apps. Jede App ist eine PHP-Datei, wird im Admin-M
 ```
 wp-content/plugins/n4s-apps/        wird bei Plugin-Updates komplett ersetzt
 ├── n4s-apps.php                    Rahmen: Registry, Loader, Shortcode, Übersetzung n4s_t()
-├── includes/admin.php              Verwaltungsbereich (Menü, Upload, Update, Löschen)
+├── includes/admin.php              Verwaltungsbereich (Menü n4s, Tabs, Upload, Update, Löschen)
+├── includes/security.php           Funktion Sicherheit (Anmeldeschutz, Härtung)
 ├── includes/updater.php            Update über WordPress, Quelle GitHub-Releases
 └── apps/hello.php                  mitgelieferte Beispiel-App
 
@@ -22,8 +23,10 @@ wp-content/n4s-apps-data/apps/      EIGENE Apps, überstehen Plugin-Updates
 - REST-Namespace aller Apps: `n4s-apps/v1`
 - `n4s_t( 'Deutsch', 'English' )` liefert den Text passend zur Sprache (Benutzer im Admin, Website im Frontend; Deutsch bei `de_*`, sonst Englisch).
 
-## 3. Verwaltungsbereich (Menü „n4s Apps")
-- Menüeintrag „Apps" mit n4s-Logo; das Menü und alle Meldungen sind zweisprachig (DE/EN)
+## 3. Verwaltungsbereich (Menü „n4s")
+- Menüeintrag „n4s" mit n4s-Logo, Unterpunkte **Funktionen**, **Apps**, **Sicherheit**. Im Plugin sind dieselben drei Bereiche als Tabs dargestellt. Menü und alle Meldungen sind zweisprachig (DE/EN).
+- **Tab Funktionen (ab 2.7.0):** Apps und Sicherheit einzeln ein-/ausschalten (Option `n4s_features`). Ausgeschaltet verschwinden Tab und Menüpunkt und die Funktion ist inaktiv (Apps: keine App geladen, Shortcodes leer; Sicherheit: Schutz aus, Einstellungen und Protokoll bleiben). Standard: Apps an; Sicherheit an, wenn die frühere Security-App schon lief, sonst aus. Hier steht auch das Plugin-Update.
+- **Tab Sicherheit:** Anmeldeschutz (Sperren nach Fehlversuchen, Protokoll, Blacklist, IP-Quelle), Härtung (Benutzernamen verbergen, neutrale Login-Meldung, XML-RPC, Sicherheits-Header, Version verbergen), Option „Beiträge deaktivieren", Dashboard-Widget. Die Mail bei vielen abgelehnten Anmeldungen enthält eine Zusammenfassung der gesperrten IPs und der häufigsten Anmeldenamen der letzten 24 Stunden. Die frühere App `security.php` wird nicht mehr geladen (Optionen `n4s_lla_settings`/`n4s_lla_state` bleiben, nichts geht verloren); die Datei kann im Tab Apps gelöscht werden.
 - Liste aller Apps: Name, Shortcode, Version, Datei, Quelle, Zugriff, Status, Änderungsdatum
 - **Neu:** App-Datei hochladen (Name: Kleinbuchstaben, Ziffern, `-`, `_`, Endung `.php`; `index.php` ist reserviert). Ein Versionssuffix im Dateinamen (`_V2_1_2`) entfernt der Upload, installiert wird unter `slug.php`. Ein App-Name (Slug), der schon in einer anderen Datei registriert ist, wird abgelehnt.
 - **Update:** Datei einer eigenen App ersetzen. Zuerst Abgleich installiert ↔ Update, dann Bestätigungsseite; erst danach wird geschrieben, die vorherige Version bleibt als `.bak`.
