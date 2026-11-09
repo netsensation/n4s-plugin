@@ -1,6 +1,6 @@
 # n4s Apps: Entscheidungen und offene Punkte
 
-Stand: 09.11.2026 · Plugin-Version 2.8.1. Ergänzt die Arbeitsanweisung um das Warum.
+Stand: 09.11.2026 · Plugin-Version 2.8.2. Ergänzt die Arbeitsanweisung um das Warum.
 
 ## Entscheidungen
 - **Eigene Apps außerhalb des Plugin-Ordners** (`wp-content/n4s-apps-data/apps/`), damit Plugin-Updates sie nicht überschreiben. Ordner mit `.htaccess` und `index.php` geschützt; auf Nginx schützt nur der `ABSPATH`-Guard in den App-Dateien.
