@@ -25,7 +25,7 @@ n4s-apps/            Plugin (Ordnername im ZIP muss n4s-apps bleiben)
 ├── includes/catalog.php   App-Katalog (Client, Signatur, Cron)
 ├── includes/trust.php     vertrauenswürdige Signaturschlüssel
 └── apps/hello.php   Beispiel-App
-tools/               Schlüssel erzeugen (n4s-keygen.php), Apps signieren (n4s-sign.php)
+tools/               Schlüssel erzeugen (n4s-keygen.html im Browser oder n4s-keygen.php), Apps signieren (n4s-sign.php)
 docs/                Arbeitsanweisung, Entscheidungen, Änderungsprotokoll, Katalog-Protokoll
 .claude/skills/      Skill für Claude Code
 ```

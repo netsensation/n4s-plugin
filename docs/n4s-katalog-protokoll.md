@@ -53,7 +53,8 @@ n4s-app-v1
 
 - Die Nachricht bindet Slug und Version an den Dateiinhalt: Eine alte oder fremde Datei lässt sich nicht als anderes Update ausgeben.
 - Werkzeuge im Repository (nur Kommandozeile, kein WordPress nötig):
-  - `php tools/n4s-keygen.php`: erzeugt das Schlüsselpaar. Den **öffentlichen** Schlüssel in `n4s-apps/includes/trust.php` eintragen und das Plugin neu veröffentlichen, den **privaten** nur als geheimen Wert speichern.
+  - `tools/n4s-keygen.html`: erzeugt das Schlüsselpaar ohne PHP. Datei per Doppelklick lokal im Browser öffnen (Chrome/Edge ab 137, Firefox ab 129, Safari ab 17), alles läuft offline im Browser. Gleichwertig: `php tools/n4s-keygen.php`.
+  - Die Schlüssel beider Werkzeuge sind austauschbar (libsodium-Format, vom Selbsttest und von `n4s-sign.php` geprüft). Den **öffentlichen** Schlüssel in `n4s-apps/includes/trust.php` eintragen und das Plugin neu veröffentlichen, den **privaten** nur als geheimen Wert speichern.
   - `N4S_SIGNING_KEY=<privat> php tools/n4s-sign.php app.php`: gibt `slug`, `version`, `name`, `sha256`, `size`, `signature` als JSON aus.
 - Schlüsselwechsel: Mehrere öffentliche Schlüssel dürfen gleichzeitig vertraut werden. Erst den neuen Schlüssel per Plugin-Update verteilen, dann damit signieren, danach den alten entfernen.
 - Von Hand hochgeladene Apps sind unsigniert und lassen sich nur manuell installieren.

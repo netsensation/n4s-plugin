@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>n4s Signaturschlüssel erzeugen</title>
+<style>
+:root{--bg:#fff;--fg:#0C0E10;--mut:#5b646b;--line:#d5dbe0;--card:#f4f8fa;--acc:#007FA3;--warn:#b32d2e;--btn:#0C0E10;--btnfg:#fff}
+@media (prefers-color-scheme:dark){:root{--bg:#0C0E10;--fg:#e9f1f5;--mut:#9aa3a9;--line:#2a3238;--card:#121b21;--acc:#00CCFF;--warn:#ff8b8d;--btn:#00CCFF;--btnfg:#0C0E10}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:720px;margin:0 auto;padding:32px 16px 64px}
+h1{font-size:1.5rem;margin:0 0 .25rem}
+h1 b{color:var(--acc)}
+p{margin:.5rem 0}
+.mut{color:var(--mut);font-size:.92rem}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);padding:.5rem .9rem}
+button.main{background:var(--btn);color:var(--btnfg);border-color:transparent;font-weight:600}
+.box{margin-top:1.25rem;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:14px 16px}
+.box h2{font-size:1.05rem;margin:0 0 .35rem}
+code{display:block;word-break:break-all;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:.5rem 0;font:13px/1.45 ui-monospace,Consolas,monospace}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.warn{color:var(--warn)}
+.ok{color:var(--acc)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+<h1><b>n4s</b> Signaturschlüssel erzeugen</h1>
+<p class="mut">Erzeugt ein Ed25519-Schlüsselpaar für die Signatur von n4s-Apps. Alles passiert lokal in diesem Browser-Fenster, es gibt keine Verbindung ins Internet und nichts wird gespeichert oder gesendet.</p>
+
+<p id="nosup" class="warn" hidden>Dieser Browser unterstützt Ed25519 nicht. Bitte einen aktuellen Browser verwenden (Chrome oder Edge ab 137, Firefox ab 129, Safari ab 17) und die Datei per Doppelklick lokal öffnen.</p>
+
+<p><button id="go" class="main" type="button">Schlüsselpaar erzeugen</button></p>
+
+<div id="out" hidden>
+  <div class="box">
+    <h2>1. Öffentlicher Schlüssel (darf weitergegeben werden)</h2>
+    <p class="mut">Diesen Schlüssel an Claude schicken. Er kommt in das Plugin (<code style="display:inline;padding:1px 5px;border-radius:4px">includes/trust.php</code>).</p>
+    <code id="pub"></code>
+    <div class="row"><button type="button" data-copy="pub">Kopieren</button><span id="pubmsg" class="mut"></span></div>
+  </div>
+  <div class="box">
+    <h2 class="warn">2. Privater Schlüssel (geheim, nicht weitergeben)</h2>
+    <p class="mut">Nur als GitHub-Secret <b>N4S_SIGNING_KEY</b> im Repository n4s-plugin-admin speichern (Settings → Secrets and variables → Actions → New repository secret). Nicht in den Chat, nicht per Mail, nicht in eine Datei im Repository.</p>
+    <code id="priv" hidden></code>
+    <div class="row"><button id="show" type="button">Anzeigen</button><button type="button" data-copy="priv">Kopieren</button><span id="privmsg" class="mut"></span></div>
+  </div>
+  <p id="test" class="mut"></p>
+  <p class="mut">Nach dem Speichern des privaten Schlüssels dieses Fenster schließen. Der Schlüssel lässt sich nicht wiederherstellen; geht er verloren, wird einfach ein neues Paar erzeugt (der öffentliche Schlüssel im Plugin muss dann ersetzt werden).</p>
+</div>
+</main>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var b64 = function (bytes) { var s = ''; bytes = new Uint8Array(bytes); for (var i = 0; i < bytes.length; i++) { s += String.fromCharCode(bytes[i]); } return btoa(s); };
+  var supported = !!(window.crypto && crypto.subtle);
+  if (!supported) { $('nosup').hidden = false; $('go').disabled = true; }
+
+  $('go').addEventListener('click', async function () {
+    try {
+      var kp = await crypto.subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
+      var pub = new Uint8Array(await crypto.subtle.exportKey('raw', kp.publicKey));
+      var pk8 = new Uint8Array(await crypto.subtle.exportKey('pkcs8', kp.privateKey));
+      var seed = pk8.slice(pk8.length - 32);
+      // libsodium-Format des geheimen Schlüssels: 32 Byte Seed + 32 Byte öffentlicher Schlüssel
+      var sec = new Uint8Array(64); sec.set(seed, 0); sec.set(pub, 32);
+      // Selbsttest: signieren und prüfen
+      var msg = new TextEncoder().encode('n4s-app-v1\ntest\n1.0.0\n' + '0'.repeat(64));
+      var sig = await crypto.subtle.sign({ name: 'Ed25519' }, kp.privateKey, msg);
+      var ok = await crypto.subtle.verify({ name: 'Ed25519' }, kp.publicKey, sig, msg);
+      $('pub').textContent = b64(pub);
+      $('priv').textContent = b64(sec);
+      $('priv').hidden = true; $('show').textContent = 'Anzeigen';
+      $('pubmsg').textContent = ''; $('privmsg').textContent = '';
+      $('test').innerHTML = ok ? '<span class="ok">Selbsttest bestanden</span> (Signatur erzeugt und geprüft).' : '<span class="warn">Selbsttest fehlgeschlagen, bitte nicht verwenden.</span>';
+      $('out').hidden = false;
+      seed.fill(0); pk8.fill(0); sec.fill(0);
+    } catch (e) {
+      $('nosup').hidden = false; $('nosup').textContent = 'Das Schlüsselpaar konnte nicht erzeugt werden: ' + e.message;
+    }
+  });
+
+  $('show').addEventListener('click', function () {
+    var h = $('priv').hidden; $('priv').hidden = !h; this.textContent = h ? 'Verbergen' : 'Anzeigen';
+  });
+
+  document.querySelectorAll('[data-copy]').forEach(function (btn) {
+    btn.addEventListener('click', async function () {
+      var id = btn.getAttribute('data-copy'), msg = $(id === 'pub' ? 'pubmsg' : 'privmsg');
+      try { await navigator.clipboard.writeText($(id).textContent); msg.textContent = 'Kopiert.'; }
+      catch (e) {
+        var r = document.createRange(); var el = $(id); var wasHidden = el.hidden; el.hidden = false; r.selectNodeContents(el);
+        var s = getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = 'Markiert, bitte mit Strg+C kopieren.'; if (wasHidden) { /* bleibt sichtbar, damit die Markierung greift */ }
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>
