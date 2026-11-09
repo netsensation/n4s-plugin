@@ -9,5 +9,5 @@
 defined( 'ABSPATH' ) || exit;
 
 return array(
-	// 'BASE64_OEFFENTLICHER_SCHLUESSEL',
+	'9IhskpDPQHTsBIIR9J4LGEf+7NuLua43NKWPIHDnHKI=', // n4s-Signaturschlüssel (erzeugt am 09.11.2026)
 );

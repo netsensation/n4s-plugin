@@ -29,7 +29,7 @@ Stand: 09.11.2026 · Plugin-Version 2.8.0. Ergänzt die Arbeitsanweisung um das 
 - Das Google-Doc „n4s Apps Arbeitsanweisung" lässt sich per Drive-Connector nicht überschreiben (nur Metadaten): neues Doc anlegen, Quelle in den Projekten umstellen. Das Feld „Anweisungen" im Projekt kann nur der Benutzer ändern.
 
 ## Offene Punkte
-- Signaturschlüssel erzeugen (`tools/n4s-keygen.html` im Browser, ohne PHP), öffentlichen Schlüssel in `n4s-apps/includes/trust.php` eintragen, dann Plugin 2.8.0 veröffentlichen. Bis dahin sind Katalog-Updates ausgeschaltet.
+- Signaturschlüssel: öffentlicher Schlüssel ist in `n4s-apps/includes/trust.php` eingetragen (09.11.2026). Der private Schlüssel gehört nur als GitHub-Secret `N4S_SIGNING_KEY` in n4s-plugin-admin.
 - Folgeschritte: Admin-App `n4s-admin` (Repository n4s-plugin-admin), Katalogseite und Rechtstexte auf n4s.one.
 - Erste Release entsteht beim Merge von 2.6.0 nach `main`; danach auf jeder Seite einmal „Jetzt prüfen".
 - Ist api.wordpress.org nicht erreichbar, bricht WordPress die gesamte Plugin-Update-Prüfung ab, also auch die GitHub-Prüfung; dann manuell per ZIP.
