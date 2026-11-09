@@ -1,6 +1,6 @@
 # n4s Apps: Entscheidungen und offene Punkte
 
-Stand: 09.11.2026 · Plugin-Version 2.7.3. Ergänzt die Arbeitsanweisung um das Warum.
+Stand: 09.11.2026 · Plugin-Version 2.8.0. Ergänzt die Arbeitsanweisung um das Warum.
 
 ## Entscheidungen
 - **Eigene Apps außerhalb des Plugin-Ordners** (`wp-content/n4s-apps-data/apps/`), damit Plugin-Updates sie nicht überschreiben. Ordner mit `.htaccess` und `index.php` geschützt; auf Nginx schützt nur der `ABSPATH`-Guard in den App-Dateien.
@@ -13,6 +13,8 @@ Stand: 09.11.2026 · Plugin-Version 2.7.3. Ergänzt die Arbeitsanweisung um das 
 - **Menü n4s, Tabs, Funktionen (2.7.0):** Oberster Menüpunkt „Plugin“ (Slug `n4s`, Icon = n4s-Logo; Text „n4s“ wäre doppelt), Unterpunkte Funktionen (`n4s`), Apps (`n4s-apps`, URL wie bisher), Sicherheit (`n4s-security`); alle rendern denselben Rahmen `n4s_apps_shell()` mit Tab-Leiste. Der Tab Funktionen schaltet Apps und Sicherheit über `n4s_features()` ein/aus. Ausgeschaltetes wird nicht geladen (Apps: Loader und REST-Routen der Apps entfallen, Shortcode leer). Standard für Sicherheit ist aus, außer die frühere Security-App läuft schon (Datei oder Option vorhanden), damit ein Update auf Seiten ohne sie keine Härtung (z. B. XML-RPC aus, Header) unerwartet aktiviert.
 - **Sicherheit ins Plugin übernommen:** Code aus der App `security` 1.0.0 (Funktionen `n4s_sec_*`, Optionen `n4s_lla_*`) nach `includes/security.php`; Einstellungen wandern von Einstellungen → Sicherheit nach n4s → Sicherheit. Eine installierte App-Datei `security.php` wird nicht mehr geladen (`n4s_apps_replaced()`, sonst doppelte Funktionen), erscheint in der Liste als ersetzt und lässt sich löschen. Mail-Zusammenfassung stützt sich auf `lockev` im Zustand (Zeit, IP, Anmeldenamen je Sperre, 24 Stunden, höchstens 200), weil das Protokoll bei vielen Fehlversuchen die Sperren verdrängt.
 - **Update-Icon (2.7.1):** `assets/icon.svg` (dunkles Quadrat, weißer Schriftzug, cyanfarbene 4), ausgeliefert über `plugins_url()` in `icons` der Update-Angabe. Eine data:-Adresse zeigt WordPress nicht an (`esc_url` entfernt das Protokoll).
+- **App-Katalog-Client (2.8.0):** Eigene Dateien `appfiles.php` (aus `admin.php` verschobene Prüffunktionen) und `catalog.php`, beide immer geladen, damit Cron ohne Admin-Kontext Updates installieren kann. Opt-in über Dateikopf `Update URI` (genau ein Slug je Datei); die Admin-Seite macht nie selbst eine Verbindung (nur Cache), Prüfung per Cron (12 h) oder Klick. Zugangsschlüssel nur an den Host der Quelle, keine Weiterleitungen, Download nur vom selben Host. Installation nur mit SHA-256 und Ed25519-Signatur über `n4s-app-v1\n<slug>\n<version>\n<sha256>` (bindet Slug und Version, verhindert Austausch). Der private Schlüssel gehört nicht auf den Katalog-Server (GitHub-Secret, Signatur im Workflow), das Plugin trägt nur öffentliche Schlüssel (`includes/trust.php`). Ohne Schlüssel sind Katalog-Updates aus (sicherer Standard). Auto-Update je App, Standard aus; nur wenn die Version höher ist, `.bak` bleibt. Schlüssel und Quelle liegen als Option `n4s_apps_catalog` (nicht autoload), Konstanten haben Vorrang. Katalog-Liste nur auf Klick, 10 Minuten gecacht.
+- **Update-Buttons:** Der Button erscheint erst nach Dateiauswahl (Inline-Skript, `style="display:none"`, weil `.button` in WordPress `[hidden]` überschreibt).
 - **Dateiname im ZIP:** Auslieferung als `n4s-apps-plugin.zip`, der Ordner darin muss `n4s-apps` bleiben (Pflicht für Prüfung und Plugin-Ordner).
 - **Nonce:** eigene Prüfung `n4s_apps_verify()` mit freundlichem Hinweis statt WordPress-Fehlerseite (einmaliger Nonce-Fehler beim ersten Upload, nicht reproduzierbar).
 - **Zweisprachig DE/EN** über `n4s_t( $de, $en )` anhand `determine_locale()` (Deutsch bei `de_*`).
@@ -27,6 +29,8 @@ Stand: 09.11.2026 · Plugin-Version 2.7.3. Ergänzt die Arbeitsanweisung um das 
 - Das Google-Doc „n4s Apps Arbeitsanweisung" lässt sich per Drive-Connector nicht überschreiben (nur Metadaten): neues Doc anlegen, Quelle in den Projekten umstellen. Das Feld „Anweisungen" im Projekt kann nur der Benutzer ändern.
 
 ## Offene Punkte
+- Signaturschlüssel: öffentlicher Schlüssel ist in `n4s-apps/includes/trust.php` eingetragen (09.11.2026). Der private Schlüssel gehört nur als GitHub-Secret `N4S_SIGNING_KEY` in n4s-plugin-admin.
+- Folgeschritte: Admin-App `n4s-admin` (Repository n4s-plugin-admin), Katalogseite und Rechtstexte auf n4s.one.
 - Erste Release entsteht beim Merge von 2.6.0 nach `main`; danach auf jeder Seite einmal „Jetzt prüfen".
 - Ist api.wordpress.org nicht erreichbar, bricht WordPress die gesamte Plugin-Update-Prüfung ab, also auch die GitHub-Prüfung; dann manuell per ZIP.
 - Zentrierung des Menü-Icons und die Versionsanzeige (Admin, unter Apps) in WordPress per Screenshot prüfen.
