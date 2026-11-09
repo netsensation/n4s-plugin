@@ -1,6 +1,6 @@
 # Arbeitsanweisung: n4s Apps (WordPress-Plugin)
 
-Stand: 09.11.2026 · Plugin-Version 2.5.3
+Stand: 09.11.2026 · Plugin-Version 2.6.0
 Gilt für jede Installation, auf der n4s Apps läuft (bisher netsensation.de, elco-systemloesungen.de, weitere folgen). Diese Datei ist in beiden Projekten **identisch**. Seitenspezifisches steht nur in der Umgebungs-Datei des jeweiligen Projekts. Änderungen immer in beiden Projekten übernehmen.
 
 ## 1. Zweck
@@ -11,6 +11,7 @@ Rahmen-Plugin für eigene PHP-Apps. Jede App ist eine PHP-Datei, wird im Admin-M
 wp-content/plugins/n4s-apps/        wird bei Plugin-Updates komplett ersetzt
 ├── n4s-apps.php                    Rahmen: Registry, Loader, Shortcode, Übersetzung n4s_t()
 ├── includes/admin.php              Verwaltungsbereich (Menü, Upload, Update, Löschen)
+├── includes/updater.php            Update über WordPress, Quelle GitHub-Releases
 └── apps/hello.php                  mitgelieferte Beispiel-App
 
 wp-content/n4s-apps-data/apps/      EIGENE Apps, überstehen Plugin-Updates
@@ -31,7 +32,8 @@ wp-content/n4s-apps-data/apps/      EIGENE Apps, überstehen Plugin-Updates
   - Hinweis (kein Häkchen): ältere App ohne Version, dann wird nur der Name verglichen.
 - **Deaktivieren/Aktivieren:** für alle Apps, auch mitgelieferte
 - **Löschen:** erst möglich, wenn die App deaktiviert ist (Button ausgegraut, serverseitig erzwungen). Gilt auch für mitgelieferte Apps; die kommen nach einem Plugin-Update deaktiviert zurück.
-- **Plugin-Update:** neues `n4s-apps-plugin.zip` hochladen, das Plugin ersetzt sich selbst und bleibt aktiv (Datei `n4s-apps-plugin.zip`; im ZIP nur der Ordner `n4s-apps/`, höchstens 5 MB). Es wird nur eine **höhere** Version installiert; gleiche oder ältere werden abgelehnt (Rollback nur über Plugins → Installieren).
+- **Plugin-Update über WordPress (ab 2.6.0):** Neue Versionen erscheinen wie bei jedem Plugin unter Plugins und Dashboard → Aktualisierungen (auch automatische Updates). Quelle: neueste Release im GitHub-Repository `netsensation/n4s-plugin` mit der Datei `n4s-apps-plugin.zip`. Auf der Seite „Apps" stehen die neueste Version und „Jetzt prüfen". Das Repository ist öffentlich, ein Token ist nicht nötig. Nur falls es wieder privat wird oder das GitHub-Abfragelimit (60 Anfragen pro Stunde je Server-IP) stört: GitHub-Token (fein granular, nur dieses Repository, Leserecht „Contents") in `wp-config.php` als `define( 'N4S_APPS_GITHUB_TOKEN', '...' );` oder im Menü „Apps" hinterlegen. Das ZIP wird vor der Installation wie beim manuellen Update geprüft.
+- **Plugin-Update manuell:** neues `n4s-apps-plugin.zip` hochladen, das Plugin ersetzt sich selbst und bleibt aktiv (Datei `n4s-apps-plugin.zip`; im ZIP nur der Ordner `n4s-apps/`, höchstens 5 MB). Es wird nur eine **höhere** Version installiert; gleiche oder ältere werden abgelehnt (Rollback nur über Plugins → Installieren).
 - Prüfung vor dem Speichern, ohne Ausführung: PHP-Syntax, `n4s_register_app` mit festem App-Namen als Zeichenkette, `defined( 'ABSPATH' )`-Schutz vorhanden, höchstens 1024 KB
 - Hochladen, Ersetzen, Löschen und Plugin-Update brauchen das Recht „Plugins installieren"; bei `DISALLOW_FILE_MODS` sind sie aus.
 - Erscheint „Sicherheitsprüfung abgelaufen", Seite neu laden und Aktion wiederholen.
@@ -99,9 +101,10 @@ Für JavaScript mit REST-Zugriff: Nonce per `wp_create_nonce( 'wp_rest' )` ins H
 - Wer Version 2.1.0 installiert hatte, hat noch die leere Tabelle `n4s_verwaltungen` und die Option `n4s_verw_db`; unschädlich, kann entfernt werden.
 
 ## 7. Updates des Plugins
-1. Neues `n4s-apps-plugin.zip` (Ordner im ZIP bleibt `n4s-apps`, Version höher als die installierte) bauen und liefern.
-2. Benutzer lädt es im Menü n4s Apps → „n4s Apps aktualisieren" hoch (oder über Plugins → Installieren → Hochladen).
-3. Eigene Apps bleiben erhalten, mitgelieferte Apps werden mit dem Plugin ersetzt.
+1. Version erhöhen (zwei Stellen in `n4s-apps.php`), Änderungsprotokoll ergänzen, auf `main` bringen. Der GitHub-Workflow „Release" baut `n4s-apps-plugin.zip` und legt die Release `v<Version>` an (Notiz aus dem Änderungsprotokoll).
+2. Die Seiten zeigen das Update innerhalb von 12 Stunden (WordPress-Prüfung, Release-Cache 6 Stunden) oder sofort nach „Jetzt prüfen" im Menü Apps; installiert wird über Plugins bzw. Dashboard → Aktualisierungen.
+3. Alternativ weiterhin manuell: `n4s-apps-plugin.zip` (Ordner im ZIP bleibt `n4s-apps`, Version höher als die installierte) im Menü n4s Apps → „Manuell per ZIP" hochladen (oder über Plugins → Installieren → Hochladen).
+4. Eigene Apps bleiben erhalten, mitgelieferte Apps werden mit dem Plugin ersetzt.
 - Erstinstallation und Wechsel von Versionen unter 2.2.0 gehen nur über Plugins → Installieren → Hochladen.
 
 ## 8. Was Claude per MCP kann und nicht kann

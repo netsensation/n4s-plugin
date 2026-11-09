@@ -2,14 +2,19 @@
 /**
  * Plugin Name: n4s Apps
  * Description: Rahmen für eigene PHP-Apps mit Verwaltung im WordPress-Menü / Framework for custom PHP apps with admin management. Shortcode [n4s_app name="..."].
- * Version: 2.5.3
+ * Version: 2.6.0
+ * Requires at least: 5.8
  * Requires PHP: 7.4
+ * Author: n4s
+ * Author URI: https://n4s.one
+ * Update URI: https://github.com/netsensation/n4s-plugin
  * Text Domain: n4s-apps
  */
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'N4S_APPS_VERSION', '2.5.3' );
+define( 'N4S_APPS_VERSION', '2.6.0' );
+define( 'N4S_APPS_FILE', __FILE__ );
 define( 'N4S_APPS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'N4S_APPS_URL', plugin_dir_url( __FILE__ ) );
 /** Eigene Apps liegen außerhalb des Plugin-Ordners und überstehen Plugin-Updates. */
@@ -145,6 +150,9 @@ add_shortcode(
 		return $out;
 	}
 );
+
+/** Update über WordPress (Quelle GitHub); immer laden, damit Auto-Updates per Cron laufen. */
+require_once N4S_APPS_DIR . 'includes/updater.php';
 
 if ( is_admin() ) {
 	require_once N4S_APPS_DIR . 'includes/admin.php';

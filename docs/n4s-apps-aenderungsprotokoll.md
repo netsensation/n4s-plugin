@@ -1,6 +1,6 @@
 # n4s Apps: Änderungsprotokoll
 
-Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.5.3.
+Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.6.0.
 
 | Datum | Version | Änderung |
 |---|---|---|
@@ -15,3 +15,4 @@ Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Di
 | 05.11.2026 | 2.5.1 | Anzeige „Version: x by n4s" ohne Datum; Shortcode hängt die App-Versionszeile automatisch an |
 | 06.11.2026 | 2.5.2 | App-Limit 1024 KB; Auslieferung als `n4s-apps-plugin.zip` |
 | 06.11.2026 | 2.5.3 | Versionssuffix im App-Dateinamen (`_V2_1_2`) wird beim Upload entfernt |
+| 09.11.2026 | 2.6.0 | Update über den normalen WordPress-Update-Prozess, Quelle GitHub-Releases (`n4s-apps-plugin.zip`, Token optional); manuelles ZIP-Update bleibt; Release-Workflow auf GitHub |
