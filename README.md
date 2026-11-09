@@ -1,13 +1,13 @@
 # n4s Plugin for WordPress
 
-**n4s Apps** – eigenes WordPress-Plugin, mit dem PHP-Apps als einzelne Dateien verwaltet und per Shortcode `[n4s_app name="..."]` in Seiten eingebunden werden. Aktuelle Version: **2.6.0**. Privates Repository.
+**n4s Apps** – eigenes WordPress-Plugin, mit dem PHP-Apps als einzelne Dateien verwaltet und per Shortcode `[n4s_app name="..."]` in Seiten eingebunden werden. Aktuelle Version: **2.6.0**. Öffentliches Repository.
 
 ## Funktionen
 - Verwaltung im Admin-Menü „Apps": Upload, Update mit Versionsabgleich und Bestätigung, (De)aktivieren, Löschen
 - Eigene Apps liegen in `wp-content/n4s-apps-data/apps/` und überstehen Plugin-Updates
 - Fehlerhafte Apps werden automatisch deaktiviert
 - Statische Prüfung von Uploads (Syntax, ABSPATH-Schutz, Größe bis 1024 KB)
-- Plugin-Update über den normalen WordPress-Update-Prozess, Quelle GitHub-Releases (Token für privates Repository per `N4S_APPS_GITHUB_TOKEN` oder im Menü „Apps")
+- Plugin-Update über den normalen WordPress-Update-Prozess, Quelle GitHub-Releases (kein Token nötig; optional per `N4S_APPS_GITHUB_TOKEN` oder im Menü „Apps")
 - Plugin-Selbstupdate per ZIP weiterhin möglich (nur höhere Version)
 - Zweisprachig Deutsch/Englisch (`n4s_t()`), Versionsanzeige „Version: x.y.z by n4s"
 

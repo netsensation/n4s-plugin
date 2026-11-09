@@ -4,7 +4,8 @@
  *
  * - Neueste Release von N4S_APPS_GITHUB_REPO (Asset n4s-apps-plugin.zip) wird abgefragt (6 h Cache).
  * - WordPress zeigt das Update unter Dashboard → Aktualisierungen und Plugins (auch Auto-Updates).
- * - Privates Repository: Token per Konstante N4S_APPS_GITHUB_TOKEN (wp-config.php) oder im Menü Apps.
+ * - Öffentliches Repository: kein Token nötig. Optional (privates Repository oder höheres API-Limit):
+ *   Token per Konstante N4S_APPS_GITHUB_TOKEN (wp-config.php) oder im Menü Apps.
  * - Das heruntergeladene ZIP wird vor der Installation wie beim manuellen Update geprüft.
  * Wird immer geladen (nicht nur im Admin), damit Auto-Updates per Cron funktionieren.
  */
@@ -99,7 +100,7 @@ function n4s_apps_gh_release( $force = false ) {
 		$data['error'] = $res->get_error_message();
 	} elseif ( 200 !== $code ) {
 		$data['error'] = 'GitHub HTTP ' . $code . ( in_array( $code, array( 401, 403, 404 ), true )
-			? n4s_t( ' (privates Repository? Token prüfen, oder noch keine Release vorhanden)', ' (private repository? Check the token, or no release yet)' )
+			? n4s_t( ' (noch keine Release vorhanden, API-Limit erreicht oder Token ungültig)', ' (no release yet, API limit reached or invalid token)' )
 			: '' );
 	} else {
 		$j       = json_decode( wp_remote_retrieve_body( $res ), true );

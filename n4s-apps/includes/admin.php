@@ -497,7 +497,7 @@ add_action(
 	}
 );
 
-/** GitHub-Token speichern oder entfernen (nur nötig bei privatem Repository, Konstante hat Vorrang). */
+/** GitHub-Token speichern oder entfernen (optional, Repository ist öffentlich; Konstante hat Vorrang). */
 add_action(
 	'admin_post_n4s_gh_token',
 	function () {
@@ -717,7 +717,7 @@ function n4s_apps_render_page() {
 			} else {
 				$has = '' !== (string) get_option( 'n4s_apps_github_token', '' );
 				n4s_apps_form_head( 'n4s_gh_token', false, 'display:block' );
-				echo '<p><label>' . esc_html( n4s_t( 'GitHub-Token (nur bei privatem Repository, Leserecht „Contents"): ', 'GitHub token (private repository only, read access "Contents"): ' ) )
+				echo '<p><label>' . esc_html( n4s_t( 'GitHub-Token (optional, nur bei privatem Repository oder erreichtem API-Limit; Leserecht „Contents"): ', 'GitHub token (optional, only for a private repository or when the API limit is reached; read access "Contents"): ' ) )
 					. '<input type="password" name="token" autocomplete="off" class="regular-text" placeholder="' . esc_attr( $has ? n4s_t( 'gespeichert – leer lassen zum Entfernen', 'saved – leave empty to remove' ) : 'github_pat_…' ) . '"></label> ';
 				submit_button( n4s_t( 'Token speichern', 'Save token' ), 'secondary', 'submit', false );
 				echo '</p><p class="description">' . esc_html( n4s_t( 'Alternativ in wp-config.php: define( \'N4S_APPS_GITHUB_TOKEN\', \'...\' );', 'Alternatively in wp-config.php: define( \'N4S_APPS_GITHUB_TOKEN\', \'...\' );' ) ) . '</p></form>';
