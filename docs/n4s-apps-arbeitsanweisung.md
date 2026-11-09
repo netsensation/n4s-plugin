@@ -1,6 +1,6 @@
 # Arbeitsanweisung: n4s Apps (WordPress-Plugin)
 
-Stand: 09.11.2026 · Plugin-Version 2.7.0
+Stand: 09.11.2026 · Plugin-Version 2.7.1
 Gilt für jede Installation, auf der n4s Apps läuft (bisher netsensation.de, elco-systemloesungen.de, weitere folgen). Diese Datei ist in beiden Projekten **identisch**. Seitenspezifisches steht nur in der Umgebungs-Datei des jeweiligen Projekts. Änderungen immer in beiden Projekten übernehmen.
 
 ## 1. Zweck
@@ -12,6 +12,7 @@ wp-content/plugins/n4s-apps/        wird bei Plugin-Updates komplett ersetzt
 ├── n4s-apps.php                    Rahmen: Registry, Loader, Shortcode, Übersetzung n4s_t()
 ├── includes/admin.php              Verwaltungsbereich (Menü n4s, Tabs, Upload, Update, Löschen)
 ├── includes/security.php           Funktion Sicherheit (Anmeldeschutz, Härtung)
+├── assets/icon.svg                 Icon in der WordPress-Aktualisierungsliste
 ├── includes/updater.php            Update über WordPress, Quelle GitHub-Releases
 └── apps/hello.php                  mitgelieferte Beispiel-App
 
