@@ -405,6 +405,8 @@ add_action(
 			array(
 				'apps'     => empty( $_POST['apps'] ) ? 0 : 1,
 				'security' => empty( $_POST['security'] ) ? 0 : 1,
+				'dup'      => empty( $_POST['dup'] ) ? 0 : 1,
+				'mediareplace' => empty( $_POST['mediareplace'] ) ? 0 : 1,
 			)
 		);
 		n4s_apps_notice( 'success', n4s_t( 'Funktionen gespeichert.', 'Features saved.' ) );
@@ -712,6 +714,14 @@ function n4s_apps_tab_features() {
 		'security' => array(
 			n4s_t( 'Sicherheit', 'Security' ),
 			n4s_t( 'Anmeldeschutz (Sperren nach Fehlversuchen, Protokoll, Mail-Zusammenfassung) und Härtung. Ausgeschaltet: Tab und Menü verschwinden und der Schutz ist inaktiv; Einstellungen und Protokoll bleiben gespeichert.', 'Login protection (lockouts after failed attempts, log, email summary) and hardening. Switched off: tab and menu disappear and the protection is inactive; settings and log stay saved.' ),
+		),
+		'dup'          => array(
+			n4s_t( 'Seite duplizieren', 'Duplicate page' ),
+			n4s_t( 'Zeilenaktion „Duplizieren“ in der Seitenliste: legt eine Kopie als Entwurf an (Inhalt, Vorlage, Elternseite, Taxonomien und alle Metafelder, auch von Elementor oder Divi).', 'Row action "Duplicate" in the pages list: creates a copy as a draft (content, template, parent, taxonomies and all custom fields, including Elementor or Divi).' ),
+		),
+		'mediareplace' => array(
+			n4s_t( 'Mediendatei ersetzen', 'Replace media file' ),
+			n4s_t( 'Aktion „Datei ersetzen“ in der Mediathek: Datei tauschen und dabei Name und Adresse behalten, oder mit neuem Dateinamen ersetzen (Verweise in Seiteninhalten werden angepasst).', 'Action "Replace file" in the media library: swap the file and keep name and address, or replace it with a new filename (references in page content are updated).' ),
 		),
 	);
 	foreach ( $rows as $k => $r ) {
