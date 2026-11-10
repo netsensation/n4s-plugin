@@ -878,7 +878,16 @@ function n4s_apps_tab_apps() {
 		echo '<td>' . ( $slugs ? '<code>[n4s_app name="' . esc_html( $slugs[0] ) . '"]</code>' : '–' ) . '</td>';
 		echo '<td>' . esc_html( $meta['version'] ? $meta['version'] : '–' ) . '</td>';
 		echo '<td><code>' . esc_html( $name ) . '</code></td>';
-		echo '<td>' . esc_html( 'bundled' === $f['source'] ? n4s_t( 'mitgeliefert', 'bundled' ) : n4s_t( 'eigene', 'custom' ) ) . '</td>';
+		// Quelle: mitgeliefert, n4s (Apps mit Update URI auf den n4s-Katalog) oder eigene.
+		$uhost = $meta['update_uri'] ? strtolower( (string) wp_parse_url( n4s_apps_base( $meta['update_uri'] ), PHP_URL_HOST ) ) : '';
+		if ( 'bundled' === $f['source'] ) {
+			$origin = n4s_t( 'mitgeliefert', 'bundled' );
+		} elseif ( 'n4s.one' === preg_replace( '/^www\./', '', $uhost ) ) {
+			$origin = 'n4s';
+		} else {
+			$origin = n4s_t( 'eigene', 'custom' );
+		}
+		echo '<td>' . esc_html( $origin ) . '</td>';
 		echo '<td>' . ( $login ? esc_html( implode( ', ', array_unique( $login ) ) ) : '–' ) . '</td>';
 		echo '<td>' . ( $repl ? '<span style="color:#b32d2e">' . esc_html( n4s_t( 'ersetzt: Sicherheit steckt jetzt im Plugin, Datei kann gelöscht werden', 'replaced: security is now part of the plugin, file can be deleted' ) ) . '</span>' : ( $off ? '<span style="color:#b32d2e">' . esc_html( n4s_t( 'deaktiviert', 'deactivated' ) ) . '</span>' : esc_html( n4s_t( 'aktiv', 'active' ) ) ) ) . '</td>';
 		echo '<td>' . esc_html( wp_date( 'd.m.Y H:i', filemtime( $f['file'] ) ) ) . '</td>';
