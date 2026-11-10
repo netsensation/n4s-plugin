@@ -151,3 +151,5 @@ Getestet am 09.11.2026 mit der Test-App `n4s-test` (1.0.0 → 1.0.1), bis zum Up
 ## 9. Arbeitsweise
 - Antworten kurz, Rückfragen nur als Text im Chat, Umsetzungsdetails selbst entscheiden.
 - Auf Firmenseiten nur auf ausdrückliche Anweisung ändern, Neues als Entwurf.
+
+**Quelle in der App-Liste (ab 2.8.4):** „n4s“ für Apps, deren Dateikopf `Update URI: https://n4s.one` enthält (Katalog), „eigene“ für andere hochgeladene Apps, „mitgeliefert“ für Apps im Plugin-Ordner. Ältere Apps ohne `Update URI` zeigen „eigene“, bis sie als Katalog-Version aktualisiert wurden.
