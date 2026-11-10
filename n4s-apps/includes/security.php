@@ -72,6 +72,8 @@ function n4s_sec_t( $de ) {
 			'X-Content-Type-Options, X-Frame-Options (SAMEORIGIN), Referrer-Policy, Permissions-Policy. Die Seite lässt sich dann nicht mehr in fremden iframes einbetten.' => 'X-Content-Type-Options, X-Frame-Options (SAMEORIGIN), Referrer-Policy, Permissions-Policy. The site can then no longer be embedded in foreign iframes.',
 			'WordPress-Version verbergen'         => 'Hide WordPress version',
 			'Entfernt den Generator-Tag und die Versionsnummer an Skript- und Style-Adressen.' => 'Removes the generator tag and the version number from script and style URLs.',
+			'Admin-Meldungen ausblenden'         => 'Hide admin notices',
+			'Blendet die Meldungen von Plugins und Themes im Admin-Bereich für alle Benutzer aus (Hinweise, Werbung, Bewertungsbitten). Meldungen von WordPress selbst (Updates, Fehler, Einstellungen) und von n4s bleiben sichtbar. Meldungen, die ein Plugin direkt in seine eigene Seite schreibt, lassen sich so nicht ausblenden.' => 'Hides notices from plugins and themes in the admin area for all users (hints, ads, review requests). Notices from WordPress itself (updates, errors, settings) and from n4s stay visible. Notices a plugin writes directly into its own page cannot be hidden this way.',
 			'Einstellungen gespeichert.'          => 'Settings saved.',
 			'Sperre aufgehoben.'                  => 'Lockout removed.',
 			'Protokoll geleert.'                  => 'Log cleared.',
@@ -124,6 +126,7 @@ function n4s_sec_defaults() {
 		'headers'       => 1,
 		'hidever'       => 1,
 		'noposts'       => 0,
+		'nonotices'     => 0,
 	);
 }
 
@@ -487,6 +490,69 @@ function n4s_sec_np_admin() {
 }
 add_action( 'admin_init', 'n4s_sec_np_admin' );
 
+/* ---------- Admin-Meldungen ausblenden ---------- */
+
+/** Datei, in der eine Hook-Funktion definiert ist (leer, wenn nicht ermittelbar). */
+function n4s_sec_callback_file( $cb ) {
+	try {
+		if ( is_array( $cb ) && isset( $cb[0], $cb[1] ) ) {
+			$r = new ReflectionMethod( $cb[0], $cb[1] );
+		} elseif ( is_string( $cb ) && false !== strpos( $cb, '::' ) ) {
+			$r = new ReflectionMethod( $cb );
+		} elseif ( $cb instanceof Closure || is_string( $cb ) ) {
+			$r = new ReflectionFunction( $cb );
+		} elseif ( is_object( $cb ) ) {
+			$r = new ReflectionMethod( $cb, '__invoke' );
+		} else {
+			return '';
+		}
+		return (string) $r->getFileName();
+	} catch ( Throwable $e ) {
+		return '';
+	}
+}
+
+/** Meldungen aus WordPress selbst (wp-admin, wp-includes), aus n4s und aus n4s-Apps bleiben sichtbar. */
+function n4s_sec_notice_keep_file( $file ) {
+	$file = wp_normalize_path( $file );
+	$dirs = array( ABSPATH . 'wp-admin/', ABSPATH . WPINC . '/' );
+	if ( defined( 'N4S_APPS_DIR' ) ) {
+		$dirs[] = N4S_APPS_DIR;
+	}
+	if ( defined( 'N4S_APPS_USER_DIR' ) ) {
+		$dirs[] = N4S_APPS_USER_DIR;
+	}
+	foreach ( $dirs as $d ) {
+		if ( 0 === strpos( $file, trailingslashit( wp_normalize_path( $d ) ) ) ) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/** Entfernt die Meldungs-Funktionen von Plugins und Themes, kurz bevor WordPress sie ausführt. */
+function n4s_sec_hide_notices() {
+	if ( ! n4s_sec_opt()['nonotices'] ) {
+		return;
+	}
+	global $wp_filter;
+	foreach ( array( 'admin_notices', 'all_admin_notices', 'user_admin_notices', 'network_admin_notices' ) as $hook ) {
+		if ( empty( $wp_filter[ $hook ] ) || ! ( $wp_filter[ $hook ] instanceof WP_Hook ) ) {
+			continue;
+		}
+		foreach ( $wp_filter[ $hook ]->callbacks as $prio => $cbs ) {
+			foreach ( $cbs as $c ) {
+				$file = n4s_sec_callback_file( $c['function'] );
+				if ( '' === $file || n4s_sec_notice_keep_file( $file ) || apply_filters( 'n4s_sec_keep_notice', false, $c['function'], $hook ) ) {
+					continue; // nicht ermittelbar, von WordPress oder n4s: bleibt
+				}
+				$wp_filter[ $hook ]->remove_filter( $hook, $c['function'], $prio );
+			}
+		}
+	}
+}
+add_action( 'in_admin_header', 'n4s_sec_hide_notices', PHP_INT_MAX );
+
 function n4s_sec_np_menu() {
 	if ( n4s_sec_opt()['noposts'] ) {
 		remove_menu_page( 'edit.php' );
@@ -641,6 +707,7 @@ function n4s_sec_render() {
 				'headers'       => $cb( 'headers' ),
 				'hidever'       => $cb( 'hidever' ),
 				'noposts'       => $cb( 'noposts' ),
+				'nonotices'     => $cb( 'nonotices' ),
 			);
 			update_option( 'n4s_lla_settings', $new, false );
 			n4s_sec_opt( true );
@@ -725,5 +792,6 @@ function n4s_sec_render() {
 	$c( 'hidever', n4s_sec_t( 'WordPress-Version verbergen' ), n4s_sec_t( 'Entfernt den Generator-Tag und die Versionsnummer an Skript- und Style-Adressen.' ) );
 	echo '</table><h3>' . esc_html( n4s_sec_t( 'Funktionen' ) ) . '</h3><table class="form-table">';
 	$c( 'noposts', n4s_sec_t( 'Beiträge deaktivieren' ), n4s_sec_t( 'Blendet „Beiträge" im Admin aus (Menü, Admin-Leiste, Dashboard, Kategorien, Schlagwörter) und liefert Beiträge, Blog-Seite, Archive, Feeds und die REST-Beiträge für Besucher als 404. Vorhandene Beiträge bleiben in der Datenbank. Voraussetzung: Die Startseite ist eine statische Seite.' ) );
+	$c( 'nonotices', n4s_sec_t( 'Admin-Meldungen ausblenden' ), n4s_sec_t( 'Blendet die Meldungen von Plugins und Themes im Admin-Bereich für alle Benutzer aus (Hinweise, Werbung, Bewertungsbitten). Meldungen von WordPress selbst (Updates, Fehler, Einstellungen) und von n4s bleiben sichtbar. Meldungen, die ein Plugin direkt in seine eigene Seite schreibt, lassen sich so nicht ausblenden.' ) );
 	echo '</table><p><button class="button button-primary">' . esc_html( n4s_sec_t( 'Speichern' ) ) . '</button></p></form>';
 }
