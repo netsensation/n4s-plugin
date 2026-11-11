@@ -1,6 +1,6 @@
 # n4s Apps: Änderungsprotokoll
 
-Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.11.1.
+Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.11.2.
 
 | Datum | Version | Änderung |
 |---|---|---|
@@ -30,3 +30,4 @@ Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Di
 | 11.11.2026 | 2.10.1 | App-Katalog: Update-Prüfung und automatische Updates der Apps laufen stündlich statt zweimal täglich (bestehende Seiten werden beim nächsten Seitenaufruf umgestellt) |
 | 11.11.2026 | 2.11.0 | Neue Funktion „Eigenes Login-Design“ (Tab Funktionen, Standard aus): WordPress-Anmeldeseite mit dem Logo der Website (Customizer, Divi, Elementor oder Website-Icon, sonst Name) und den Farben des aktiven Themes (theme.json, Divi, Elementor, Astra, GeneratePress, Customizer); Logo verlinkt auf die Startseite; Anmeldung, Passwort vergessen und Anmeldeschutz unverändert |
 | 11.11.2026 | 2.11.1 | Eigenes Login-Design: Farben aus dem Theme Neve (aktive globale Palette, Button-Farbe); theme.json-Standardbutton von WordPress wird nicht mehr als Theme-Farbe übernommen |
+| 11.11.2026 | 2.11.2 | Eigenes Login-Design: Logo, das das Theme im Header zeigt, hat Vorrang (Neve, Divi, Avada, Enfold, Blocksy), danach WordPress-Logo (Customizer, Block-Themes), Elementor-Kit, Website-Icon |

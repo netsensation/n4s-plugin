@@ -242,25 +242,79 @@ function n4s_login_colors() {
 
 /* ------------------------------------------------------------------- Logo */
 
-/** Logo der Website: Customizer-Logo, Divi, Elementor-Kit, sonst Website-Icon; '' = Name als Text. */
-function n4s_login_logo() {
-	$url = '';
-	$id  = (int) get_theme_mod( 'custom_logo' );
-	if ( $id ) {
-		$src = wp_get_attachment_image_src( $id, 'full' );
-		$url = $src ? $src[0] : '';
+/** Bildadresse aus Anhang-ID oder Adresse ('' wenn unbekannt). */
+function n4s_login_img( $v ) {
+	if ( is_numeric( $v ) && (int) $v > 0 ) {
+		$src = wp_get_attachment_image_src( (int) $v, 'full' );
+		return $src ? (string) $src[0] : '';
 	}
-	if ( ! $url ) {
-		$divi = get_option( 'et_divi' );
-		if ( is_array( $divi ) && ! empty( $divi['divi_logo'] ) && is_string( $divi['divi_logo'] ) ) {
-			$url = $divi['divi_logo'];
+	if ( is_array( $v ) ) {
+		foreach ( array( 'url', 'id', 'desktop' ) as $k ) {
+			if ( ! empty( $v[ $k ] ) ) {
+				$u = n4s_login_img( 'id' === $k || 'desktop' === $k ? $v[ $k ] : (string) $v[ $k ] );
+				if ( $u ) {
+					return $u;
+				}
+			}
+		}
+		return '';
+	}
+	return ( is_string( $v ) && preg_match( '#^(https?:)?//|^/#', $v ) ) ? $v : '';
+}
+
+/**
+ * Logo der Website. Zuerst das Logo, das das aktive Theme im Header zeigt (Neve, Divi, Avada, Enfold, Blocksy),
+ * dann das WordPress-Logo (Customizer bzw. Block-Theme), Elementor-Kit, Website-Icon; '' = Name als Text.
+ */
+function n4s_login_logo() {
+	$cands = array();
+
+	// Neve: Logo-Komponente im Header (JSON {"light":ID,"dark":ID,"same":bool} oder ID).
+	$nv = get_theme_mod( 'logo_logo' );
+	if ( $nv ) {
+		$d = is_string( $nv ) ? json_decode( $nv, true ) : $nv;
+		if ( is_array( $d ) ) {
+			$dark    = ! empty( $d['dark'] ) && empty( $d['same'] ) && n4s_login_colors()['dark'];
+			$cands[] = $dark ? $d['dark'] : ( isset( $d['light'] ) ? $d['light'] : '' );
+		} else {
+			$cands[] = $nv;
 		}
 	}
-	if ( ! $url ) {
-		$kit = (int) get_option( 'elementor_active_kit' );
-		$ks  = $kit ? get_post_meta( $kit, '_elementor_page_settings', true ) : array();
-		if ( is_array( $ks ) && ! empty( $ks['site_logo']['url'] ) ) {
-			$url = $ks['site_logo']['url'];
+
+	// Divi.
+	$divi = get_option( 'et_divi' );
+	if ( is_array( $divi ) && ! empty( $divi['divi_logo'] ) ) {
+		$cands[] = $divi['divi_logo'];
+	}
+
+	// Avada.
+	$fu = get_option( 'fusion_options' );
+	if ( is_array( $fu ) && ! empty( $fu['logo'] ) ) {
+		$cands[] = $fu['logo'];
+	}
+
+	// Enfold.
+	$en = get_option( 'avia_options_enfold' );
+	if ( is_array( $en ) && ! empty( $en['avia']['logo'] ) ) {
+		$cands[] = $en['avia']['logo'];
+	}
+
+	// WordPress-Logo (Customizer; Blocksy speichert es je Gerät als Array) und Logo der Block-Themes.
+	$cands[] = get_theme_mod( 'custom_logo' );
+	$cands[] = get_option( 'site_logo' );
+
+	// Elementor-Kit.
+	$kit = (int) get_option( 'elementor_active_kit' );
+	$ks  = $kit ? get_post_meta( $kit, '_elementor_page_settings', true ) : array();
+	if ( is_array( $ks ) && ! empty( $ks['site_logo'] ) ) {
+		$cands[] = $ks['site_logo'];
+	}
+
+	$url = '';
+	foreach ( $cands as $c ) {
+		$url = n4s_login_img( $c );
+		if ( $url ) {
+			break;
 		}
 	}
 	if ( ! $url && function_exists( 'get_site_icon_url' ) ) {
