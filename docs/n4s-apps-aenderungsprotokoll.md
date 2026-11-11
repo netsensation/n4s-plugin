@@ -1,6 +1,6 @@
 # n4s Apps: Änderungsprotokoll
 
-Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.10.0.
+Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.10.1.
 
 | Datum | Version | Änderung |
 |---|---|---|
@@ -27,3 +27,4 @@ Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Di
 | 10.11.2026 | 2.8.4 | Liste der Apps: Quelle „n4s“ für Apps mit Update URI auf n4s.one (Katalog) statt „eigene“ |
 | 10.11.2026 | 2.9.0 | Sicherheit: Option „Admin-Meldungen ausblenden“ (Funktionen): entfernt die Meldungen von Plugins und Themes im Admin-Bereich für alle Benutzer; Meldungen von WordPress und n4s bleiben; Standard aus |
 | 10.11.2026 | 2.10.0 | Neue Funktionen (Tab Funktionen, Standard aus): „Seite duplizieren“ (Zeilenaktion in der Seitenliste, Kopie als Entwurf mit Metafeldern und Taxonomien) und „Mediendatei ersetzen“ (Aktion in der Mediathek, gleicher oder neuer Dateiname mit Anpassung der Verweise) |
+| 11.11.2026 | 2.10.1 | App-Katalog: Update-Prüfung und automatische Updates der Apps laufen stündlich statt zweimal täglich (bestehende Seiten werden beim nächsten Seitenaufruf umgestellt) |

@@ -40,7 +40,7 @@ wp-content/n4s-apps-data/apps/      EIGENE Apps, überstehen Plugin-Updates
   - Warnung (Häkchen nötig): abweichender Anzeigename oder Dateiname, gleiche oder ältere Version, Update ohne Version bei versionierter App.
   - Hinweis (kein Häkchen): ältere App ohne Version, dann wird nur der Name verglichen.
 - **Update-Buttons:** Der Button „Update" einer App erscheint erst, wenn eine Datei ausgewählt wurde (gilt auch für „App hochladen" und das Plugin-ZIP). Gibt es ein Update aus dem Katalog, steht bei genau dieser App „Update verfügbar: x.y.z" mit Button „Aktualisieren".
-- **App-Katalog (ab 2.8.0):** Abschnitt im Tab Apps. Apps mit Dateikopf `Update URI: https://n4s.one` werden alle 12 Stunden geprüft („Updates jetzt prüfen" sofort). Je App lässt sich „Automatisch" einschalten (Standard aus). „Katalog laden" zeigt die Apps der Quelle, „Installieren" holt eine neue App. Quelle (Standard https://n4s.one) und Zugangsschlüssel für private Apps stehen im selben Abschnitt. Installiert wird nur mit gültiger Signatur; ist in `includes/trust.php` kein Schlüssel hinterlegt, sind Katalog-Updates und -Installationen aus. Protokoll: `docs/n4s-katalog-protokoll.md`.
+- **App-Katalog (ab 2.8.0):** Abschnitt im Tab Apps. Apps mit Dateikopf `Update URI: https://n4s.one` werden stündlich geprüft („Updates jetzt prüfen" sofort). Je App lässt sich „Automatisch" einschalten (Standard aus). „Katalog laden" zeigt die Apps der Quelle, „Installieren" holt eine neue App. Quelle (Standard https://n4s.one) und Zugangsschlüssel für private Apps stehen im selben Abschnitt. Installiert wird nur mit gültiger Signatur; ist in `includes/trust.php` kein Schlüssel hinterlegt, sind Katalog-Updates und -Installationen aus. Protokoll: `docs/n4s-katalog-protokoll.md`.
 - **Tab-Erweiterung:** Apps können per Filter `n4s_apps_tabs` einen eigenen Tab und Menüpunkt einhängen (Schlüssel, `page`, `label`, `render`).
 - **Deaktivieren/Aktivieren:** für alle Apps, auch mitgelieferte
 - **Löschen:** erst möglich, wenn die App deaktiviert ist (Button ausgegraut, serverseitig erzwungen). Gilt auch für mitgelieferte Apps; die kommen nach einem Plugin-Update deaktiviert zurück.
@@ -116,7 +116,7 @@ Für JavaScript mit REST-Zugriff: Nonce per `wp_create_nonce( 'wp_rest' )` ins H
 
 ## 7. Updates des Plugins
 1. Version erhöhen (zwei Stellen in `n4s-apps.php`), Änderungsprotokoll ergänzen, auf `main` bringen. Der GitHub-Workflow „Release" baut `n4s-apps-plugin.zip` und legt die Release `v<Version>` an (Notiz aus dem Änderungsprotokoll).
-2. Die Seiten zeigen das Update innerhalb von 12 Stunden (WordPress-Prüfung, Release-Cache 6 Stunden) oder sofort nach „Jetzt prüfen" im Menü Apps; installiert wird über Plugins bzw. Dashboard → Aktualisierungen.
+2. Die Seiten zeigen das Update innerhalb einer Stunde (WordPress-Prüfung, Release-Cache 6 Stunden) oder sofort nach „Jetzt prüfen" im Menü Apps; installiert wird über Plugins bzw. Dashboard → Aktualisierungen.
 3. Alternativ weiterhin manuell: `n4s-apps-plugin.zip` (Ordner im ZIP bleibt `n4s-apps`, Version höher als die installierte) im Menü n4s Apps → „Manuell per ZIP" hochladen (oder über Plugins → Installieren → Hochladen).
 4. Eigene Apps bleiben erhalten, mitgelieferte Apps werden mit dem Plugin ersetzt.
 - Erstinstallation und Wechsel von Versionen unter 2.2.0 gehen nur über Plugins → Installieren → Hochladen.
@@ -138,7 +138,7 @@ Getestet am 09.11.2026 mit der Test-App `n4s-test` (1.0.0 → 1.0.1), bis zum Up
 1. App bauen (Abschnitt 4 und 5, Dateikopf mit `Update URI: https://n4s.one`), im Repository n4s-plugin-admin unter `apps/<slug>/app.php` und `app.json` ablegen, Version erhöhen, Protokollzeile ergänzen, Pull Request. **Protokoll (Pflicht):** `apps/<slug>/PROTOKOLL.md` mit der Tabelle `| Datum | Version | Änderung |`, neueste Version zuerst; bei jeder Versionserhöhung im selben Pull Request eine Zeile ergänzen (einfache Worte, darf ausführlicher sein als der öffentliche `changelog`); das Release-Werkzeug lehnt eine Version ohne Protokollzeile ab. `app.json`: `license` immer `MIT`; `description` (de und en) nur Funktionen für Benutzer, keine technischen Hintergründe; `changelog` (öffentlich auf der Katalogseite sichtbar) nur Änderungen, die Benutzer betreffen, ohne Technikbegriffe. Der Katalog übernimmt Beschreibung und Lizenz nur, solange sie leer sind (spätere Änderungen im Tab Admin unter „Texte bearbeiten“). Bei Pull Requests läuft nur die Syntaxprüfung, der Release-Job wird übersprungen.
 2. Nach dem Merge auf `main` signiert der Workflow (etwa 30 Sekunden) und legt die Release `app-<slug>-v<Version>` an. Eine geänderte Datei bei gleicher Version bricht den Workflow ab. Prüfen: Releases im Repository ansehen.
 3. n4s.one: Tab Admin → „Jetzt abgleichen“ (sonst stündlich) → Version „Freigeben“. Neue Apps sind zuerst privat, „Öffentlich schalten“ ist ein bewusster Klick.
-4. Seiten mit dem n4s Plugin: Tab Apps → „Updates jetzt prüfen“ (sonst alle 12 Stunden) → „Aktualisieren“, oder „Automatisch“ je App. Neue Apps: „Katalog laden“ → „Installieren“; private nur mit Zugangsschlüssel.
+4. Seiten mit dem n4s Plugin: Tab Apps → „Updates jetzt prüfen“ (sonst stündlich) → „Aktualisieren“, oder „Automatisch“ je App. Neue Apps: „Katalog laden“ → „Installieren“; private nur mit Zugangsschlüssel.
 
 **Fehlerbilder:**
 | Meldung oder Symptom | Ursache und Abhilfe |

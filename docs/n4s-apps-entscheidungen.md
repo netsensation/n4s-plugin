@@ -40,7 +40,7 @@ Stand: 09.11.2026 · Plugin-Version 2.8.3. Ergänzt die Arbeitsanweisung um das 
 - **Rechtstexte:** Impressum und Datenschutz sind um App-Katalog, Downloads, Zugangsschlüssel und den serverseitigen GitHub-Abgleich ergänzt (Haftung: eigene Verantwortung, ohne Gewähr, Haftung nur bei Vorsatz und grober Fahrlässigkeit, soweit gesetzlich zulässig). Eine rechtliche Prüfung steht aus.
 
 ## Offene Punkte
-- Live noch nicht geprüft: Auto-Update per Cron (alle 12 Stunden) und private Apps mit Zugangsschlüssel auf einer echten Seite.
+- Live noch nicht geprüft: Auto-Update per Cron (stündlich) und private Apps mit Zugangsschlüssel auf einer echten Seite.
 - Die Test-App `n4s-test` aus dem Katalog nehmen (privat schalten oder löschen), sobald echte Apps da sind.
 - Das GitHub-Token (Tab Admin) läuft ab: Ablaufdatum notieren, dann neues eintragen.
 - Option: GitHub-Webhook für sofortigen Abgleich statt stündlich.
