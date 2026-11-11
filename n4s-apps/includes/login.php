@@ -73,11 +73,31 @@ function n4s_login_on( $bg ) {
 
 /**
  * Farben des aktiven Themes: Hintergrund, Text und Hauptfarbe (Buttons, Links).
- * Quellen: theme.json/Website-Editor, Divi, Elementor-Kit, Astra, GeneratePress, Customizer.
+ * Quellen: Neve, theme.json/Website-Editor, Divi, Elementor-Kit, Astra, GeneratePress, Customizer.
  * Fehlende Werte: WordPress-Standard. Filter n4s_login_colors zum Überschreiben.
  */
 function n4s_login_colors() {
 	$c = array( 'bg' => '', 'text' => '', 'primary' => '' );
+
+	// Neve (globale Farbpalette im Customizer, aktive Palette, Button-Farbe).
+	$nv = get_theme_mod( 'neve_global_colors' );
+	if ( is_array( $nv ) && ! empty( $nv['palettes'] ) && is_array( $nv['palettes'] ) ) {
+		$act  = ( ! empty( $nv['activePalette'] ) && isset( $nv['palettes'][ $nv['activePalette'] ] ) ) ? $nv['activePalette'] : 'base';
+		$npal = isset( $nv['palettes'][ $act ]['colors'] ) && is_array( $nv['palettes'][ $act ]['colors'] ) ? $nv['palettes'][ $act ]['colors'] : array();
+		$nres = function ( $v ) use ( $npal ) {
+			if ( is_string( $v ) && preg_match( '/var\(\s*--([a-z0-9_-]+)/i', $v, $m ) ) {
+				$v = isset( $npal[ $m[1] ] ) ? $npal[ $m[1] ] : '';
+			}
+			return n4s_login_hex( $v );
+		};
+		$btn          = get_theme_mod( 'neve_button_appearance' );
+		$c['primary'] = is_array( $btn ) && ! empty( $btn['background'] ) ? $nres( $btn['background'] ) : '';
+		if ( ! $c['primary'] ) {
+			$c['primary'] = $nres( 'var(--nv-primary-accent)' );
+		}
+		$c['bg']   = $nres( 'var(--nv-site-bg)' );
+		$c['text'] = $nres( 'var(--nv-text-color)' );
+	}
 
 	// Block-Themes und Themes mit theme.json (Website-Editor, globale Stile).
 	$has_json = function_exists( 'wp_theme_has_theme_json' ) ? wp_theme_has_theme_json() : ( function_exists( 'wp_is_block_theme' ) && wp_is_block_theme() );
@@ -94,8 +114,12 @@ function n4s_login_colors() {
 			}
 		}
 		$s           = wp_get_global_styles();
-		$c['bg']     = n4s_login_resolve( isset( $s['color']['background'] ) ? $s['color']['background'] : '', $palette );
-		$c['text']   = n4s_login_resolve( isset( $s['color']['text'] ) ? $s['color']['text'] : '', $palette );
+		if ( ! $c['bg'] ) {
+			$c['bg'] = n4s_login_resolve( isset( $s['color']['background'] ) ? $s['color']['background'] : '', $palette );
+		}
+		if ( ! $c['text'] ) {
+			$c['text'] = n4s_login_resolve( isset( $s['color']['text'] ) ? $s['color']['text'] : '', $palette );
+		}
 		$candidates  = array(
 			isset( $s['elements']['button']['color']['background'] ) ? $s['elements']['button']['color']['background'] : '',
 			isset( $s['elements']['link']['color']['text'] ) ? $s['elements']['link']['color']['text'] : '',
@@ -103,10 +127,10 @@ function n4s_login_colors() {
 		foreach ( array( 'primary', 'accent', 'accent-1', 'vivid-primary', 'secondary', 'accent-2' ) as $slug ) {
 			$candidates[] = isset( $palette[ $slug ] ) ? $palette[ $slug ] : '';
 		}
-		foreach ( $candidates as $cand ) {
+		foreach ( $c['primary'] ? array() : $candidates as $cand ) {
 			$hex = n4s_login_resolve( $cand, $palette );
-			// Hauptfarbe soll sich vom Hintergrund abheben (sonst nächste Quelle).
-			if ( $hex && ( ! $c['bg'] || n4s_login_contrast( $hex, $c['bg'] ) >= 1.6 ) ) {
+			// Hauptfarbe soll sich vom Hintergrund abheben (sonst nächste Quelle); #32373c ist der WordPress-Standard-Button, keine Theme-Farbe.
+			if ( $hex && '#32373c' !== $hex && ( ! $c['bg'] || n4s_login_contrast( $hex, $c['bg'] ) >= 1.6 ) ) {
 				$c['primary'] = $hex;
 				break;
 			}
