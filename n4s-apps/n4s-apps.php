@@ -2,7 +2,7 @@
 /**
  * Plugin Name: n4s Apps
  * Description: n4s: Rahmen für eigene PHP-Apps und Sicherheit (Anmeldeschutz, Härtung), Funktionen einzeln schaltbar / Framework for custom PHP apps and security (login protection, hardening), features switchable. Shortcode [n4s_app name="..."].
- * Version: 2.10.1
+ * Version: 2.11.0
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: n4s
@@ -13,7 +13,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'N4S_APPS_VERSION', '2.10.1' );
+define( 'N4S_APPS_VERSION', '2.11.0' );
 define( 'N4S_APPS_FILE', __FILE__ );
 define( 'N4S_APPS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'N4S_APPS_URL', plugin_dir_url( __FILE__ ) );
@@ -29,7 +29,7 @@ function n4s_t( $de, $en ) {
 }
 
 /**
- * Funktionen des Plugins (Tab Funktionen): 'apps', 'security', 'dup' (Seite duplizieren) und 'mediareplace' (Mediendatei ersetzen) einzeln ein-/ausschaltbar.
+ * Funktionen des Plugins (Tab Funktionen): 'apps', 'security', 'dup' (Seite duplizieren) und 'mediareplace' (Mediendatei ersetzen) und 'login' (eigenes Login-Design) einzeln ein-/ausschaltbar.
  * Standard: Apps an. Sicherheit an, wenn die Einstellungen der früheren Security-App schon da sind
  * (Datei security.php aktiv oder Option n4s_lla_settings), sonst aus, damit ein Update nichts Neues aktiviert.
  */
@@ -40,7 +40,7 @@ function n4s_features() {
 			|| false !== get_option( 'n4s_lla_settings', false );
 		$v   = array( 'apps' => 1, 'security' => $old ? 1 : 0 );
 	}
-	return wp_parse_args( $v, array( 'apps' => 1, 'security' => 0, 'dup' => 0, 'mediareplace' => 0 ) );
+	return wp_parse_args( $v, array( 'apps' => 1, 'security' => 0, 'dup' => 0, 'mediareplace' => 0, 'login' => 0 ) );
 }
 
 function n4s_feature_on( $key ) {
@@ -194,6 +194,11 @@ require_once N4S_APPS_DIR . 'includes/catalog.php';
 /** Sicherheit (Anmeldeschutz, Härtung): nur, wenn unter n4s → Funktionen eingeschaltet. */
 if ( n4s_feature_on( 'security' ) ) {
 	require_once N4S_APPS_DIR . 'includes/security.php';
+}
+
+/** Eigenes Login-Design (Logo und Farben des Themes auf der Anmeldeseite): nur, wenn eingeschaltet. */
+if ( n4s_feature_on( 'login' ) ) {
+	require_once N4S_APPS_DIR . 'includes/login.php';
 }
 
 if ( is_admin() ) {

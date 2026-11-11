@@ -1,6 +1,6 @@
 # n4s Apps: Änderungsprotokoll
 
-Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.10.1.
+Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.11.0.
 
 | Datum | Version | Änderung |
 |---|---|---|
@@ -28,3 +28,4 @@ Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Di
 | 10.11.2026 | 2.9.0 | Sicherheit: Option „Admin-Meldungen ausblenden“ (Funktionen): entfernt die Meldungen von Plugins und Themes im Admin-Bereich für alle Benutzer; Meldungen von WordPress und n4s bleiben; Standard aus |
 | 10.11.2026 | 2.10.0 | Neue Funktionen (Tab Funktionen, Standard aus): „Seite duplizieren“ (Zeilenaktion in der Seitenliste, Kopie als Entwurf mit Metafeldern und Taxonomien) und „Mediendatei ersetzen“ (Aktion in der Mediathek, gleicher oder neuer Dateiname mit Anpassung der Verweise) |
 | 11.11.2026 | 2.10.1 | App-Katalog: Update-Prüfung und automatische Updates der Apps laufen stündlich statt zweimal täglich (bestehende Seiten werden beim nächsten Seitenaufruf umgestellt) |
+| 11.11.2026 | 2.11.0 | Neue Funktion „Eigenes Login-Design“ (Tab Funktionen, Standard aus): WordPress-Anmeldeseite mit dem Logo der Website (Customizer, Divi, Elementor oder Website-Icon, sonst Name) und den Farben des aktiven Themes (theme.json, Divi, Elementor, Astra, GeneratePress, Customizer); Logo verlinkt auf die Startseite; Anmeldung, Passwort vergessen und Anmeldeschutz unverändert |
