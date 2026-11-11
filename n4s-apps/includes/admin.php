@@ -417,7 +417,7 @@ add_action(
 
 /* ---------------------------------------------------------------- App-Katalog */
 
-/** Quelle und Zugangsschlüssel des Katalogs speichern. */
+/** Zugangsschlüssel des Katalogs speichern. */
 add_action(
 	'admin_post_n4s_catalog_save',
 	function () {
@@ -425,12 +425,8 @@ add_action(
 			n4s_apps_deny();
 		}
 		n4s_apps_verify( 'n4s_catalog_save' );
-		$src = n4s_apps_base( isset( $_POST['source'] ) ? sanitize_text_field( wp_unslash( $_POST['source'] ) ) : '' );
-		if ( '' === $src ) {
-			n4s_apps_notice( 'error', n4s_t( 'Ungültige Quelle. Erlaubt ist eine https-Adresse, z. B. https://n4s.one.', 'Invalid source. An https address is required, e.g. https://n4s.one.' ) );
-			n4s_apps_back();
-		}
 		$old = get_option( 'n4s_apps_catalog', array() );
+		$src = isset( $old['source'] ) ? (string) $old['source'] : ''; // Die Quelle ist nicht mehr einstellbar (Standard https://n4s.one, per Konstante änderbar).
 		$key = isset( $old['key'] ) ? $old['key'] : '';
 		if ( ! empty( $_POST['key_clear'] ) ) {
 			$key = '';
@@ -798,8 +794,7 @@ function n4s_apps_catalog_section( $can, $sigok ) {
 	}
 	if ( current_user_can( 'manage_options' ) ) {
 		n4s_apps_form_head( 'n4s_catalog_save', false, 'display:block;margin-bottom:8px' );
-		echo '<p><label>' . esc_html( n4s_t( 'Quelle: ', 'Source: ' ) ) . '<input type="url" name="source" value="' . esc_attr( $cfg['source'] ) . '" class="regular-text"></label> ';
-		echo '<label>' . esc_html( n4s_t( 'Zugangsschlüssel (für private Apps): ', 'Access key (for private apps): ' ) ) . '<input type="password" name="key" autocomplete="off" class="regular-text" placeholder="' . esc_attr( $has ? n4s_t( 'gespeichert, leer lassen zum Behalten', 'saved, leave empty to keep' ) : '' ) . '"></label> ';
+		echo '<p><label>' . esc_html( n4s_t( 'Zugangsschlüssel (für private Apps): ', 'Access key (for private apps): ' ) ) . '<input type="password" name="key" autocomplete="off" class="regular-text" placeholder="' . esc_attr( $has ? n4s_t( 'gespeichert, leer lassen zum Behalten', 'saved, leave empty to keep' ) : '' ) . '"></label> ';
 		if ( $has ) {
 			echo '<label><input type="checkbox" name="key_clear" value="1"> ' . esc_html( n4s_t( 'Schlüssel entfernen', 'Remove key' ) ) . '</label> ';
 		}
