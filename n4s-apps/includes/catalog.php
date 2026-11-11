@@ -216,7 +216,7 @@ function n4s_apps_update_sources() {
 }
 
 /**
- * Update-Prüfung (einen Tag gecacht, Cron erneuert alle 12 Stunden). Ergebnis: array( checked, updates => slug => Eintrag, errors => base => Meldung ).
+ * Update-Prüfung (einen Tag gecacht, Cron erneuert stündlich). Ergebnis: array( checked, updates => slug => Eintrag, errors => base => Meldung ).
  * $cached_only: nie eine Verbindung aufbauen (für die Admin-Seite), ohne Cache leeres Ergebnis.
  */
 function n4s_apps_updates( $force = false, $cached_only = false ) {
@@ -365,8 +365,13 @@ function n4s_apps_catalog_apply( $e, $mode ) {
 add_action(
 	'init',
 	function () {
-		if ( ! wp_next_scheduled( 'n4s_apps_cron' ) ) {
-			wp_schedule_event( time() + HOUR_IN_SECONDS, 'twicedaily', 'n4s_apps_cron' );
+		$ev = wp_get_scheduled_event( 'n4s_apps_cron' );
+		if ( $ev && 'hourly' !== $ev->schedule ) { // bis 2.10.0: zweimal täglich, jetzt stündlich.
+			wp_clear_scheduled_hook( 'n4s_apps_cron' );
+			$ev = false;
+		}
+		if ( ! $ev ) {
+			wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', 'n4s_apps_cron' );
 		}
 	}
 );
@@ -378,7 +383,7 @@ register_deactivation_hook(
 	}
 );
 
-/** Zweimal täglich: Updates prüfen und Apps mit eingeschalteter Automatik aktualisieren. Ohne Apps mit Update URI passiert nichts. */
+/** Stündlich: Updates prüfen und Apps mit eingeschalteter Automatik aktualisieren. Ohne Apps mit Update URI passiert nichts. */
 function n4s_apps_cron_run() {
 	if ( ! n4s_feature_on( 'apps' ) || ! n4s_apps_update_sources() ) {
 		return;

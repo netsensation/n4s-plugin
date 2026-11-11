@@ -785,8 +785,8 @@ function n4s_apps_catalog_section( $can, $sigok ) {
 	$upd = n4s_apps_updates( false, true );
 	echo '<h2>' . esc_html( n4s_t( 'App-Katalog', 'App catalog' ) ) . '</h2>';
 	echo '<p>' . esc_html( n4s_t(
-		'Apps mit dem Dateikopf „Update URI:“ werden alle 12 Stunden beim Katalog auf neue Versionen geprüft (nur Name und Version der App werden gesendet). Der Katalog wird nur auf Klick geladen. Dateien werden nur installiert, wenn ihre Signatur stimmt.',
-		'Apps with the file header "Update URI:" are checked against the catalog for new versions every 12 hours (only app name and version are sent). The catalog is only loaded on click. Files are only installed if their signature is valid.'
+		'Apps mit dem Dateikopf „Update URI:“ werden stündlich beim Katalog auf neue Versionen geprüft (nur Name und Version der App werden gesendet). Der Katalog wird nur auf Klick geladen. Dateien werden nur installiert, wenn ihre Signatur stimmt.',
+		'Apps with the file header "Update URI:" are checked against the catalog for new versions every hour (only app name and version are sent). The catalog is only loaded on click. Files are only installed if their signature is valid.'
 	) ) . '</p>';
 	if ( ! $sigok ) {
 		echo '<div class="notice notice-warning inline"><p>' . esc_html( n4s_t( 'Es ist kein Signaturschlüssel hinterlegt (includes/trust.php). Updates und Installationen aus dem Katalog sind deaktiviert.', 'No signing key is configured (includes/trust.php). Updates and installations from the catalog are disabled.' ) ) . '</p></div>';
