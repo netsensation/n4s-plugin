@@ -407,6 +407,7 @@ add_action(
 				'security' => empty( $_POST['security'] ) ? 0 : 1,
 				'dup'      => empty( $_POST['dup'] ) ? 0 : 1,
 				'mediareplace' => empty( $_POST['mediareplace'] ) ? 0 : 1,
+				'login'        => empty( $_POST['login'] ) ? 0 : 1,
 			)
 		);
 		n4s_apps_notice( 'success', n4s_t( 'Funktionen gespeichert.', 'Features saved.' ) );
@@ -722,6 +723,10 @@ function n4s_apps_tab_features() {
 		'mediareplace' => array(
 			n4s_t( 'Mediendatei ersetzen', 'Replace media file' ),
 			n4s_t( 'Aktion „Datei ersetzen“ in der Mediathek: Datei tauschen und dabei Name und Adresse behalten, oder mit neuem Dateinamen ersetzen (Verweise in Seiteninhalten werden angepasst).', 'Action "Replace file" in the media library: swap the file and keep name and address, or replace it with a new filename (references in page content are updated).' ),
+		),
+		'login'        => array(
+			n4s_t( 'Eigenes Login-Design', 'Custom login design' ),
+			n4s_t( 'Ersetzt das Aussehen der WordPress-Anmeldung: Logo der Website statt WordPress-Logo, Farben des aktiven Themes (Hintergrund, Text, Buttons und Links), Logo verlinkt auf die Startseite. Anmeldung, Passwort vergessen und Anmeldeschutz funktionieren unverändert.', 'Replaces the look of the WordPress login: the website logo instead of the WordPress logo, colours of the active theme (background, text, buttons and links), logo links to the home page. Login, lost password and login protection work as before.' ),
 		),
 	);
 	foreach ( $rows as $k => $r ) {
