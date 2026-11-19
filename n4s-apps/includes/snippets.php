@@ -19,13 +19,15 @@ function n4s_snippets_defs() {
 		'login'  => array(
 			'title'     => n4s_t( 'Anmeldung', 'Login' ),
 			'desc'      => n4s_t(
-				'Anmeldeformular (Benutzername, Passwort, „Angemeldet bleiben“) direkt in der Seite. Nach der Anmeldung geht es auf derselben Seite weiter, bei falschen Daten erscheint ein Hinweis über dem Formular. Ist der Besucher schon angemeldet, steht dort „Angemeldet als …“ mit Abmelden-Link. Die Darstellung übernimmt das Theme.',
-				'Login form (username, password, "Remember me") right in the page. After logging in the visitor stays on the same page, wrong credentials show a notice above the form. If the visitor is already logged in, "Logged in as …" with a log-out link is shown. The theme provides the design.'
+				'Ein Button „Anmelden“; erst nach dem Klick klappt die schmale, zentrierte Anmeldemaske (Benutzername, Passwort, „Angemeldet bleiben“) auf. Optional ist die Maske sofort sichtbar. Nach der Anmeldung geht es auf derselben Seite weiter, bei falschen Daten erscheint ein Hinweis (die Maske bleibt offen). Ist der Besucher schon angemeldet, steht dort „Angemeldet als …“ mit Abmelden-Link. Die Darstellung übernimmt das Theme.',
+				'A "Log in" button; only after clicking it the narrow, centered login form (username, password, "Remember me") opens. Optionally the form is visible right away. After logging in the visitor stays on the same page, wrong credentials show a notice (the form stays open). If the visitor is already logged in, "Logged in as …" with a log-out link is shown. The theme provides the design.'
 			),
 			'hint'      => '',
 			'shortcode' => '[n4s_login]',
 			'attrs'     => array(
-				'titel="Anmelden"'        => n4s_t( 'Überschrift über dem Formular (optional)', 'Heading above the form (optional)' ),
+				'anzeige="formular"'      => n4s_t( 'Maske sofort anzeigen statt nur den Button (Standard: Button)', 'Show the form right away instead of only the button (default: button)' ),
+				'text="Anmelden"'         => n4s_t( 'Beschriftung des Buttons', 'Button label' ),
+				'titel="Anmelden"'        => n4s_t( 'Überschrift über der Maske (nur bei anzeige="formular")', 'Heading above the form (only with anzeige="formular")' ),
 				'weiterleitung="/seite/"' => n4s_t( 'Seite nach der Anmeldung (Standard: dieselbe Seite)', 'Page after login (default: same page)' ),
 				'angemeldet="ausblenden"' => n4s_t( 'Nichts anzeigen, wenn schon angemeldet', 'Show nothing if already logged in' ),
 			),
@@ -124,13 +126,15 @@ function n4s_snippets_style() {
 	$c    = n4s_login_colors();
 	$ol   = $c['outside'];
 	$css  = '.n4s-btn{--n4s-bg:var(--primarybtnbg,' . $c['primary'] . ');--n4s-fg:var(--primarybtncolor,' . $c['on'] . ');--n4s-r:var(--primarybtnborderradius,.4em);display:inline-block;box-sizing:border-box;margin:0 .6em .6em 0;padding:.65em 1.4em;border:2px solid var(--n4s-bg);border-radius:var(--n4s-r);background:var(--n4s-bg);color:var(--n4s-fg);font:inherit;font-weight:600;line-height:1.25;text-align:center;text-decoration:none;cursor:pointer;vertical-align:top;transition:filter .15s}'
-		. '.n4s-btn:hover,.n4s-btn:focus{filter:brightness(.92);color:var(--n4s-fg);text-decoration:none}'
+		. '.n4s-btn:hover,.n4s-btn:focus-visible{filter:brightness(.92);color:var(--n4s-fg);text-decoration:none}'
 		. '.n4s-btn-outline{--n4s-bg:var(--primarybtnbg,' . $ol . ');--n4s-fg:var(--primarybtncolor,' . n4s_login_on( $ol ) . ');background:transparent;color:var(--n4s-bg)}'
-		. '.n4s-btn-outline:hover,.n4s-btn-outline:focus{background:var(--n4s-bg);color:var(--n4s-fg);filter:none}'
+		. '.n4s-btn-outline:hover,.n4s-btn-outline:focus-visible{background:var(--n4s-bg);color:var(--n4s-fg);filter:none}'
 		. '.n4s-menu{display:flex;flex-wrap:wrap;align-items:center;gap:.4em 1.2em;margin-top:0;margin-bottom:.6em}.n4s-menu .n4s-btn{margin:0}.n4s-menu-buttons,.n4s-menu-umrandet{gap:.6em}'
-		. '.n4s-login{--n4s-r:var(--primarybtnborderradius,.4em)}.n4s-login p{margin:0 0 12px}.n4s-login label{display:block;margin-bottom:4px}'
-		. '.n4s-login input.input{width:100%;box-sizing:border-box;padding:.65em 1em;border:1px solid ' . $c['border'] . ';border-radius:var(--n4s-r);background:' . $c['field'] . ';color:' . $c['text'] . ';font:inherit}'
-		. '.n4s-login .login-remember label{display:inline}.n4s-login .login-submit .button{margin:0}.n4s-login-error{color:#b32d2e}';
+		. '.n4s-login{--n4s-r:var(--primarybtnborderradius,.4em);max-width:22em;margin-left:auto;margin-right:auto;text-align:center}.n4s-login-title{margin:0 0 .6em}'
+		. '.n4s-login summary.n4s-btn{display:inline-block;margin:0;list-style:none}.n4s-login summary.n4s-btn::-webkit-details-marker{display:none}.n4s-login summary.n4s-btn::marker{content:""}.n4s-login-box{margin-top:1em}'
+		. '.n4s-login p{margin:0 0 12px}.n4s-login .login-username label,.n4s-login .login-password label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}'
+		. '.n4s-login input.input{width:100%;box-sizing:border-box;padding:.75em 1.2em;border:1px solid ' . $c['border'] . ';border-radius:var(--n4s-r);background:' . $c['field'] . ';color:' . $c['text'] . ';font:inherit;text-align:center}'
+		. '.n4s-login .login-remember{font-size:.9em;opacity:.8;text-align:center}.n4s-login .login-remember label{display:inline-flex;align-items:center;justify-content:center;gap:.5em;margin:0;cursor:pointer}.n4s-login .login-submit .button{display:block;width:100%;margin:0;padding:.85em 1.4em}.n4s-login-error{color:#b32d2e}';
 	return '<style>' . $css . '</style>';
 }
 
@@ -141,14 +145,14 @@ function n4s_snippets_sc_login( $atts ) {
 	if ( ! n4s_snippet_on( 'login' ) ) {
 		return '';
 	}
-	$a   = shortcode_atts( array( 'titel' => '', 'weiterleitung' => '', 'angemeldet' => 'hinweis' ), $atts, 'n4s_login' );
+	$a   = shortcode_atts( array( 'titel' => '', 'weiterleitung' => '', 'angemeldet' => 'hinweis', 'anzeige' => 'button', 'text' => '' ), $atts, 'n4s_login' );
 	$cur = n4s_snippets_current_url();
 	if ( is_user_logged_in() ) {
 		if ( 'ausblenden' === strtolower( $a['angemeldet'] ) ) {
 			return '';
 		}
 		$u = wp_get_current_user();
-		return '<p class="n4s-snippet n4s-login-info">' . esc_html( sprintf( n4s_t( 'Angemeldet als %s.', 'Logged in as %s.' ), $u->display_name ) ) . ' <a href="' . esc_url( wp_logout_url( $cur ) ) . '">' . esc_html( n4s_t( 'Abmelden', 'Log out' ) ) . '</a></p>';
+		return n4s_snippets_style() . '<p class="n4s-snippet n4s-login n4s-login-info">' . esc_html( sprintf( n4s_t( 'Angemeldet als %s.', 'Logged in as %s.' ), $u->display_name ) ) . ' <a href="' . esc_url( wp_logout_url( $cur ) ) . '">' . esc_html( n4s_t( 'Abmelden', 'Log out' ) ) . '</a></p>';
 	}
 	static $n = 0;
 	++$n;
@@ -170,17 +174,24 @@ function n4s_snippets_sc_login( $atts ) {
 		)
 	);
 	// Pflichtfelder, Button im Design der Snippets und Rückkehradresse für Fehlermeldungen.
+	$form = str_replace( 'type="text" name="log"', 'type="text" name="log" placeholder="' . esc_attr( n4s_t( 'Benutzername oder E-Mail-Adresse', 'Username or email address' ) ) . '"', $form );
+	$form = str_replace( 'type="password" name="pwd"', 'type="password" name="pwd" placeholder="' . esc_attr( n4s_t( 'Passwort', 'Password' ) ) . '"', $form );
 	$form = preg_replace( '/<input type="(text|password)" name="(log|pwd)"/', '<input type="$1" name="$2" required', $form );
 	$form = str_replace( 'class="button button-primary"', 'class="button button-primary n4s-btn"', $form );
 	$form = str_replace( '</form>', '<input type="hidden" name="n4s_login_ref" value="' . esc_attr( $cur ) . '"></form>', $form );
+	$fail = isset( $_GET['n4s_login'] ) && 'fehler' === sanitize_key( wp_unslash( $_GET['n4s_login'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nur Anzeige einer Meldung.
+	$err  = $fail ? '<p class="n4s-login-error" role="alert">' . esc_html( n4s_t( 'Anmeldung fehlgeschlagen. Bitte Benutzername und Passwort prüfen.', 'Login failed. Please check your username and password.' ) ) . '</p>' : '';
 	$out  = n4s_snippets_style() . '<div class="n4s-snippet n4s-login">';
-	if ( '' !== trim( $a['titel'] ) ) {
-		$out .= '<h3 class="n4s-login-title">' . esc_html( $a['titel'] ) . '</h3>';
+	if ( 'formular' === strtolower( trim( $a['anzeige'] ) ) ) {
+		// Formular sofort sichtbar.
+		if ( '' !== trim( $a['titel'] ) ) {
+			$out .= '<h3 class="n4s-login-title">' . esc_html( $a['titel'] ) . '</h3>';
+		}
+		return $out . $err . $form . '</div>';
 	}
-	if ( isset( $_GET['n4s_login'] ) && 'fehler' === sanitize_key( wp_unslash( $_GET['n4s_login'] ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nur Anzeige einer Meldung.
-		$out .= '<p class="n4s-login-error" role="alert">' . esc_html( n4s_t( 'Anmeldung fehlgeschlagen. Bitte Benutzername und Passwort prüfen.', 'Login failed. Please check your username and password.' ) ) . '</p>';
-	}
-	return $out . $form . '</div>';
+	// Standard: nur ein Button, die Anmeldemaske klappt nach dem Klick auf (ohne JavaScript, bei Fehler offen).
+	$label = '' !== trim( $a['text'] ) ? $a['text'] : n4s_t( 'Anmelden', 'Log in' );
+	return $out . '<details' . ( $fail ? ' open' : '' ) . '><summary class="n4s-btn n4s-btn-outline">' . esc_html( $label ) . '</summary><div class="n4s-login-box">' . $err . $form . '</div></details></div>';
 }
 
 /** Fehlgeschlagene Anmeldung aus dem Snippet: zurück auf die Seite mit Hinweis statt auf die Anmeldeseite. */
