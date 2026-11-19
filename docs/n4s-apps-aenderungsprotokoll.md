@@ -1,6 +1,6 @@
 # n4s Apps: Änderungsprotokoll
 
-Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.12.0.
+Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.12.1.
 
 | Datum | Version | Änderung |
 |---|---|---|
@@ -33,3 +33,4 @@ Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Di
 | 11.11.2026 | 2.11.2 | Eigenes Login-Design: Logo, das das Theme im Header zeigt, hat Vorrang (Neve, Divi, Avada, Enfold, Blocksy), danach WordPress-Logo (Customizer, Block-Themes), Elementor-Kit, Website-Icon |
 | 11.11.2026 | 2.11.3 | App-Katalog: Das Feld „Quelle“ entfällt im Tab Apps (Standard https://n4s.one, nur noch per Konstante änderbar); der Zugangsschlüssel bleibt |
 | 19.11.2026 | 2.12.0 | Neuer Tab „Snippets“: kleine Funktionen per Shortcode, einzeln aktivierbar (Shortcode erst nach Aktivierung sichtbar, sonst nur Beschreibung), Darstellung immer durch das Theme. Snippets: `[n4s_login]` (Anmeldeformular in der Seite, bleibt auf der Seite, Fehlerhinweis), `[n4s_link]` und `[n4s_button]` (konfigurierbarer Link/Button, nur für angemeldete Besucher; Einstellhilfe setzt den Shortcode zusammen). App-Updates: Nach einem Update bleiben die übrigen verfügbaren Updates sichtbar (die Prüfung wurde bisher komplett verworfen); neue Schaltfläche „Alle aktualisieren“ |
+| 19.11.2026 | 2.12.1 | Snippets: Buttons haben jetzt ein eigenes Design mit den Farben und der Rundung des Themes (gefüllt und umrandet; bisher blieb es ohne Theme-Button-Styles reiner Text), stehen nebeneinander; neues Snippet Menü (`[n4s_menue]`: Reihe aus Links oder Buttons, nur für Angemeldete, Einstellhilfe mit Einträgen); Kopieren-Schaltfläche für jeden Shortcode; Kurzhinweis je Eintrag; Einstellungsbereich in voller Breite; Anmeldeformular mit Feldern und Button im Theme-Design; Theme-Farbfunktionen in `includes/colors.php` (gemeinsam mit dem Login-Design) |
