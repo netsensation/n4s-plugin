@@ -108,6 +108,7 @@ add_action(
 		if ( n4s_feature_on( 'security' ) ) {
 			add_submenu_page( 'n4s', 'n4s – ' . n4s_t( 'Sicherheit', 'Security' ), n4s_t( 'Sicherheit', 'Security' ), 'manage_options', 'n4s-security', function () { n4s_apps_shell( 'security' ); } );
 		}
+		add_submenu_page( 'n4s', 'n4s – Snippets', 'Snippets', 'manage_options', 'n4s-snippets', function () { n4s_apps_shell( 'snippets' ); } );
 		foreach ( n4s_apps_extra_tabs() as $k => $t ) {
 			add_submenu_page( 'n4s', 'n4s – ' . $t['label'], $t['label'], 'manage_options', $t['page'], function () use ( $k ) { n4s_apps_shell( $k ); } );
 		}
@@ -122,7 +123,7 @@ function n4s_apps_extra_tabs() {
 	$out = array();
 	foreach ( (array) apply_filters( 'n4s_apps_tabs', array() ) as $k => $t ) {
 		$k = sanitize_key( $k );
-		if ( $k && ! in_array( $k, array( 'features', 'apps', 'security' ), true ) && is_array( $t ) && ! empty( $t['page'] ) && ! empty( $t['label'] ) && ! empty( $t['render'] ) && is_callable( $t['render'] ) ) {
+		if ( $k && ! in_array( $k, array( 'features', 'apps', 'security', 'snippets' ), true ) && is_array( $t ) && ! empty( $t['page'] ) && ! empty( $t['label'] ) && ! empty( $t['render'] ) && is_callable( $t['render'] ) ) {
 			$out[ $k ] = array(
 				'page'   => sanitize_key( $t['page'] ),
 				'label'  => (string) $t['label'],
@@ -530,6 +531,36 @@ add_action(
 	}
 );
 
+/** Alle verfügbaren App-Updates installieren. */
+add_action(
+	'admin_post_n4s_app_catalog_update_all',
+	function () {
+		if ( ! n4s_apps_can_files() ) {
+			n4s_apps_deny();
+		}
+		n4s_apps_verify( 'n4s_app_catalog_update_all' );
+		if ( ! n4s_apps_pending_updates( false, true ) ) {
+			n4s_apps_notice( 'error', n4s_t( 'Kein Update bekannt. Bitte „Updates jetzt prüfen“ ausführen.', 'No update known. Please run "Check for updates".' ) );
+			n4s_apps_back();
+		}
+		$r    = n4s_apps_update_all();
+		$done = array();
+		foreach ( $r['ok'] as $slug => $v ) {
+			$done[] = $slug . ' (' . $v . ')';
+		}
+		$bad = array();
+		foreach ( $r['fail'] as $slug => $m ) {
+			$bad[] = $slug . ': ' . $m;
+		}
+		if ( $bad ) {
+			n4s_apps_notice( 'error', ( $done ? n4s_t( 'Aktualisiert: ', 'Updated: ' ) . implode( ', ', $done ) . ' · ' : '' ) . n4s_t( 'Fehlgeschlagen: ', 'Failed: ' ) . implode( ' · ', $bad ) );
+		} else {
+			n4s_apps_notice( 'success', sprintf( n4s_t( '%d Apps aktualisiert: ', '%d apps updated: ' ), count( $done ) ) . implode( ', ', $done ) );
+		}
+		n4s_apps_back();
+	}
+);
+
 /** Automatische Updates einer App ein-/ausschalten. */
 add_action(
 	'admin_post_n4s_app_autoupdate',
@@ -664,7 +695,8 @@ function n4s_apps_shell( $tab ) {
 	if ( n4s_feature_on( 'security' ) ) {
 		$tabs['security'] = array( 'n4s-security', n4s_t( 'Sicherheit', 'Security' ) );
 	}
-	$extra = n4s_apps_extra_tabs();
+	$tabs['snippets'] = array( 'n4s-snippets', 'Snippets' );
+	$extra            = n4s_apps_extra_tabs();
 	foreach ( $extra as $k => $t ) {
 		$tabs[ $k ] = array( $t['page'], $t['label'] );
 	}
@@ -688,6 +720,8 @@ function n4s_apps_shell( $tab ) {
 		n4s_apps_tab_apps();
 	} elseif ( 'security' === $tab && isset( $tabs['security'] ) && function_exists( 'n4s_sec_render' ) ) {
 		n4s_sec_render();
+	} elseif ( 'snippets' === $tab ) {
+		n4s_snippets_tab();
 	} elseif ( isset( $extra[ $tab ] ) ) {
 		call_user_func( $extra[ $tab ]['render'] );
 	} else {
@@ -854,6 +888,12 @@ function n4s_apps_tab_apps() {
 
 	/* Liste */
 	echo '<h2>' . esc_html( n4s_t( 'Apps', 'Apps' ) ) . '</h2>';
+	$all_pending = n4s_apps_update_sources() ? n4s_apps_pending_updates( false, true ) : array();
+	if ( $all_pending && n4s_apps_can_files() ) {
+		echo '<div style="margin:0 0 10px;padding:8px 12px;background:#f0f6fc;border-left:3px solid #2271b1;display:flex;gap:12px;align-items:center;flex-wrap:wrap"><strong>' . esc_html( sprintf( n4s_t( '%d App-Update(s) verfügbar', '%d app update(s) available' ), count( $all_pending ) ) ) . '</strong>';
+		n4s_apps_post_form( 'n4s_app_catalog_update_all', array(), n4s_t( 'Alle aktualisieren', 'Update all' ), 'button button-primary', n4s_t( 'Alle verfügbaren App-Updates jetzt installieren?', 'Install all available app updates now?' ), ! n4s_apps_trusted_keys(), n4s_apps_trusted_keys() ? '' : n4s_t( 'Kein Signaturschlüssel hinterlegt.', 'No signing key configured.' ) );
+		echo '</div>';
+	}
 	echo '<table class="widefat striped"><thead><tr>';
 	foreach ( array(
 		n4s_t( 'App', 'App' ), 'Shortcode', n4s_t( 'Version', 'Version' ), n4s_t( 'Datei', 'File' ), n4s_t( 'Quelle', 'Source' ),

@@ -356,8 +356,29 @@ function n4s_apps_catalog_apply( $e, $mode ) {
 	if ( false === file_put_contents( $path, $code, LOCK_EX ) ) {
 		return new WP_Error( 'n4s_catalog', n4s_t( 'Die Datei konnte nicht gespeichert werden.', 'The file could not be saved.' ) );
 	}
-	delete_transient( 'n4s_apps_updates' );
+	// Nur den erledigten Eintrag aus der gemerkten Update-Prüfung nehmen, die übrigen Updates bleiben sichtbar.
+	$u = get_transient( 'n4s_apps_updates' );
+	if ( is_array( $u ) && isset( $u['updates'][ $slug ] ) ) {
+		unset( $u['updates'][ $slug ] );
+		set_transient( 'n4s_apps_updates', $u, DAY_IN_SECONDS );
+	}
 	return array( 'name' => $name, 'version' => $e['version'] );
+}
+
+/**
+ * Alle bekannten App-Updates installieren (je App wie das einzelne Update). Gibt array( ok => slug => Version, fail => slug => Meldung ) zurück.
+ */
+function n4s_apps_update_all() {
+	$res = array( 'ok' => array(), 'fail' => array() );
+	foreach ( n4s_apps_pending_updates( false, true ) as $slug => $e ) {
+		$r = n4s_apps_catalog_apply( $e, 'update' );
+		if ( is_wp_error( $r ) ) {
+			$res['fail'][ $slug ] = $r->get_error_message();
+		} else {
+			$res['ok'][ $slug ] = $r['version'];
+		}
+	}
+	return $res;
 }
 
 /* ---------------------------------------------------------- Automatik (Cron) */
