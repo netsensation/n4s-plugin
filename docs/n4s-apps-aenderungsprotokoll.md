@@ -1,6 +1,6 @@
 # n4s Apps: Änderungsprotokoll
 
-Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.11.3.
+Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.12.0.
 
 | Datum | Version | Änderung |
 |---|---|---|
@@ -32,3 +32,4 @@ Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Di
 | 11.11.2026 | 2.11.1 | Eigenes Login-Design: Farben aus dem Theme Neve (aktive globale Palette, Button-Farbe); theme.json-Standardbutton von WordPress wird nicht mehr als Theme-Farbe übernommen |
 | 11.11.2026 | 2.11.2 | Eigenes Login-Design: Logo, das das Theme im Header zeigt, hat Vorrang (Neve, Divi, Avada, Enfold, Blocksy), danach WordPress-Logo (Customizer, Block-Themes), Elementor-Kit, Website-Icon |
 | 11.11.2026 | 2.11.3 | App-Katalog: Das Feld „Quelle“ entfällt im Tab Apps (Standard https://n4s.one, nur noch per Konstante änderbar); der Zugangsschlüssel bleibt |
+| 19.11.2026 | 2.12.0 | Neuer Tab „Snippets“: kleine Funktionen per Shortcode, einzeln aktivierbar (Shortcode erst nach Aktivierung sichtbar, sonst nur Beschreibung), Darstellung immer durch das Theme. Snippets: `[n4s_login]` (Anmeldeformular in der Seite, bleibt auf der Seite, Fehlerhinweis), `[n4s_link]` und `[n4s_button]` (konfigurierbarer Link/Button, nur für angemeldete Besucher; Einstellhilfe setzt den Shortcode zusammen). App-Updates: Nach einem Update bleiben die übrigen verfügbaren Updates sichtbar (die Prüfung wurde bisher komplett verworfen); neue Schaltfläche „Alle aktualisieren“ |
