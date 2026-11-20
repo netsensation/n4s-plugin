@@ -22,6 +22,9 @@ function n4s_sec_t( $de ) {
 	if ( null === $en ) {
 		$en = array(
 			'Sicherheit'                          => 'Security',
+			'SVG-Upload erlauben (bereinigt)'     => 'Allow SVG uploads (sanitised)',
+			'Erlaubt SVG-Dateien in der Mediathek. Jede Datei wird beim Hochladen bereinigt: Skripte, Ereignis-Attribute, eingebettete Fremdobjekte, externe Verweise und Animationen werden entfernt; Dateien, die sich nicht sicher bereinigen lassen, werden abgelehnt.' => 'Allows SVG files in the media library. Every file is sanitised on upload: scripts, event attributes, embedded foreign objects, external references and animations are removed; files that cannot be sanitised safely are rejected.',
+			'Die SVG-Datei konnte nicht sicher bereinigt werden und wurde abgelehnt.' => 'The SVG file could not be sanitised safely and was rejected.',
 			'Nach der Anmeldung zur Startseite'   => 'Go to the home page after login',
 			'Leitet nach dem Login auf die Startseite statt in den Admin-Bereich. Ein ausdrücklich angegebenes Ziel (z. B. beim Snippet Anmeldung oder beim Aufruf einer geschützten Seite) bleibt erhalten.' => 'Sends users to the home page after login instead of the admin area. An explicitly given target (e.g. from the login snippet or a protected page) is kept.',
 			'Aktive Sperren'                      => 'Active lockouts',
@@ -130,6 +133,7 @@ function n4s_sec_defaults() {
 		'noposts'       => 0,
 		'nonotices'     => 0,
 		'homeredirect'  => 0,
+		'svg'           => 0,
 	);
 }
 
@@ -678,6 +682,137 @@ add_filter(
 	3
 );
 
+/* ---------- SVG-Upload (bereinigt) ---------- */
+
+/** Bereinigt eine SVG-Datei mit einer Positivliste. Gibt den sauberen Text zurück oder false, wenn sie sich nicht sicher bereinigen lässt. */
+function n4s_sec_svg_clean( $svg ) {
+	$svg = trim( (string) $svg );
+	if ( '' === $svg || strlen( $svg ) > 2097152 || ! class_exists( 'DOMDocument' ) ) {
+		return false;
+	}
+	if ( 0 === strpos( $svg, "\x1f\x8b" ) || preg_match( '/<!ENTITY/i', $svg ) ) {
+		return false; // komprimiert (svgz) oder mit Entitäten: nicht sicher prüfbar.
+	}
+	$svg = preg_replace( '/<!DOCTYPE[^>\[]*>/i', '', $svg ); // einfache DOCTYPE-Zeile (z. B. von Illustrator) entfernen.
+	if ( preg_match( '/<!DOCTYPE/i', $svg ) ) {
+		return false;
+	}
+	$prev = libxml_use_internal_errors( true );
+	$dom  = new DOMDocument();
+	$ok   = $dom->loadXML( $svg, LIBXML_NONET | LIBXML_NOWARNING | LIBXML_NOERROR );
+	libxml_clear_errors();
+	libxml_use_internal_errors( $prev );
+	if ( ! $ok || ! $dom->documentElement || 'svg' !== strtolower( $dom->documentElement->localName ) ) {
+		return false;
+	}
+	$allowed = array_flip( array(
+		'svg', 'g', 'defs', 'symbol', 'use', 'path', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'text', 'tspan', 'textpath',
+		'title', 'desc', 'lineargradient', 'radialgradient', 'stop', 'pattern', 'clippath', 'mask', 'marker', 'image', 'style', 'filter',
+		'fegaussianblur', 'feoffset', 'feblend', 'fecolormatrix', 'fecomposite', 'feflood', 'femerge', 'femergenode', 'femorphology',
+		'feturbulence', 'fedropshadow', 'fecomponenttransfer', 'fefuncr', 'fefuncg', 'fefuncb', 'fefunca', 'fedisplacementmap',
+		'fediffuselighting', 'fespecularlighting', 'fedistantlight', 'fepointlight', 'fespotlight', 'feconvolvematrix', 'fetile',
+	) );
+	$bad_style = '/(expression|javascript:|@import|behavior|binding|url\s*\(\s*[^#\s"\')])/i';
+	$walk      = function ( DOMNode $node ) use ( &$walk, $allowed, $bad_style ) {
+		$remove = array();
+		foreach ( iterator_to_array( $node->childNodes ) as $c ) {
+			if ( XML_ELEMENT_NODE === $c->nodeType ) {
+				if ( ! isset( $allowed[ strtolower( $c->localName ) ] ) || ( $c->namespaceURI && 'http://www.w3.org/2000/svg' !== $c->namespaceURI ) ) {
+					$remove[] = $c;
+					continue;
+				}
+				if ( 'style' === strtolower( $c->localName ) && preg_match( $bad_style, $c->textContent ) ) {
+					$remove[] = $c;
+					continue;
+				}
+				$drop = array();
+				foreach ( $c->attributes as $a ) {
+					$n = strtolower( $a->localName );
+					$v = trim( (string) $a->value );
+					if ( 0 === strpos( $n, 'on' ) || preg_match( '/javascript:|vbscript:/i', $v ) ) {
+						$drop[] = $a;
+					} elseif ( 'href' === $n ) {
+						if ( '#' !== substr( $v, 0, 1 ) && ! preg_match( '#^data:image/(png|jpe?g|gif|webp);base64,[A-Za-z0-9+/=\s]+$#i', $v ) ) {
+							$drop[] = $a;
+						}
+					} elseif ( 'style' === $n && preg_match( $bad_style, $v ) ) {
+						$drop[] = $a;
+					} elseif ( $a->namespaceURI && ! in_array( $a->namespaceURI, array( 'http://www.w3.org/1999/xlink', 'http://www.w3.org/XML/1998/namespace', 'http://www.w3.org/2000/xmlns/' ), true ) ) {
+						$drop[] = $a; // fremde Namensräume (Editor-Metadaten) entfernen.
+					}
+				}
+				foreach ( $drop as $a ) {
+					$c->removeAttributeNode( $a );
+				}
+				$walk( $c );
+			} elseif ( XML_TEXT_NODE !== $c->nodeType && XML_CDATA_SECTION_NODE !== $c->nodeType ) {
+				$remove[] = $c; // Kommentare, Verarbeitungsanweisungen u. Ä.
+			}
+		}
+		foreach ( $remove as $c ) {
+			$node->removeChild( $c );
+		}
+	};
+	$walk( $dom );
+	$out = $dom->saveXML( $dom->documentElement );
+	return ( is_string( $out ) && '' !== $out ) ? $out : false;
+}
+
+function n4s_sec_svg_on() {
+	return ! empty( n4s_sec_opt()['svg'] );
+}
+
+add_filter(
+	'upload_mimes',
+	function ( $m ) {
+		if ( n4s_sec_svg_on() && current_user_can( 'upload_files' ) ) {
+			$m['svg'] = 'image/svg+xml';
+		}
+		return $m;
+	}
+);
+
+add_filter(
+	'wp_check_filetype_and_ext',
+	function ( $d, $file, $filename ) {
+		if ( n4s_sec_svg_on() && current_user_can( 'upload_files' ) && 'svg' === strtolower( pathinfo( (string) $filename, PATHINFO_EXTENSION ) ) ) {
+			return array( 'ext' => 'svg', 'type' => 'image/svg+xml', 'proper_filename' => false );
+		}
+		return $d;
+	},
+	10,
+	3
+);
+
+/** Beim Hochladen jede SVG-Datei bereinigen oder ablehnen. */
+function n4s_sec_svg_prefilter( $file ) {
+	if ( ! n4s_sec_svg_on() || empty( $file['name'] ) || 'svg' !== strtolower( pathinfo( (string) $file['name'], PATHINFO_EXTENSION ) ) ) {
+		return $file;
+	}
+	$clean = ( ! empty( $file['tmp_name'] ) && is_readable( $file['tmp_name'] ) ) ? n4s_sec_svg_clean( (string) file_get_contents( $file['tmp_name'] ) ) : false;
+	if ( false === $clean || false === file_put_contents( $file['tmp_name'], $clean ) ) {
+		$file['error'] = n4s_sec_t( 'Die SVG-Datei konnte nicht sicher bereinigt werden und wurde abgelehnt.' );
+		return $file;
+	}
+	$file['size'] = strlen( $clean );
+	return $file;
+}
+add_filter( 'wp_handle_upload_prefilter', 'n4s_sec_svg_prefilter' );
+add_filter( 'wp_handle_sideload_prefilter', 'n4s_sec_svg_prefilter' );
+
+/** Vorschau in der Mediathek (SVG hat keine Größenvarianten). */
+add_filter(
+	'wp_prepare_attachment_for_js',
+	function ( $r, $att ) {
+		if ( n4s_sec_svg_on() && 'image/svg+xml' === get_post_mime_type( $att ) && ! empty( $r['url'] ) ) {
+			$r['sizes'] = array( 'full' => array( 'url' => $r['url'], 'height' => 150, 'width' => 150, 'orientation' => 'landscape' ) );
+		}
+		return $r;
+	},
+	10,
+	2
+);
+
 /* ---------- Dashboard-Widget ---------- */
 
 function n4s_sec_dashboard_setup() {
@@ -732,6 +867,7 @@ function n4s_sec_render() {
 				'noposts'       => $cb( 'noposts' ),
 				'nonotices'     => $cb( 'nonotices' ),
 				'homeredirect'  => $cb( 'homeredirect' ),
+				'svg'           => $cb( 'svg' ),
 			);
 			update_option( 'n4s_lla_settings', $new, false );
 			n4s_sec_opt( true );
@@ -818,5 +954,6 @@ function n4s_sec_render() {
 	$c( 'noposts', n4s_sec_t( 'Beiträge deaktivieren' ), n4s_sec_t( 'Blendet „Beiträge" im Admin aus (Menü, Admin-Leiste, Dashboard, Kategorien, Schlagwörter) und liefert Beiträge, Blog-Seite, Archive, Feeds und die REST-Beiträge für Besucher als 404. Vorhandene Beiträge bleiben in der Datenbank. Voraussetzung: Die Startseite ist eine statische Seite.' ) );
 	$c( 'nonotices', n4s_sec_t( 'Admin-Meldungen ausblenden' ), n4s_sec_t( 'Blendet die Meldungen von Plugins und Themes im Admin-Bereich für alle Benutzer aus (Hinweise, Werbung, Bewertungsbitten). Meldungen von WordPress selbst (Updates, Fehler, Einstellungen) und von n4s bleiben sichtbar. Meldungen, die ein Plugin direkt in seine eigene Seite schreibt, lassen sich so nicht ausblenden.' ) );
 	$c( 'homeredirect', n4s_sec_t( 'Nach der Anmeldung zur Startseite' ), n4s_sec_t( 'Leitet nach dem Login auf die Startseite statt in den Admin-Bereich. Ein ausdrücklich angegebenes Ziel (z. B. beim Snippet Anmeldung oder beim Aufruf einer geschützten Seite) bleibt erhalten.' ) );
+	$c( 'svg', n4s_sec_t( 'SVG-Upload erlauben (bereinigt)' ), n4s_sec_t( 'Erlaubt SVG-Dateien in der Mediathek. Jede Datei wird beim Hochladen bereinigt: Skripte, Ereignis-Attribute, eingebettete Fremdobjekte, externe Verweise und Animationen werden entfernt; Dateien, die sich nicht sicher bereinigen lassen, werden abgelehnt.' ) );
 	echo '</table><p><button class="button button-primary">' . esc_html( n4s_sec_t( 'Speichern' ) ) . '</button></p></form>';
 }
