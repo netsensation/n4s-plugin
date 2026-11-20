@@ -1,6 +1,6 @@
 # n4s Apps: Änderungsprotokoll
 
-Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.15.0.
+Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.16.0.
 
 | Datum | Version | Änderung |
 |---|---|---|
@@ -39,3 +39,4 @@ Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Di
 | 20.11.2026 | 2.13.1 | Rechte: Redakteure haben die volle App-Verwaltung im Tab Apps (eigene PHP-Dateien hochladen, Apps löschen, aktivieren/deaktivieren, Automatik, Katalog, Installieren, Aktualisieren). Gesperrt für Redakteure bleiben der Zugangsschlüssel, die Einstellungen, das Plugin-Update und die Erweiterungs-Tabs (z. B. Admin); Funktionen, Sicherheit und Snippets sind nur einsehbar. |
 | 20.11.2026 | 2.14.0 | Sicherheit: neue Checkbox „Nach der Anmeldung zur Startseite“ (Bereich Funktionen). Nach dem Login geht es auf die Startseite statt in den Admin-Bereich; ein ausdrücklich angegebenes Ziel (Snippet Anmeldung mit `weiterleitung`, Aufruf einer geschützten Seite) bleibt erhalten. Standard: aus. |
 | 20.11.2026 | 2.15.0 | Snippets: Shortcode einlesen und bearbeiten. Ein vorhandener Shortcode (Link, Button oder Menü) wird oben im Tab eingefügt; „Einlesen“ füllt die Einstellhilfe des passenden Snippets (Text, Adresse, Stil, neuer Tab, Menü-Einträge), dort lässt er sich ändern und wieder kopieren. Erscheint, sobald eines dieser Snippets aktiv ist. |
+| 20.11.2026 | 2.16.0 | Test vor der Freigabe (n4s Admin): Während eines Tests lädt die Seite die installierte Version der getesteten App für den Testenden nicht (nur bei Test-, REST-, Ajax- und Formular-Aufrufen), damit auch bereits installierte Apps getestet werden können. Besucher sehen weiter die installierte Version. Option `n4s_apps_test`. |
