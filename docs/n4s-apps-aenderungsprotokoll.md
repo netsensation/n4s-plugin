@@ -1,6 +1,6 @@
 # n4s Apps: Änderungsprotokoll
 
-Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.14.0.
+Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.15.0.
 
 | Datum | Version | Änderung |
 |---|---|---|
@@ -38,3 +38,4 @@ Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Di
 | 20.11.2026 | 2.13.0 | Rechte: Redakteure (Recht „Seiten bearbeiten“) sehen das Menü Plugin mit den Tabs Funktionen, Apps, Sicherheit und Snippets schreibgeschützt und dürfen im Tab Apps Apps aus dem Katalog installieren und aktualisieren („Updates jetzt prüfen“, „Katalog laden“, Installieren, Aktualisieren, „Alle aktualisieren“; nur signierte Dateien). Eigene Dateien hochladen, Löschen, (De-)Aktivieren, Automatik, Zugangsschlüssel, Einstellungen, Plugin-Update und Erweiterungs-Tabs (z. B. Admin) bleiben Administratoren vorbehalten. |
 | 20.11.2026 | 2.13.1 | Rechte: Redakteure haben die volle App-Verwaltung im Tab Apps (eigene PHP-Dateien hochladen, Apps löschen, aktivieren/deaktivieren, Automatik, Katalog, Installieren, Aktualisieren). Gesperrt für Redakteure bleiben der Zugangsschlüssel, die Einstellungen, das Plugin-Update und die Erweiterungs-Tabs (z. B. Admin); Funktionen, Sicherheit und Snippets sind nur einsehbar. |
 | 20.11.2026 | 2.14.0 | Sicherheit: neue Checkbox „Nach der Anmeldung zur Startseite“ (Bereich Funktionen). Nach dem Login geht es auf die Startseite statt in den Admin-Bereich; ein ausdrücklich angegebenes Ziel (Snippet Anmeldung mit `weiterleitung`, Aufruf einer geschützten Seite) bleibt erhalten. Standard: aus. |
+| 20.11.2026 | 2.15.0 | Snippets: Shortcode einlesen und bearbeiten. Ein vorhandener Shortcode (Link, Button oder Menü) wird oben im Tab eingefügt; „Einlesen“ füllt die Einstellhilfe des passenden Snippets (Text, Adresse, Stil, neuer Tab, Menü-Einträge), dort lässt er sich ändern und wieder kopieren. Erscheint, sobald eines dieser Snippets aktiv ist. |

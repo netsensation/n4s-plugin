@@ -336,6 +336,9 @@ if ( is_admin() ) {
 			'Kleine Funktionen, die per Shortcode in jede Seite eingebunden werden können. Ein Snippet muss zuerst aktiviert werden; dann erscheint der Shortcode zum Kopieren. Ausgeschaltet bleiben die Shortcodes leer. Die Darstellung übernimmt immer das aktive Theme.',
 			'Small functions that can be embedded in any page with a shortcode. A snippet must be activated first; then its shortcode is shown for copying. When switched off, the shortcodes stay empty. The active theme always provides the design.'
 		) ) . '</p>';
+		if ( n4s_snippet_on( 'link' ) || n4s_snippet_on( 'button' ) || n4s_snippet_on( 'menu' ) ) {
+			n4s_snippets_tab_import();
+		}
 		n4s_apps_form_head( 'n4s_snippets_save', false, 'display:block' );
 		echo '<table class="widefat striped" style="width:100%"><thead><tr><th style="width:90px">' . esc_html( n4s_t( 'Aktiv', 'Active' ) ) . '</th><th>Snippet</th></tr></thead><tbody>';
 		foreach ( $defs as $k => $d ) {
@@ -361,6 +364,24 @@ var done=function(){var t=b.textContent;b.textContent=b.getAttribute("data-done"
 i.select();if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(i.value).then(done,function(){document.execCommand("copy");done()})}else{document.execCommand("copy");done()}});
 N4SJS;
 		echo '<script>' . $js . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- feste Skriptvorlage.
+	}
+
+	/** Vorhandenen Shortcode (Link, Button, Menü) einlesen: füllt die Einstellhilfe des passenden Snippets zum Bearbeiten. */
+	function n4s_snippets_tab_import() {
+		echo '<div style="margin:0 0 14px;padding:10px 12px;background:#fff;border:1px solid #c3c4c7;width:100%;box-sizing:border-box"><strong>' . esc_html( n4s_t( 'Shortcode einlesen und bearbeiten', 'Load and edit a shortcode' ) ) . '</strong>';
+		echo '<p class="description" style="margin:2px 0 6px;max-width:none">' . esc_html( n4s_t( 'Einen vorhandenen Shortcode (Link, Button oder Menü) hier einfügen und „Einlesen“ wählen. Die Einstellhilfe des passenden Snippets wird damit gefüllt; dort lässt er sich ändern und wieder kopieren.', 'Paste an existing shortcode (link, button or menu) here and choose "Load". The helper of the matching snippet is filled with it; change it there and copy it again.' ) ) . '</p>';
+		echo '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input type="text" id="n4s-imp-in" class="code" style="flex:1;min-width:240px" placeholder="[n4s_button url=&quot;/mein-bereich/&quot; text=&quot;Mein Bereich&quot;]">';
+		echo '<button type="button" class="button" id="n4s-imp-go">' . esc_html( n4s_t( 'Einlesen', 'Load' ) ) . '</button> <span id="n4s-imp-msg" class="description"></span></div></div>';
+		$js = <<<'N4SJS'
+(function(){var i=document.getElementById("n4s-imp-in"),b=document.getElementById("n4s-imp-go"),m=document.getElementById("n4s-imp-msg");if(!i||!b)return;
+var T={link:"link",button:"button",menue:"menu"},M={bad:"%BAD%",off:"%OFF%",ok:"%OK%"};
+function go(){var v=i.value.trim(),r=/^\[\s*n4s_(link|button|menue)\b([^\]]*)\]?/i.exec(v);if(!r){m.textContent=M.bad;return}
+var k=T[r[1].toLowerCase()],a={},re=/([a-z_]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/gi,x;while((x=re.exec(r[2]))){a[x[1].toLowerCase()]=x[2]!==undefined?x[2]:x[3]}
+var g=document.getElementById("n4s-gen-"+k);if(!g){m.textContent=M.off;return}
+g.dispatchEvent(new CustomEvent("n4s-load",{detail:a}));g.scrollIntoView({behavior:"smooth",block:"center"});m.textContent=M.ok}
+b.addEventListener("click",go);i.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();go()}})})();
+N4SJS;
+		echo '<script>' . str_replace( array( '%BAD%', '%OFF%', '%OK%' ), array( esc_js( n4s_t( 'Kein Shortcode für Link, Button oder Menü erkannt.', 'No link, button or menu shortcode recognised.' ) ), esc_js( n4s_t( 'Dieses Snippet ist nicht aktiv: zuerst aktivieren und speichern.', 'This snippet is not active: activate and save it first.' ) ), esc_js( n4s_t( 'Eingelesen: unten in der Einstellhilfe bearbeiten.', 'Loaded: edit it in the helper below.' ) ) ), $js ) . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- feste Skriptvorlage, Werte mit esc_js.
 	}
 
 	/** Shortcode (mit Kopieren-Schaltfläche) und Einstellhilfe eines aktiven Snippets. */
@@ -396,6 +417,7 @@ N4SJS;
 		$js = <<<'N4SJS'
 (function(){var g=document.getElementById("%ID%"),o=document.querySelector('[data-n4s-out="%KEY%"]');if(!g||!o)return;
 function up(){var s="[n4s_%KEY%";["url","text","stil","neu","titel","klasse"].forEach(function(n){var el=g.querySelector('[data-f="'+n+'"]');if(!el)return;var v=el.type==="checkbox"?(el.checked?"1":""):el.value.trim();if(v!=="")s+=" "+n+'="'+v.replace(/"/g,"'")+'"'});o.value=s+"]"}
+g.addEventListener("n4s-load",function(ev){var a=ev.detail||{};["url","text","stil","neu","titel","klasse"].forEach(function(n){var el=g.querySelector('[data-f="'+n+'"]');if(!el)return;var v=a[n]||"";if(el.type==="checkbox"){el.checked=["1","ja","yes","true","neu","on"].indexOf(v.toLowerCase())>-1}else{el.value=v}});up()});
 g.addEventListener("input",up);g.addEventListener("change",up);up()})();
 N4SJS;
 		echo '<script>' . str_replace( array( '%ID%', '%KEY%' ), array( esc_js( $id ), esc_js( $key ) ), $js ) . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- feste Skriptvorlage, Werte mit esc_js.
@@ -418,6 +440,7 @@ d.querySelector('[data-r="t"]').value=t||"";d.querySelector('[data-r="u"]').valu
 function up(){var e=[];Array.prototype.forEach.call(rows.children,function(r){var t=r.querySelector('[data-r="t"]').value.replace(/[;|"]/g," ").trim(),u=r.querySelector('[data-r="u"]').value.replace(/[;|"]/g,"").trim(),n=r.querySelector('[data-r="n"]').checked;if(t===""&&u==="")return;e.push(t+"|"+u+(n?"|neu":""))});
 var s="[n4s_menue",st=g.querySelector('[data-m="stil"]').value,al=g.querySelector('[data-m="ausrichtung"]').value;if(st!=="buttons")s+=' stil="'+st+'"';if(al!=="links")s+=' ausrichtung="'+al+'"';o.value=s+' eintraege="'+e.join("; ")+'"]'}
 g.addEventListener("input",up);g.addEventListener("change",up);g.addEventListener("click",function(ev){if(ev.target.hasAttribute("data-add")){row();up()}else if(ev.target.hasAttribute("data-del")){ev.target.parentNode.remove();up()}});
+g.addEventListener("n4s-load",function(ev){var a=ev.detail||{};var st=g.querySelector('[data-m="stil"]'),al=g.querySelector('[data-m="ausrichtung"]');if(a.stil&&st.querySelector('option[value="'+a.stil+'"]'))st.value=a.stil;else st.value="buttons";if(a.ausrichtung&&al.querySelector('option[value="'+a.ausrichtung+'"]'))al.value=a.ausrichtung;else al.value="links";rows.innerHTML="";(a.eintraege||"").split(";").forEach(function(x){x=x.trim();if(!x)return;var p=x.split("|");row((p[0]||"").trim(),(p[1]||"").trim(),(p[2]||"").trim().toLowerCase()==="neu")});if(!rows.children.length)row();up()});
 row("Mein Bereich","/mein-bereich/");row("Profil","/profil/");up()})();
 N4SJS;
 		echo '<script>' . str_replace( array( '%ID%', '%T%', '%U%', '%N%', '%X%' ), array( esc_js( $id ), esc_js( n4s_t( 'Text', 'Text' ) ), esc_js( n4s_t( 'Adresse (URL oder Pfad)', 'Address (URL or path)' ) ), esc_js( n4s_t( 'Neuer Tab', 'New tab' ) ), esc_js( n4s_t( 'Entfernen', 'Remove' ) ) ), $js ) . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- feste Skriptvorlage, Werte mit esc_js.
