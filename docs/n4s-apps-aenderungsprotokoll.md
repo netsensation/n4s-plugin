@@ -1,6 +1,6 @@
 # n4s Apps: Änderungsprotokoll
 
-Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.20.0.
+Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.21.0.
 
 | Datum | Version | Änderung |
 |---|---|---|
@@ -44,3 +44,4 @@ Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Di
 | 20.11.2026 | 2.18.0 | Snippets: Anmeldung mit Einstellhilfe. Die optionalen Angaben (Maske sofort anzeigen, Beschriftung, Überschrift, Seite nach der Anmeldung, bei Anmeldung ausblenden) sind Checkboxen, bei Textangaben mit Eingabefeld; der Shortcode oben wird live angepasst. „Einlesen“ versteht jetzt auch `[n4s_login …]`. |
 | 20.11.2026 | 2.19.0 | Sicherheit: neue Checkbox „Nach der Abmeldung zur Startseite“ (Bereich Funktionen, Standard aus), analog zur Weiterleitung nach der Anmeldung. Nach dem Logout geht es auf die Startseite statt auf die Anmeldeseite; ein ausdrücklich angegebenes Ziel (`redirect_to` im Abmelde-Link) bleibt erhalten. |
 | 20.11.2026 | 2.20.0 | Snippets: neues Snippet „Abmelden“ (`[n4s_logout]`, nur für Angemeldete) als Link oder Button (gefüllt oder umrandet) mit Einstellhilfe (Beschriftung, Seite nach der Abmeldung, Tooltip, CSS-Klasse); ohne eigene Seite gilt die Einstellung unter Sicherheit. „Einlesen“ versteht auch `[n4s_logout …]`. Reihenfolge: Abmelden steht direkt unter Anmeldung (Snippets) und die Weiterleitungen nach An- und Abmeldung stehen untereinander (Sicherheit). |
+| 20.11.2026 | 2.21.0 | Neuer Tab „Theme“ (Theme-Engine, Standard aus, je Modul schaltbar): Menü je Anmeldestatus und Rolle (Position, Besucher, Angemeldete, je Rolle), Sichtbarkeit je Menüpunkt (alle, Besucher, Angemeldete, bestimmte Rollen), Anmelden/Abmelden als Menüpunkt (Box im Menü-Editor, schaltet um), Seitengestaltung je Seite (Kopfzeile, Fußzeile, Seitentitel ausblenden, steuert auch die Seitenfelder von Neve) und bis zu drei Farbschemen (Farben von Hintergrund, Text, Hauptfarbe, Hover, Flächen, Buttons, Überschriften; Wahl je Seite oder als Standard; bei Neve färben sie auch Kopf- und Fußzeile). Menü-Funktionen gelten für jedes Theme. Datei `includes/theme.php`, Option `n4s_theme`. |
