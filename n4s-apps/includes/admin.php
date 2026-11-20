@@ -424,6 +424,7 @@ add_action(
 				'dup'      => empty( $_POST['dup'] ) ? 0 : 1,
 				'mediareplace' => empty( $_POST['mediareplace'] ) ? 0 : 1,
 				'login'        => empty( $_POST['login'] ) ? 0 : 1,
+				'theme'        => empty( $_POST['theme'] ) ? 0 : 1,
 			)
 		);
 		n4s_apps_notice( 'success', n4s_t( 'Funktionen gespeichert.', 'Features saved.' ) );
@@ -777,6 +778,10 @@ function n4s_apps_tab_features() {
 		'mediareplace' => array(
 			n4s_t( 'Mediendatei ersetzen', 'Replace media file' ),
 			n4s_t( 'Aktion „Datei ersetzen“ in der Mediathek: Datei tauschen und dabei Name und Adresse behalten, oder mit neuem Dateinamen ersetzen (Verweise in Seiteninhalten werden angepasst).', 'Action "Replace file" in the media library: swap the file and keep name and address, or replace it with a new filename (references in page content are updated).' ),
+		),
+		'theme'        => array(
+			n4s_t( 'Theme-Engine', 'Theme engine' ),
+			n4s_t( 'Neuer Tab „Theme“: Menü je Anmeldestatus und Rolle, Sichtbarkeit je Menüpunkt, Anmelden/Abmelden als Menüpunkt, Zusatzmenü-Widget und Shortcode, Seitengestaltung je Seite und bis zu drei Farbschemen. Ausgeschaltet: Tab und alle Theme-Funktionen sind inaktiv; Einstellungen bleiben gespeichert.', 'New tab "Theme": menu by login status and role, visibility per menu item, log in/out as menu item, additional menu widget and shortcode, page design per page and up to three color schemes. Switched off: the tab and all theme features are inactive; settings stay saved.' ),
 		),
 		'login'        => array(
 			n4s_t( 'Eigenes Login-Design', 'Custom login design' ),
