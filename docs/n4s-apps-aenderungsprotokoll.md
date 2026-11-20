@@ -1,6 +1,6 @@
 # n4s Apps: Änderungsprotokoll
 
-Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.12.2.
+Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.13.0.
 
 | Datum | Version | Änderung |
 |---|---|---|
@@ -35,3 +35,4 @@ Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Di
 | 19.11.2026 | 2.12.0 | Neuer Tab „Snippets“: kleine Funktionen per Shortcode, einzeln aktivierbar (Shortcode erst nach Aktivierung sichtbar, sonst nur Beschreibung), Darstellung immer durch das Theme. Snippets: `[n4s_login]` (Anmeldeformular in der Seite, bleibt auf der Seite, Fehlerhinweis), `[n4s_link]` und `[n4s_button]` (konfigurierbarer Link/Button, nur für angemeldete Besucher; Einstellhilfe setzt den Shortcode zusammen). App-Updates: Nach einem Update bleiben die übrigen verfügbaren Updates sichtbar (die Prüfung wurde bisher komplett verworfen); neue Schaltfläche „Alle aktualisieren“ |
 | 19.11.2026 | 2.12.1 | Snippets: Buttons haben jetzt ein eigenes Design mit den Farben und der Rundung des Themes (gefüllt und umrandet; bisher blieb es ohne Theme-Button-Styles reiner Text), stehen nebeneinander; neues Snippet Menü (`[n4s_menue]`: Reihe aus Links oder Buttons, nur für Angemeldete, Einstellhilfe mit Einträgen); Kopieren-Schaltfläche für jeden Shortcode; Kurzhinweis je Eintrag; Einstellungsbereich in voller Breite; Anmeldeformular mit Feldern und Button im Theme-Design; Theme-Farbfunktionen in `includes/colors.php` (gemeinsam mit dem Login-Design) |
 | 19.11.2026 | 2.12.2 | Snippet Anmeldung: Standard ist nur ein Button „Anmelden“, erst nach dem Klick klappt die Maske auf (bei Fehler offen, ohne JavaScript); Option `anzeige="formular"` zeigt die Maske sofort; Beschriftung per `text`; Maske schmal (22 em) und zentriert, Felder mit Platzhalter, „Angemeldet bleiben“ mittig, Button über volle Maskenbreite; Hover-/Fokus-Stil der Buttons nur bei Tastaturfokus |
+| 20.11.2026 | 2.13.0 | Rechte: Redakteure (Recht „Seiten bearbeiten“) sehen das Menü Plugin mit den Tabs Funktionen, Apps, Sicherheit und Snippets schreibgeschützt und dürfen im Tab Apps Apps aus dem Katalog installieren und aktualisieren („Updates jetzt prüfen“, „Katalog laden“, Installieren, Aktualisieren, „Alle aktualisieren“; nur signierte Dateien). Eigene Dateien hochladen, Löschen, (De-)Aktivieren, Automatik, Zugangsschlüssel, Einstellungen, Plugin-Update und Erweiterungs-Tabs (z. B. Admin) bleiben Administratoren vorbehalten. |

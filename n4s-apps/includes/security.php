@@ -672,11 +672,12 @@ function n4s_sec_widget() {
 
 /** Inhalt des Tabs „Sicherheit“ (Rahmen, Titel und Tabs liefert das Plugin). */
 function n4s_sec_render() {
-	if ( ! current_user_can( 'manage_options' ) ) {
+	// Redakteure dürfen einsehen (Felder sind dann deaktiviert), Aktionen nur Administratoren.
+	if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'edit_pages' ) ) {
 		return;
 	}
 	$msg = '';
-	if ( isset( $_POST['n4s_sec_action'] ) ) {
+	if ( isset( $_POST['n4s_sec_action'] ) && current_user_can( 'manage_options' ) ) {
 		check_admin_referer( 'n4s_sec' );
 		$act = sanitize_key( wp_unslash( $_POST['n4s_sec_action'] ) );
 		$s   = n4s_sec_state();

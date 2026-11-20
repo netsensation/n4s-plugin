@@ -161,3 +161,8 @@ Getestet am 09.11.2026 mit der Test-App `n4s-test` (1.0.0 → 1.0.1), bis zum Up
 - Auf Firmenseiten nur auf ausdrückliche Anweisung ändern, Neues als Entwurf.
 
 **Quelle in der App-Liste (ab 2.8.4):** „n4s“ für Apps, deren Dateikopf `Update URI: https://n4s.one` enthält (Katalog), „eigene“ für andere hochgeladene Apps, „mitgeliefert“ für Apps im Plugin-Ordner. Ältere Apps ohne `Update URI` zeigen „eigene“, bis sie als Katalog-Version aktualisiert wurden.
+
+## Rechte (ab 2.13.0)
+
+- Administratoren (`manage_options`, `install_plugins`): alles.
+- Redakteure (`edit_pages`): Menü Plugin mit Funktionen, Apps, Sicherheit, Snippets nur zum Einsehen (Felder deaktiviert, Server prüft zusätzlich); im Tab Apps Katalog laden, Updates prüfen, Apps aus dem Katalog installieren und aktualisieren (`n4s_apps_can_catalog()`). Kein Hochladen eigener PHP-Dateien, kein Löschen, (De-)Aktivieren oder Ändern von Einstellungen; Erweiterungs-Tabs (Admin) nur für Administratoren.
