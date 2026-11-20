@@ -336,7 +336,7 @@ if ( is_admin() ) {
 			'Kleine Funktionen, die per Shortcode in jede Seite eingebunden werden können. Ein Snippet muss zuerst aktiviert werden; dann erscheint der Shortcode zum Kopieren. Ausgeschaltet bleiben die Shortcodes leer. Die Darstellung übernimmt immer das aktive Theme.',
 			'Small functions that can be embedded in any page with a shortcode. A snippet must be activated first; then its shortcode is shown for copying. When switched off, the shortcodes stay empty. The active theme always provides the design.'
 		) ) . '</p>';
-		if ( n4s_snippet_on( 'link' ) || n4s_snippet_on( 'button' ) || n4s_snippet_on( 'menu' ) ) {
+		if ( n4s_snippet_on( 'login' ) || n4s_snippet_on( 'link' ) || n4s_snippet_on( 'button' ) || n4s_snippet_on( 'menu' ) ) {
 			n4s_snippets_tab_import();
 		}
 		n4s_apps_form_head( 'n4s_snippets_save', false, 'display:block' );
@@ -369,36 +369,32 @@ N4SJS;
 	/** Vorhandenen Shortcode (Link, Button, Menü) einlesen: füllt die Einstellhilfe des passenden Snippets zum Bearbeiten. */
 	function n4s_snippets_tab_import() {
 		echo '<div style="margin:0 0 14px;padding:10px 12px;background:#fff;border:1px solid #c3c4c7;width:100%;box-sizing:border-box"><strong>' . esc_html( n4s_t( 'Shortcode einlesen und bearbeiten', 'Load and edit a shortcode' ) ) . '</strong>';
-		echo '<p class="description" style="margin:2px 0 6px;max-width:none">' . esc_html( n4s_t( 'Einen vorhandenen Shortcode (Link, Button oder Menü) hier einfügen und „Einlesen“ wählen. Die Einstellhilfe des passenden Snippets wird damit gefüllt; dort lässt er sich ändern und wieder kopieren.', 'Paste an existing shortcode (link, button or menu) here and choose "Load". The helper of the matching snippet is filled with it; change it there and copy it again.' ) ) . '</p>';
+		echo '<p class="description" style="margin:2px 0 6px;max-width:none">' . esc_html( n4s_t( 'Einen vorhandenen Shortcode (Anmeldung, Link, Button oder Menü) hier einfügen und „Einlesen“ wählen. Die Einstellhilfe des passenden Snippets wird damit gefüllt; dort lässt er sich ändern und wieder kopieren.', 'Paste an existing shortcode (login, link, button or menu) here and choose "Load". The helper of the matching snippet is filled with it; change it there and copy it again.' ) ) . '</p>';
 		echo '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input type="text" id="n4s-imp-in" class="code" style="flex:1;min-width:240px" placeholder="[n4s_button url=&quot;/mein-bereich/&quot; text=&quot;Mein Bereich&quot;]">';
 		echo '<button type="button" class="button" id="n4s-imp-go">' . esc_html( n4s_t( 'Einlesen', 'Load' ) ) . '</button> <span id="n4s-imp-msg" class="description"></span></div></div>';
 		$js = <<<'N4SJS'
 (function(){var i=document.getElementById("n4s-imp-in"),b=document.getElementById("n4s-imp-go"),m=document.getElementById("n4s-imp-msg");if(!i||!b)return;
-var T={link:"link",button:"button",menue:"menu"},M={bad:"%BAD%",off:"%OFF%",ok:"%OK%"};
-function go(){var v=i.value.trim(),r=/^\[\s*n4s_(link|button|menue)\b([^\]]*)\]?/i.exec(v);if(!r){m.textContent=M.bad;return}
+var T={login:"login",link:"link",button:"button",menue:"menu"},M={bad:"%BAD%",off:"%OFF%",ok:"%OK%"};
+function go(){var v=i.value.trim(),r=/^\[\s*n4s_(login|link|button|menue)\b([^\]]*)\]?/i.exec(v);if(!r){m.textContent=M.bad;return}
 var k=T[r[1].toLowerCase()],a={},re=/([a-z_]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/gi,x;while((x=re.exec(r[2]))){a[x[1].toLowerCase()]=x[2]!==undefined?x[2]:x[3]}
 var g=document.getElementById("n4s-gen-"+k);if(!g){m.textContent=M.off;return}
 g.dispatchEvent(new CustomEvent("n4s-load",{detail:a}));g.scrollIntoView({behavior:"smooth",block:"center"});m.textContent=M.ok}
 b.addEventListener("click",go);i.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();go()}})})();
 N4SJS;
-		echo '<script>' . str_replace( array( '%BAD%', '%OFF%', '%OK%' ), array( esc_js( n4s_t( 'Kein Shortcode für Link, Button oder Menü erkannt.', 'No link, button or menu shortcode recognised.' ) ), esc_js( n4s_t( 'Dieses Snippet ist nicht aktiv: zuerst aktivieren und speichern.', 'This snippet is not active: activate and save it first.' ) ), esc_js( n4s_t( 'Eingelesen: unten in der Einstellhilfe bearbeiten.', 'Loaded: edit it in the helper below.' ) ) ), $js ) . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- feste Skriptvorlage, Werte mit esc_js.
+		echo '<script>' . str_replace( array( '%BAD%', '%OFF%', '%OK%' ), array( esc_js( n4s_t( 'Kein Shortcode für Anmeldung, Link, Button oder Menü erkannt.', 'No login, link, button or menu shortcode recognised.' ) ), esc_js( n4s_t( 'Dieses Snippet ist nicht aktiv: zuerst aktivieren und speichern.', 'This snippet is not active: activate and save it first.' ) ), esc_js( n4s_t( 'Eingelesen: unten in der Einstellhilfe bearbeiten.', 'Loaded: edit it in the helper below.' ) ) ), $js ) . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- feste Skriptvorlage, Werte mit esc_js.
 	}
 
 	/** Shortcode (mit Kopieren-Schaltfläche) und Einstellhilfe eines aktiven Snippets. */
 	function n4s_snippets_tab_usage( $key, $d ) {
 		$oid = 'n4s-out-' . $key;
 		echo '<div style="display:flex;gap:8px;align-items:center;width:100%;margin:0 0 6px"><strong>' . esc_html( n4s_t( 'Shortcode:', 'Shortcode:' ) ) . '</strong>';
-		echo '<input type="text" readonly id="' . esc_attr( $oid ) . '" class="code" style="flex:1;min-width:0" value="' . esc_attr( $d['shortcode'] ) . '" onclick="this.select()"' . ( 'login' !== $key ? ' data-n4s-out="' . esc_attr( $key ) . '"' : '' ) . '>';
+		echo '<input type="text" readonly id="' . esc_attr( $oid ) . '" class="code" style="flex:1;min-width:0" value="' . esc_attr( $d['shortcode'] ) . '" onclick="this.select()" data-n4s-out="' . esc_attr( $key ) . '">';
 		echo '<button type="button" class="button" data-n4s-copy="' . esc_attr( $oid ) . '" data-done="' . esc_attr( n4s_t( 'Kopiert', 'Copied' ) ) . '">' . esc_html( n4s_t( 'Kopieren', 'Copy' ) ) . '</button></div>';
+		$id = 'n4s-gen-' . $key;
 		if ( 'login' === $key ) {
-			echo '<p class="description" style="margin:0 0 4px">' . esc_html( n4s_t( 'Optionale Angaben im Shortcode:', 'Optional attributes:' ) ) . '</p><ul style="margin:0 0 0 18px;list-style:disc">';
-			foreach ( $d['attrs'] as $a => $t ) {
-				echo '<li><code>' . esc_html( $a ) . '</code> – ' . esc_html( $t ) . '</li>';
-			}
-			echo '</ul>';
+			n4s_snippets_tab_login_helper( $id, $d );
 			return;
 		}
-		$id = 'n4s-gen-' . $key;
 		if ( 'menu' === $key ) {
 			n4s_snippets_tab_menu_helper( $id );
 			return;
@@ -421,6 +417,33 @@ g.addEventListener("n4s-load",function(ev){var a=ev.detail||{};["url","text","st
 g.addEventListener("input",up);g.addEventListener("change",up);up()})();
 N4SJS;
 		echo '<script>' . str_replace( array( '%ID%', '%KEY%' ), array( esc_js( $id ), esc_js( $key ) ), $js ) . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- feste Skriptvorlage, Werte mit esc_js.
+	}
+
+	/** Einstellhilfe für die Anmeldung: optionale Angaben als Checkboxen (bei Textangaben mit Eingabefeld), Shortcode live. */
+	function n4s_snippets_tab_login_helper( $id, $d ) {
+		$rows = array(
+			array( 'anzeige', 'formular', '', n4s_t( 'Maske sofort anzeigen statt nur den Button', 'Show the form right away instead of only the button' ) ),
+			array( 'text', '', 'Anmelden', n4s_t( 'Beschriftung des Buttons ändern', 'Change the button label' ) ),
+			array( 'titel', '', 'Anmelden', n4s_t( 'Überschrift über der Maske (nur bei sofort angezeigter Maske)', 'Heading above the form (only when the form is shown right away)' ) ),
+			array( 'weiterleitung', '', '/mein-bereich/', n4s_t( 'Seite nach der Anmeldung festlegen (Standard: dieselbe Seite)', 'Set the page after login (default: same page)' ) ),
+			array( 'angemeldet', 'ausblenden', '', n4s_t( 'Nichts anzeigen, wenn schon angemeldet', 'Show nothing if already logged in' ) ),
+		);
+		echo '<div id="' . esc_attr( $id ) . '" style="width:100%;margin-top:6px"><p class="description" style="margin:0 0 6px">' . esc_html( n4s_t( 'Optionale Angaben (Häkchen setzen, der Shortcode wird oben angepasst):', 'Optional settings (tick a box, the shortcode above is updated):' ) ) . '</p>';
+		foreach ( $rows as $r ) {
+			echo '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 6px"><label style="min-width:340px"><input type="checkbox" data-a="' . esc_attr( $r[0] ) . '"' . ( '' !== $r[1] ? ' data-fix="' . esc_attr( $r[1] ) . '"' : '' ) . '> ' . esc_html( $r[3] ) . ' <code>' . esc_html( $r[0] ) . '</code></label>';
+			if ( '' !== $r[2] ) {
+				echo '<input type="text" data-av="' . esc_attr( $r[0] ) . '" value="' . esc_attr( $r[2] ) . '" disabled style="min-width:220px">';
+			}
+			echo '</div>';
+		}
+		echo '</div>';
+		$js = <<<'N4SJS'
+(function(){var g=document.getElementById("%ID%"),o=document.querySelector('[data-n4s-out="login"]');if(!g||!o)return;
+function up(){var s="[n4s_login";g.querySelectorAll("[data-a]").forEach(function(c){var n=c.getAttribute("data-a"),t=g.querySelector('[data-av="'+n+'"]'),v;if(t)t.disabled=!c.checked;if(!c.checked)return;v=c.hasAttribute("data-fix")?c.getAttribute("data-fix"):(t?t.value.trim():"");if(v==="")return;s+=" "+n+'="'+v.replace(/"/g,"'")+'"'});o.value=s+"]"}
+g.addEventListener("n4s-load",function(ev){var a=ev.detail||{};g.querySelectorAll("[data-a]").forEach(function(c){var n=c.getAttribute("data-a"),t=g.querySelector('[data-av="'+n+'"]'),has=Object.prototype.hasOwnProperty.call(a,n);if(c.hasAttribute("data-fix")){c.checked=has&&String(a[n]).toLowerCase()===c.getAttribute("data-fix")}else{c.checked=has;if(has&&t)t.value=a[n]}});up()});
+g.addEventListener("input",up);g.addEventListener("change",up);up()})();
+N4SJS;
+		echo '<script>' . str_replace( '%ID%', esc_js( $id ), $js ) . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- feste Skriptvorlage, ID mit esc_js.
 	}
 
 	/** Einstellhilfe für das Menü: Einträge hinzufügen/entfernen, Stil und Ausrichtung. */
