@@ -1,6 +1,6 @@
 # n4s Apps: Änderungsprotokoll
 
-Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.19.0.
+Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.20.0.
 
 | Datum | Version | Änderung |
 |---|---|---|
@@ -43,3 +43,4 @@ Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Di
 | 20.11.2026 | 2.17.0 | Sicherheit: neue Checkbox „SVG-Upload erlauben (bereinigt)“ (Bereich Funktionen, Standard aus). SVG-Dateien dürfen in die Mediathek; jede Datei wird beim Hochladen mit einer Positivliste bereinigt (Skripte, Ereignis-Attribute, foreignObject, externe Verweise, Animationen, DOCTYPE/Entitäten werden entfernt oder die Datei wird abgelehnt). Nur für Benutzer mit dem Recht „Dateien hochladen“. |
 | 20.11.2026 | 2.18.0 | Snippets: Anmeldung mit Einstellhilfe. Die optionalen Angaben (Maske sofort anzeigen, Beschriftung, Überschrift, Seite nach der Anmeldung, bei Anmeldung ausblenden) sind Checkboxen, bei Textangaben mit Eingabefeld; der Shortcode oben wird live angepasst. „Einlesen“ versteht jetzt auch `[n4s_login …]`. |
 | 20.11.2026 | 2.19.0 | Sicherheit: neue Checkbox „Nach der Abmeldung zur Startseite“ (Bereich Funktionen, Standard aus), analog zur Weiterleitung nach der Anmeldung. Nach dem Logout geht es auf die Startseite statt auf die Anmeldeseite; ein ausdrücklich angegebenes Ziel (`redirect_to` im Abmelde-Link) bleibt erhalten. |
+| 20.11.2026 | 2.20.0 | Snippets: neues Snippet „Abmelden“ (`[n4s_logout]`, nur für Angemeldete) als Link oder Button (gefüllt oder umrandet) mit Einstellhilfe (Beschriftung, Seite nach der Abmeldung, Tooltip, CSS-Klasse); ohne eigene Seite gilt die Einstellung unter Sicherheit. „Einlesen“ versteht auch `[n4s_logout …]`. Reihenfolge: Abmelden steht direkt unter Anmeldung (Snippets) und die Weiterleitungen nach An- und Abmeldung stehen untereinander (Sicherheit). |
