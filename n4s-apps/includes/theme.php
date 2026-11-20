@@ -29,7 +29,8 @@ function n4s_theme_color_fields() {
 
 function n4s_theme_defaults() {
 	return array(
-		'on'      => array( 'menus' => 0, 'items' => 0, 'loginout' => 0, 'widget' => 0, 'page' => 0, 'schemes' => 0 ),
+		'on'      => array( 'menus' => 0, 'items' => 0, 'loginout' => 0, 'widget' => 0, 'above' => 0, 'page' => 0, 'schemes' => 0 ),
+		'above'   => array( 'align' => 'right', 'bg' => '', 'text' => '' ),
 		'menus'   => array(),
 		'default' => 0,
 		'schemes' => array(
@@ -56,7 +57,7 @@ function n4s_theme_opt( $reset = false ) {
 		$s = get_option( 'n4s_theme', array() );
 		$s = is_array( $s ) ? $s : array();
 		$o = $d;
-		foreach ( array( 'on', 'menus', 'default' ) as $k ) {
+		foreach ( array( 'on', 'menus', 'default', 'above' ) as $k ) {
 			if ( isset( $s[ $k ] ) ) {
 				$o[ $k ] = is_array( $d[ $k ] ) ? array_merge( $d[ $k ], (array) $s[ $k ] ) : $s[ $k ];
 			}
@@ -194,6 +195,55 @@ add_filter(
 		return array_values( $items );
 	},
 	5
+);
+
+/* ------------------------------------------------------------------ Menüleiste über dem Header */
+
+add_action(
+	'after_setup_theme',
+	function () {
+		if ( n4s_theme_on( 'above' ) ) {
+			register_nav_menus( array( 'n4s-above' => 'n4s – ' . n4s_t( 'Leiste über dem Header', 'Bar above the header' ) ) );
+		}
+	},
+	30
+);
+
+add_action(
+	'wp_body_open',
+	function () {
+		static $done = false;
+		if ( $done || ! n4s_theme_on( 'above' ) ) {
+			return;
+		}
+		$menu = wp_nav_menu(
+			array(
+				'theme_location'  => 'n4s-above',
+				'container'       => false,
+				'menu_class'      => 'n4s-above-list',
+				'menu_id'         => '',
+				'depth'           => 1,
+				'fallback_cb'     => '__return_empty_string',
+				'echo'            => false,
+			)
+		);
+		if ( ! $menu || '' === trim( wp_strip_all_tags( $menu ) ) ) {
+			return;
+		}
+		$done  = true;
+		$o     = n4s_theme_opt()['above'];
+		$bg    = sanitize_hex_color( (string) $o['bg'] );
+		$tx    = sanitize_hex_color( (string) $o['text'] );
+		$just  = array( 'left' => 'flex-start', 'center' => 'center', 'right' => 'flex-end' );
+		$al    = isset( $just[ $o['align'] ] ) ? $o['align'] : 'right';
+		$css   = '.n4s-above-header{background:' . ( $bg ? $bg : 'var(--nv-dark-bg,#1d2327)' ) . ';color:' . ( $tx ? $tx : 'var(--nv-text-dark-bg,#fff)' ) . ';font-size:.85rem;line-height:1.4}'
+			. '.n4s-above-header .n4s-above-inner{max-width:var(--container,1170px);margin:0 auto;padding:6px 15px;display:flex;justify-content:' . $just[ $al ] . '}'
+			. '.n4s-above-header .n4s-above-list{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:2px 18px}'
+			. '.n4s-above-header a{color:inherit;text-decoration:none}.n4s-above-header a:hover{text-decoration:underline}'
+			. 'body.n4s-no-header .n4s-above-header{display:none}';
+		echo '<style id="n4s-above-css">' . $css . '</style><div class="n4s-above-header"><div class="n4s-above-inner">' . $menu . '</div></div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Menü von wp_nav_menu, Farben als Hex geprüft.
+	},
+	1
 );
 
 /* ------------------------------------------------------------------ Zusatzmenü: Widget und Shortcode */
@@ -666,6 +716,7 @@ if ( is_admin() ) {
 			'menus'    => array( n4s_t( 'Menü je Anmeldestatus und Rolle', 'Menu by login status and role' ), n4s_t( 'Zeigt für Besucher, Angemeldete und einzelne Rollen unterschiedliche Menüs an derselben Menüposition.', 'Shows different menus at the same menu location for visitors, logged-in users and individual roles.' ) ),
 			'items'    => array( n4s_t( 'Sichtbarkeit je Menüpunkt', 'Visibility per menu item' ), n4s_t( 'Im Menü-Editor kann jeder Punkt für alle, Besucher, Angemeldete oder bestimmte Rollen gelten.', 'In the menu editor each item can apply to everyone, visitors, logged-in users or certain roles.' ) ),
 			'loginout' => array( n4s_t( 'Anmelden / Abmelden als Menüpunkt', 'Log in / Log out as menu item' ), n4s_t( 'Im Menü-Editor eine Box zum Hinzufügen; der Punkt schaltet je nach Status um.', 'A box in the menu editor to add it; the item switches depending on the status.' ) ),
+			'above'    => array( n4s_t( 'Menüleiste über dem Header', 'Menu bar above the header' ), n4s_t( 'Zusätzliche Menüposition „n4s – Leiste über dem Header“ (Design → Menüs). Die Leiste steht ganz oben über der Kopfzeile, auch mit Menü je Besucher, Angemeldete und Rolle.', 'Additional menu location "n4s – bar above the header" (Appearance → Menus). The bar sits at the very top above the header, also with a menu per visitor, logged-in user and role.' ) ),
 			'widget'   => array( n4s_t( 'Zusatzmenü (Widget und Shortcode)', 'Additional menu (widget and shortcode)' ), n4s_t( 'Widget „n4s Menü“ für Seitenleisten und Fußzeilen sowie Shortcode [n4s_nav] für Seiten: ein Menü mit eigener Auswahl für Besucher, Angemeldete und Rollen, senkrecht oder in einer Zeile. Funktioniert auch bei Themes mit Block-Navigation.', 'Widget "n4s Menu" for sidebars and footers and shortcode [n4s_nav] for pages: a menu with its own choice for visitors, logged-in users and roles, vertical or in a row. Also works with themes using block navigation.' ) ),
 			'page'     => array( n4s_t( 'Seitengestaltung je Seite', 'Page design per page' ), n4s_t( 'Kopfzeile, Fußzeile und Seitentitel je Seite ausblenden (Feld im Seiteneditor).', 'Hide header, footer and page title per page (field in the page editor).' ) ),
 			'schemes'  => array( n4s_t( 'Farbschemen (bis zu 3)', 'Color schemes (up to 3)' ), n4s_t( 'Drei Farbschemen definieren und je Seite wählen oder als Standard setzen.', 'Define three color schemes and choose per page or set as default.' ) ),
@@ -675,6 +726,13 @@ if ( is_admin() ) {
 			echo '<tr><td><label><input type="checkbox" name="on[' . esc_attr( $k ) . ']" value="1"' . checked( ! empty( $o['on'][ $k ] ), true, false ) . '> ' . esc_html( ! empty( $o['on'][ $k ] ) ? n4s_t( 'an', 'on' ) : n4s_t( 'aus', 'off' ) ) . '</label></td><td><strong>' . esc_html( $m[0] ) . '</strong><br><span class="description">' . esc_html( $m[1] ) . '</span></td></tr>';
 		}
 		echo '</tbody></table>';
+
+		/* Leiste über dem Header */
+		echo '<h3 style="margin-top:20px">' . esc_html( n4s_t( 'Menüleiste über dem Header', 'Menu bar above the header' ) ) . '</h3><p class="description">' . esc_html( n4s_t( 'Das Menü wählst du unten bei „Menüs je Position“ (Position „n4s – Leiste über dem Header“, auch je Rolle) oder unter Design → Menüs. Farben leer = Farben des Themes bzw. des Farbschemas (dunkle Fläche).', 'Choose the menu below under "Menus per location" (location "n4s – bar above the header", also per role) or under Appearance → Menus. Empty colors = theme or color scheme colors (dark surface).' ) ) . '</p><p><label>' . esc_html( n4s_t( 'Ausrichtung', 'Alignment' ) ) . ' <select name="above[align]">';
+		foreach ( array( 'left' => n4s_t( 'Links', 'Left' ), 'center' => n4s_t( 'Mitte', 'Center' ), 'right' => n4s_t( 'Rechts', 'Right' ) ) as $k => $l ) {
+			echo '<option value="' . esc_attr( $k ) . '"' . selected( $o['above']['align'], $k, false ) . '>' . esc_html( $l ) . '</option>';
+		}
+		echo '</select></label> &nbsp; <label>' . esc_html( n4s_t( 'Hintergrund', 'Background' ) ) . ' <input type="text" class="n4s-cp" name="above[bg]" value="' . esc_attr( $o['above']['bg'] ) . '"></label> &nbsp; <label>' . esc_html( n4s_t( 'Text', 'Text' ) ) . ' <input type="text" class="n4s-cp" name="above[text]" value="' . esc_attr( $o['above']['text'] ) . '"></label></p>';
 
 		/* Menüs je Position */
 		echo '<h3 style="margin-top:20px">' . esc_html( n4s_t( 'Menüs je Position', 'Menus per location' ) ) . '</h3><p class="description">' . esc_html( n4s_t( 'Standard = das der Position zugewiesene Menü (unter Design → Menüs). Für Angemeldete gilt zuerst die Rolle (Administrator vor Redakteur …), dann „Alle Angemeldeten“.', 'Default = the menu assigned to the location (under Appearance → Menus). For logged-in users the role applies first (administrator before editor …), then "All logged-in users".' ) ) . '</p>';
@@ -765,6 +823,13 @@ if ( is_admin() ) {
 					$in['menus'][ $loc ] = $c;
 				}
 			}
+			$pa             = isset( $_POST['above'] ) && is_array( $_POST['above'] ) ? wp_unslash( $_POST['above'] ) : array(); // phpcs:ignore WordPress.Security
+			$al             = isset( $pa['align'] ) ? sanitize_key( $pa['align'] ) : 'right';
+			$in['above']    = array(
+				'align' => in_array( $al, array( 'left', 'center', 'right' ), true ) ? $al : 'right',
+				'bg'    => isset( $pa['bg'] ) ? (string) sanitize_hex_color( trim( (string) $pa['bg'] ) ) : '',
+				'text'  => isset( $pa['text'] ) ? (string) sanitize_hex_color( trim( (string) $pa['text'] ) ) : '',
+			);
 			$dn = isset( $_POST['default'] ) ? (int) $_POST['default'] : 0; // phpcs:ignore WordPress.Security.NonceVerification
 			$in['default'] = ( $dn >= 1 && $dn <= 3 ) ? $dn : 0;
 			$ps = isset( $_POST['schemes'] ) && is_array( $_POST['schemes'] ) ? wp_unslash( $_POST['schemes'] ) : array(); // phpcs:ignore WordPress.Security
