@@ -34,8 +34,13 @@ add_action(
 	}
 );
 
-/** Dateiänderungen (Upload, Löschen, Plugin-Update) nur mit Plugin-Installationsrecht. */
+/** App-Verwaltung (Upload, Löschen, (De-)Aktivieren, Automatik, Katalog): Administratoren und Redakteure. */
 function n4s_apps_can_files() {
+	return ( current_user_can( 'install_plugins' ) || current_user_can( 'edit_pages' ) ) && ! ( defined( 'DISALLOW_FILE_MODS' ) && DISALLOW_FILE_MODS );
+}
+
+/** Plugin n4s Apps selbst aktualisieren (ZIP): nur mit Plugin-Installationsrecht. */
+function n4s_apps_can_plugin() {
 	return current_user_can( 'install_plugins' ) && ! ( defined( 'DISALLOW_FILE_MODS' ) && DISALLOW_FILE_MODS );
 }
 
@@ -44,9 +49,9 @@ function n4s_apps_can_view() {
 	return current_user_can( 'manage_options' ) || current_user_can( 'edit_pages' );
 }
 
-/** Apps aus dem Katalog installieren und aktualisieren (nur signierte Dateien): Administratoren und Redakteure. */
+/** Katalog: Updates prüfen, laden, installieren, aktualisieren (wie App-Verwaltung). */
 function n4s_apps_can_catalog() {
-	return ( current_user_can( 'install_plugins' ) || current_user_can( 'edit_pages' ) ) && ! ( defined( 'DISALLOW_FILE_MODS' ) && DISALLOW_FILE_MODS );
+	return n4s_apps_can_files();
 }
 
 function n4s_apps_notice( $type, $text ) {
@@ -325,7 +330,7 @@ add_action(
 add_action(
 	'admin_post_n4s_app_toggle',
 	function () {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! n4s_apps_can_files() ) {
 			n4s_apps_deny();
 		}
 		n4s_apps_verify( 'n4s_app_toggle' );
@@ -347,7 +352,7 @@ add_action(
 add_action(
 	'admin_post_n4s_self_update',
 	function () {
-		if ( ! n4s_apps_can_files() ) {
+		if ( ! n4s_apps_can_plugin() ) {
 			n4s_apps_deny();
 		}
 		n4s_apps_verify( 'n4s_self_update' );
@@ -728,7 +733,7 @@ function n4s_apps_shell( $tab ) {
 	echo '</nav>';
 
 	if ( ! $admin && 'apps' !== $tab ) {
-		echo '<div class="notice notice-info inline"><p>' . esc_html( n4s_t( 'Du kannst hier alles einsehen. Ändern können nur Administratoren; Redakteure dürfen im Tab Apps Apps aus dem Katalog installieren und aktualisieren.', 'You can view everything here. Only administrators can change settings; editors can install and update apps from the catalog in the Apps tab.' ) ) . '</p></div>';
+		echo '<div class="notice notice-info inline"><p>' . esc_html( n4s_t( 'Du kannst hier alles einsehen. Ändern können nur Administratoren; die App-Verwaltung im Tab Apps steht auch Redakteuren offen.', 'You can view everything here. Only administrators can change settings; the app management in the Apps tab is open to editors too.' ) ) . '</p></div>';
 	}
 	if ( 'apps' === $tab && isset( $tabs['apps'] ) ) {
 		n4s_apps_tab_apps();
@@ -789,7 +794,7 @@ function n4s_apps_tab_features() {
 
 /** Plugin-Update (WordPress/GitHub und manuell per ZIP), im Tab Funktionen. */
 function n4s_apps_update_section() {
-	$can = n4s_apps_can_files();
+	$can = n4s_apps_can_plugin();
 	if ( current_user_can( 'update_plugins' ) ) {
 		echo '<h2>' . esc_html( n4s_t( 'n4s Apps aktualisieren', 'Update n4s Apps' ) ) . '</h2>';
 		echo '<p>' . esc_html( n4s_t( 'Installierte Version: ', 'Installed version: ' ) ) . '<strong>' . esc_html( N4S_APPS_VERSION ) . '</strong></p>';
@@ -893,15 +898,12 @@ function n4s_apps_catalog_section( $can, $sigok ) {
 
 /** Tab Apps. */
 function n4s_apps_tab_apps() {
-	$can      = n4s_apps_can_files(); // Hochladen und Löschen (nur Administratoren)
-	$cat      = n4s_apps_can_catalog(); // Katalog: installieren und aktualisieren (auch Redakteure)
-	$admin    = current_user_can( 'manage_options' );
+	$can      = n4s_apps_can_files(); // App-Verwaltung (Administratoren und Redakteure)
+	$cat      = $can;
 	$disabled = (array) get_option( 'n4s_apps_disabled', array() );
 
-	if ( ! $can && $cat ) {
-		echo '<div class="notice notice-info inline"><p>' . esc_html( n4s_t( 'Du kannst Apps aus dem Katalog installieren und aktualisieren. Eigene Dateien hochladen, Apps löschen, aktivieren und deaktivieren sowie die Einstellungen sind Administratoren vorbehalten.', 'You can install and update apps from the catalog. Uploading files, deleting, activating and deactivating apps and the settings are for administrators only.' ) ) . '</p></div>';
-	} elseif ( ! $can ) {
-		echo '<div class="notice notice-warning"><p>' . esc_html( n4s_t( 'Hochladen, Aktualisieren und Löschen sind nicht möglich: Dir fehlt das Recht „Plugins installieren" oder Dateiänderungen sind gesperrt (DISALLOW_FILE_MODS).', 'Uploading, updating and deleting are not possible: you lack the "install plugins" capability or file changes are disabled (DISALLOW_FILE_MODS).' ) ) . '</p></div>';
+	if ( ! $can ) {
+		echo '<div class="notice notice-warning"><p>' . esc_html( n4s_t( 'Hochladen, Aktualisieren und Löschen sind nicht möglich: Dir fehlt das Recht (Administrator oder Redakteur nötig) oder Dateiänderungen sind gesperrt (DISALLOW_FILE_MODS).', 'Uploading, updating and deleting are not possible: you lack the permission (administrator or editor required) or file changes are disabled (DISALLOW_FILE_MODS).' ) ) . '</p></div>';
 	}
 
 	if ( $can && isset( $_GET['review'] ) ) {
@@ -967,7 +969,7 @@ function n4s_apps_tab_apps() {
 		echo '<td>' . ( $repl ? '<span style="color:#b32d2e">' . esc_html( n4s_t( 'ersetzt: Sicherheit steckt jetzt im Plugin, Datei kann gelöscht werden', 'replaced: security is now part of the plugin, file can be deleted' ) ) . '</span>' : ( $off ? '<span style="color:#b32d2e">' . esc_html( n4s_t( 'deaktiviert', 'deactivated' ) ) . '</span>' : esc_html( n4s_t( 'aktiv', 'active' ) ) ) ) . '</td>';
 		echo '<td>' . esc_html( wp_date( 'd.m.Y H:i', filemtime( $f['file'] ) ) ) . '</td>';
 		echo '<td>';
-		n4s_apps_post_form( 'n4s_app_toggle', array( 'key' => $key ), $off ? n4s_t( 'Aktivieren', 'Activate' ) : n4s_t( 'Deaktivieren', 'Deactivate' ), 'button', '', ! $admin );
+		n4s_apps_post_form( 'n4s_app_toggle', array( 'key' => $key ), $off ? n4s_t( 'Aktivieren', 'Activate' ) : n4s_t( 'Deaktivieren', 'Deactivate' ) );
 		if ( $can ) {
 			echo ' ';
 			n4s_apps_post_form(
@@ -993,7 +995,7 @@ function n4s_apps_tab_apps() {
 			}
 			if ( $s1 && isset( $usrc[ $s1 ] ) ) {
 				echo '<div class="description" style="margin:4px 0">' . esc_html( n4s_t( 'Update-Quelle: ', 'Update source: ' ) . n4s_apps_host( $usrc[ $s1 ]['base'] ) ) . ' · ';
-				n4s_apps_post_form( 'n4s_app_autoupdate', array( 'slug' => $s1 ), in_array( $s1, $auto, true ) ? n4s_t( 'Automatisch: an', 'Automatic: on' ) : n4s_t( 'Automatisch: aus', 'Automatic: off' ), 'button-link', '', ! $can );
+				n4s_apps_post_form( 'n4s_app_autoupdate', array( 'slug' => $s1 ), in_array( $s1, $auto, true ) ? n4s_t( 'Automatisch: an', 'Automatic: on' ) : n4s_t( 'Automatisch: aus', 'Automatic: off' ), 'button-link' );
 				echo '</div>';
 			} else {
 				echo '<br>';
