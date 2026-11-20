@@ -796,28 +796,29 @@ if ( is_admin() ) {
 		echo '<h2>Theme</h2><p>' . esc_html( n4s_t( 'Aktives Theme: ', 'Active theme: ' ) ) . '<strong>' . esc_html( $th->get( 'Name' ) ) . '</strong>' . ( $neve ? ' – ' . esc_html( n4s_t( 'Neve erkannt: Farbschemen färben auch Kopf- und Fußzeile, die Seitenfelder von Neve werden mitgesteuert.', 'Neve detected: color schemes also color header and footer, and Neve\'s page fields are controlled too.' ) ) : ' – ' . esc_html( n4s_t( 'Farbschemen färben die Seite und, soweit das Theme es zulässt, Kopf- und Fußzeile; die Menü-Funktionen gelten für jedes Theme.', 'Color schemes color the page and, as far as the theme allows, header and footer; the menu features work with any theme.' ) ) ) . '</p>';
 		n4s_apps_form_head( 'n4s_theme_save', false, 'display:block' );
 		$mods = array(
-			'menus'       => array( n4s_t( 'Menü je Anmeldestatus und Rolle', 'Menu by login status and role' ), n4s_t( 'Unterschiedliche Menüs je Menüposition für Besucher, Angemeldete und Rollen.', 'Different menus per menu location for visitors, logged-in users and roles.' ) ),
-			'above'       => array( n4s_t( 'Headermenü', 'Header menu' ), n4s_t( 'Menüleiste über dem Header.', 'Menu bar above the header.' ) ),
-			'abovefooter' => array( n4s_t( 'Footermenü', 'Footer menu' ), n4s_t( 'Menüleiste über dem Footer.', 'Menu bar above the footer.' ) ),
-			'widget'      => array( n4s_t( 'Zusatzmenü (Widget und Shortcode)', 'Additional menu (widget and shortcode)' ), n4s_t( 'Widget „n4s Menü“ und Shortcode [n4s_nav].', 'Widget "n4s Menu" and shortcode [n4s_nav].' ) ),
-			'items'       => array( n4s_t( 'Sichtbarkeit je Menüpunkt', 'Visibility per menu item' ), n4s_t( 'Menüpunkte für alle, Besucher, Angemeldete oder Rollen.', 'Menu items for everyone, visitors, logged-in users or roles.' ) ),
-			'loginout'    => array( n4s_t( 'Anmelden / Abmelden als Menüpunkt', 'Log in / Log out as menu item' ), n4s_t( 'Menüpunkt, der je nach Status umschaltet.', 'Menu item that switches depending on the status.' ) ),
-			'page'        => array( n4s_t( 'Seitengestaltung je Seite', 'Page design per page' ), n4s_t( 'Kopfzeile, Menüs, Fußzeile und Titel je Seite ausblenden.', 'Hide header, menus, footer and title per page.' ) ),
-			'schemes'     => array( n4s_t( 'Farbschemen (bis zu 3)', 'Color schemes (up to 3)' ), n4s_t( 'Drei Farbschemen, je Seite wählbar.', 'Three color schemes, selectable per page.' ) ),
+			'menus'       => array( n4s_t( 'Menü je Anmeldestatus und Rolle', 'Menu by login status and role' ), n4s_t( 'Zeigt für Besucher, Angemeldete und einzelne Rollen unterschiedliche Menüs an derselben Menüposition.', 'Shows different menus at the same menu location for visitors, logged-in users and individual roles.' ) ),
+			'items'       => array( n4s_t( 'Sichtbarkeit je Menüpunkt', 'Visibility per menu item' ), n4s_t( 'Im Menü-Editor kann jeder Punkt für alle, Besucher, Angemeldete oder bestimmte Rollen gelten.', 'In the menu editor each item can apply to everyone, visitors, logged-in users or certain roles.' ) ),
+			'loginout'    => array( n4s_t( 'Anmelden / Abmelden als Menüpunkt', 'Log in / Log out as menu item' ), n4s_t( 'Im Menü-Editor eine Box zum Hinzufügen; der Punkt schaltet je nach Status um.', 'A box in the menu editor to add it; the item switches depending on the status.' ) ),
+			'above'       => array( n4s_t( 'Headermenü', 'Header menu' ), n4s_t( 'Zusätzliche Menüposition „Headermenü“ (Design → Menüs). Die Leiste steht ganz oben über der Kopfzeile, auch mit Menü je Besucher, Angemeldete und Rolle.', 'Additional menu location "Header menu" (Appearance → Menus). The bar sits at the very top above the header, also with a menu per visitor, logged-in user and role.' ) ),
+			'abovefooter' => array( n4s_t( 'Footermenü', 'Footer menu' ), n4s_t( 'Zusätzliche Menüposition „Footermenü“ (Design → Menüs). Die Leiste steht über dem Footer, auch mit Menü je Besucher, Angemeldete und Rolle.', 'Additional menu location "Footer menu" (Appearance → Menus). The bar sits above the footer, also with a menu per visitor, logged-in user and role.' ) ),
+			'widget'      => array( n4s_t( 'Zusatzmenü (Widget und Shortcode)', 'Additional menu (widget and shortcode)' ), n4s_t( 'Widget „n4s Menü“ für Seitenleisten und Fußzeilen sowie Shortcode [n4s_nav] für Seiten: ein Menü mit eigener Auswahl für Besucher, Angemeldete und Rollen, senkrecht oder in einer Zeile. Funktioniert auch bei Themes mit Block-Navigation.', 'Widget "n4s Menu" for sidebars and footers and shortcode [n4s_nav] for pages: a menu with its own choice for visitors, logged-in users and roles, vertical or in a row. Also works with themes using block navigation.' ) ),
+			'page'        => array( n4s_t( 'Seitengestaltung je Seite', 'Page design per page' ), n4s_t( 'Kopfzeile, Hauptmenü, Headermenü, Footermenü, Fußzeile und Seitentitel je Seite ausblenden (Feld im Seiteneditor).', 'Hide header, main menu, header menu, footer menu, footer and page title per page (field in the page editor).' ) ),
+			'schemes'     => array( n4s_t( 'Farbschemen (bis zu 3)', 'Color schemes (up to 3)' ), n4s_t( 'Drei Farbschemen definieren und je Seite wählen oder als Standard setzen.', 'Define three color schemes and choose per page or set as default.' ) ),
 		);
-		// Ein-/Ausschalten: kompakt. Nur eingeschaltete Funktionen haben darunter ein Feld mit Einstellungen.
-		echo '<p><strong>' . esc_html( n4s_t( 'Funktionen', 'Features' ) ) . '</strong> <span class="description">' . esc_html( n4s_t( '(nach dem Speichern erscheinen die Einstellungen der eingeschalteten Funktionen unten)', '(after saving, the settings of the switched-on features appear below)' ) ) . '</span></p>';
-		echo '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:6px 16px;background:#fff;border:1px solid #c3c4c7;padding:10px 12px;margin:0 0 14px">';
+		// Funktionsübersicht: ein-/ausschalten. Darunter ein zweiter Speichern-Button (speichert wie der am Ende).
+		echo '<table class="widefat striped" style="width:100%"><thead><tr><th style="width:90px">' . esc_html( n4s_t( 'Aktiv', 'Active' ) ) . '</th><th>' . esc_html( n4s_t( 'Funktion', 'Feature' ) ) . '</th></tr></thead><tbody>';
 		foreach ( $mods as $k => $m ) {
-			echo '<label title="' . esc_attr( $m[1] ) . '"><input type="checkbox" name="on[' . esc_attr( $k ) . ']" value="1"' . checked( ! empty( $o['on'][ $k ] ), true, false ) . '> ' . esc_html( $m[0] ) . '</label>';
+			echo '<tr><td><label><input type="checkbox" name="on[' . esc_attr( $k ) . ']" value="1"' . checked( ! empty( $o['on'][ $k ] ), true, false ) . '> ' . esc_html( ! empty( $o['on'][ $k ] ) ? n4s_t( 'an', 'on' ) : n4s_t( 'aus', 'off' ) ) . '</label></td><td><strong>' . esc_html( $m[0] ) . '</strong><br><span class="description">' . esc_html( $m[1] ) . '</span></td></tr>';
 		}
-		echo '</div>';
+		echo '</tbody></table><p style="margin:10px 0 16px">';
+		submit_button( n4s_t( 'Speichern', 'Save' ), 'primary', 'submit-top', false );
+		echo ' <span class="description">' . esc_html( n4s_t( 'Nach dem Speichern erscheinen unten die Einstellungen der eingeschalteten Funktionen.', 'After saving, the settings of the switched-on features appear below.' ) ) . '</span></p>';
 
 		$panel = function ( $key, $body ) use ( $o, $mods ) {
 			if ( empty( $o['on'][ $key ] ) ) {
 				return;
 			}
-			echo '<details style="background:#fff;border:1px solid #c3c4c7;margin:-1px 0 0;padding:8px 14px"><summary style="cursor:pointer"><strong>' . esc_html( $mods[ $key ][0] ) . '</strong> – <span class="description">' . esc_html( $mods[ $key ][1] ) . '</span></summary><div style="padding:10px 0 4px">';
+			echo '<details style="background:#fff;border:1px solid #c3c4c7;margin:-1px 0 0;padding:8px 14px"><summary style="cursor:pointer"><strong>' . esc_html( $mods[ $key ][0] ) . '</strong></summary><div style="padding:10px 0 4px">';
 			$body();
 			echo '</div></details>';
 		};
