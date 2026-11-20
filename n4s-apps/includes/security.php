@@ -22,6 +22,8 @@ function n4s_sec_t( $de ) {
 	if ( null === $en ) {
 		$en = array(
 			'Sicherheit'                          => 'Security',
+			'Nach der Anmeldung zur Startseite'   => 'Go to the home page after login',
+			'Leitet nach dem Login auf die Startseite statt in den Admin-Bereich. Ein ausdrücklich angegebenes Ziel (z. B. beim Snippet Anmeldung oder beim Aufruf einer geschützten Seite) bleibt erhalten.' => 'Sends users to the home page after login instead of the admin area. An explicitly given target (e.g. from the login snippet or a protected page) is kept.',
 			'Aktive Sperren'                      => 'Active lockouts',
 			'Fehlversuche (24 Std.)'              => 'Failed attempts (24 h)',
 			'Fehlversuche (30 Tage)'              => 'Failed attempts (30 days)',
@@ -127,6 +129,7 @@ function n4s_sec_defaults() {
 		'hidever'       => 1,
 		'noposts'       => 0,
 		'nonotices'     => 0,
+		'homeredirect'  => 0,
 	);
 }
 
@@ -656,6 +659,25 @@ function n4s_sec_summary( $s, $compact = false ) {
 	echo '<line x1="0" x2="700" y1="112.5" y2="112.5" stroke="#dcdcde"/></svg>';
 }
 
+/* ---------- Weiterleitung nach der Anmeldung ---------- */
+
+/** Nach dem Login zur Startseite, außer es wurde ein eigenes Ziel angegeben (nicht leer und nicht der Admin-Bereich). */
+add_filter(
+	'login_redirect',
+	function ( $redirect_to, $requested, $user ) {
+		if ( ! n4s_sec_opt()['homeredirect'] || ! ( $user instanceof WP_User ) ) {
+			return $redirect_to;
+		}
+		$req = (string) $requested;
+		if ( '' === $req || untrailingslashit( $req ) === untrailingslashit( admin_url() ) ) {
+			return home_url( '/' );
+		}
+		return $redirect_to;
+	},
+	99,
+	3
+);
+
 /* ---------- Dashboard-Widget ---------- */
 
 function n4s_sec_dashboard_setup() {
@@ -709,6 +731,7 @@ function n4s_sec_render() {
 				'hidever'       => $cb( 'hidever' ),
 				'noposts'       => $cb( 'noposts' ),
 				'nonotices'     => $cb( 'nonotices' ),
+				'homeredirect'  => $cb( 'homeredirect' ),
 			);
 			update_option( 'n4s_lla_settings', $new, false );
 			n4s_sec_opt( true );
@@ -794,5 +817,6 @@ function n4s_sec_render() {
 	echo '</table><h3>' . esc_html( n4s_sec_t( 'Funktionen' ) ) . '</h3><table class="form-table">';
 	$c( 'noposts', n4s_sec_t( 'Beiträge deaktivieren' ), n4s_sec_t( 'Blendet „Beiträge" im Admin aus (Menü, Admin-Leiste, Dashboard, Kategorien, Schlagwörter) und liefert Beiträge, Blog-Seite, Archive, Feeds und die REST-Beiträge für Besucher als 404. Vorhandene Beiträge bleiben in der Datenbank. Voraussetzung: Die Startseite ist eine statische Seite.' ) );
 	$c( 'nonotices', n4s_sec_t( 'Admin-Meldungen ausblenden' ), n4s_sec_t( 'Blendet die Meldungen von Plugins und Themes im Admin-Bereich für alle Benutzer aus (Hinweise, Werbung, Bewertungsbitten). Meldungen von WordPress selbst (Updates, Fehler, Einstellungen) und von n4s bleiben sichtbar. Meldungen, die ein Plugin direkt in seine eigene Seite schreibt, lassen sich so nicht ausblenden.' ) );
+	$c( 'homeredirect', n4s_sec_t( 'Nach der Anmeldung zur Startseite' ), n4s_sec_t( 'Leitet nach dem Login auf die Startseite statt in den Admin-Bereich. Ein ausdrücklich angegebenes Ziel (z. B. beim Snippet Anmeldung oder beim Aufruf einer geschützten Seite) bleibt erhalten.' ) );
 	echo '</table><p><button class="button button-primary">' . esc_html( n4s_sec_t( 'Speichern' ) ) . '</button></p></form>';
 }
