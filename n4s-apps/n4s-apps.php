@@ -2,7 +2,7 @@
 /**
  * Plugin Name: n4s Apps
  * Description: n4s: Rahmen für eigene PHP-Apps und Sicherheit (Anmeldeschutz, Härtung), Funktionen einzeln schaltbar / Framework for custom PHP apps and security (login protection, hardening), features switchable. Shortcode [n4s_app name="..."].
- * Version: 2.15.0
+ * Version: 2.16.0
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: n4s
@@ -13,7 +13,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'N4S_APPS_VERSION', '2.15.0' );
+define( 'N4S_APPS_VERSION', '2.16.0' );
 define( 'N4S_APPS_FILE', __FILE__ );
 define( 'N4S_APPS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'N4S_APPS_URL', plugin_dir_url( __FILE__ ) );
@@ -114,6 +114,36 @@ function n4s_apps_disable_key( $key ) {
 	update_option( 'n4s_apps_disabled', array_values( array_unique( $list ) ) );
 }
 
+/**
+ * Test vor der Freigabe (App n4s Admin auf n4s.one): Die App legt in der Option n4s_apps_test je Benutzer
+ * { slug, until } ab. Solange der Test läuft, lädt die Seite die installierte Version dieser App nicht, wenn der
+ * Testende selbst eine Test-, REST-, Ajax- oder Formular-Anfrage stellt; so kann die Testversion dieselben
+ * Funktionen nutzen. Alle anderen Besucher sehen unverändert die installierte Version.
+ */
+function n4s_apps_test_skip_slug() {
+	static $r = false;
+	if ( false !== $r ) {
+		return $r;
+	}
+	$r = '';
+	$o = get_option( 'n4s_apps_test', array() );
+	if ( ! is_array( $o ) || ! $o || ! function_exists( 'wp_validate_logged_in_cookie' ) ) {
+		return $r;
+	}
+	$uid = (int) wp_validate_logged_in_cookie( false );
+	if ( $uid < 1 || empty( $o[ $uid ]['slug'] ) || (int) $o[ $uid ]['until'] < time() ) {
+		return $r;
+	}
+	$uri  = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+	$rest = false !== strpos( $uri, 'n4s-apps/v1/' ) || ( isset( $_GET['rest_route'] ) && false !== strpos( (string) wp_unslash( $_GET['rest_route'] ), 'n4s-apps/v1/' ) ); // phpcs:ignore WordPress.Security
+	$page = isset( $_REQUEST['n4s_adm_test'] ) && ! defined( 'WP_ADMIN' ); // phpcs:ignore WordPress.Security.NonceVerification
+	$ajax = ( defined( 'DOING_AJAX' ) && DOING_AJAX ) || 'admin-post.php' === basename( (string) wp_parse_url( $uri, PHP_URL_PATH ) );
+	if ( $rest || $page || $ajax ) {
+		$r = sanitize_key( $o[ $uid ]['slug'] );
+	}
+	return $r;
+}
+
 /** Apps laden. Eine Datei mit Fehler wird automatisch deaktiviert, damit die Seite erreichbar bleibt. */
 add_action(
 	'plugins_loaded',
@@ -136,6 +166,10 @@ add_action(
 			$key = $f['source'] . ':' . basename( $f['file'] );
 			if ( in_array( $key, $disabled, true ) || n4s_apps_replaced( $key ) ) {
 				continue;
+			}
+			$test_slug = n4s_apps_test_skip_slug();
+			if ( '' !== $test_slug && 'n4s-admin' !== $test_slug && in_array( $test_slug, n4s_apps_meta( (string) file_get_contents( $f['file'] ) )['slugs'], true ) ) {
+				continue; // Testversion läuft statt der installierten Version (siehe n4s_apps_test_skip_slug).
 			}
 			$before                = array_keys( $GLOBALS['n4s_apps'] );
 			$GLOBALS['n4s_loading'] = $key;
