@@ -167,3 +167,9 @@ Getestet am 09.11.2026 mit der Test-App `n4s-test` (1.0.0 → 1.0.1), bis zum Up
 - Administratoren (`manage_options`, `install_plugins`): alles.
 - Redakteure (`edit_pages`): Menü Plugin mit Funktionen, Sicherheit, Snippets nur zum Einsehen (Felder deaktiviert, Server prüft zusätzlich); der Tab Apps ist voll nutzbar (`n4s_apps_can_files()`: hochladen, löschen, (de)aktivieren, Automatik, Katalog laden/installieren/aktualisieren). Gesperrt: Zugangsschlüssel (Katalog speichern), Einstellungen, Plugin-Update per ZIP/WordPress (`n4s_apps_can_plugin()`), Erweiterungs-Tabs (Admin).
 - Hinweis: Wer eigene PHP-Dateien hochladen darf, kann Code auf der Seite ausführen; die Redakteur-Rolle sollte deshalb nur vertrauenswürdigen Personen gegeben werden.
+
+## Theme-Engine (ab 2.21.0, Tab „Theme“)
+
+- Datei `n4s-apps/includes/theme.php`, Option `n4s_theme` (`on` je Modul, `menus`, `default`, `schemes`); alles nur über Hooks, kein Eingriff in Theme-Dateien; nur Administratoren (Erweiterungs-Tab).
+- Module: `menus` (Filter `wp_nav_menu_args`, Priorität 1000: Besucher, Angemeldete, je Rolle, Reihenfolge der Rollen wie in WordPress), `items` (Meta `_n4s_vis`, Filter `wp_nav_menu_objects`), `loginout` (Menüpunkt mit Adresse `#n4s-login`, `#n4s-logout` oder `#n4s-loginout`, Titel `Besucher|Angemeldete`), `page` (Meta `_n4s_hide_header|footer|title`, CSS und Überschreiben der Neve-Felder `neve_meta_disable_*` per `get_post_metadata`), `schemes` (Meta `_n4s_scheme`, Körper-Klasse `n4s-scheme-N`, CSS-Variablen von Neve `--nv-*`, `--primarybtncolor`, `--headingcolor`).
+- Farbschemen: Neve setzt Kopf- und Fußzeile über `var(--nv-…)`; das Überschreiben der Variablen am `body` genügt. Bei anderen Themes gelten Hintergrund und Text der Seite (und Block-Buttons).
