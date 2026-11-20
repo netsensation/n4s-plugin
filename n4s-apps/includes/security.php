@@ -26,6 +26,8 @@ function n4s_sec_t( $de ) {
 			'Erlaubt SVG-Dateien in der Mediathek. Jede Datei wird beim Hochladen bereinigt: Skripte, Ereignis-Attribute, eingebettete Fremdobjekte, externe Verweise und Animationen werden entfernt; Dateien, die sich nicht sicher bereinigen lassen, werden abgelehnt.' => 'Allows SVG files in the media library. Every file is sanitised on upload: scripts, event attributes, embedded foreign objects, external references and animations are removed; files that cannot be sanitised safely are rejected.',
 			'Die SVG-Datei konnte nicht sicher bereinigt werden und wurde abgelehnt.' => 'The SVG file could not be sanitised safely and was rejected.',
 			'Nach der Anmeldung zur Startseite'   => 'Go to the home page after login',
+			'Nach der Abmeldung zur Startseite'   => 'Go to the home page after logout',
+			'Leitet nach dem Logout auf die Startseite statt auf die Anmeldeseite. Ein ausdrücklich angegebenes Ziel (z. B. ein Abmelde-Link mit redirect_to) bleibt erhalten.' => 'Sends users to the home page after logout instead of the login page. An explicitly given target (e.g. a logout link with redirect_to) is kept.',
 			'Leitet nach dem Login auf die Startseite statt in den Admin-Bereich. Ein ausdrücklich angegebenes Ziel (z. B. beim Snippet Anmeldung oder beim Aufruf einer geschützten Seite) bleibt erhalten.' => 'Sends users to the home page after login instead of the admin area. An explicitly given target (e.g. from the login snippet or a protected page) is kept.',
 			'Aktive Sperren'                      => 'Active lockouts',
 			'Fehlversuche (24 Std.)'              => 'Failed attempts (24 h)',
@@ -133,6 +135,7 @@ function n4s_sec_defaults() {
 		'noposts'       => 0,
 		'nonotices'     => 0,
 		'homeredirect'  => 0,
+		'logouthome'    => 0,
 		'svg'           => 0,
 	);
 }
@@ -813,6 +816,19 @@ add_filter(
 	2
 );
 
+/** Nach dem Logout zur Startseite, außer es wurde ein eigenes Ziel (redirect_to) angegeben. */
+add_filter(
+	'logout_redirect',
+	function ( $redirect_to, $requested ) {
+		if ( n4s_sec_opt()['logouthome'] && '' === (string) $requested ) {
+			return home_url( '/' );
+		}
+		return $redirect_to;
+	},
+	99,
+	2
+);
+
 /* ---------- Dashboard-Widget ---------- */
 
 function n4s_sec_dashboard_setup() {
@@ -867,6 +883,7 @@ function n4s_sec_render() {
 				'noposts'       => $cb( 'noposts' ),
 				'nonotices'     => $cb( 'nonotices' ),
 				'homeredirect'  => $cb( 'homeredirect' ),
+				'logouthome'    => $cb( 'logouthome' ),
 				'svg'           => $cb( 'svg' ),
 			);
 			update_option( 'n4s_lla_settings', $new, false );
@@ -955,5 +972,6 @@ function n4s_sec_render() {
 	$c( 'nonotices', n4s_sec_t( 'Admin-Meldungen ausblenden' ), n4s_sec_t( 'Blendet die Meldungen von Plugins und Themes im Admin-Bereich für alle Benutzer aus (Hinweise, Werbung, Bewertungsbitten). Meldungen von WordPress selbst (Updates, Fehler, Einstellungen) und von n4s bleiben sichtbar. Meldungen, die ein Plugin direkt in seine eigene Seite schreibt, lassen sich so nicht ausblenden.' ) );
 	$c( 'homeredirect', n4s_sec_t( 'Nach der Anmeldung zur Startseite' ), n4s_sec_t( 'Leitet nach dem Login auf die Startseite statt in den Admin-Bereich. Ein ausdrücklich angegebenes Ziel (z. B. beim Snippet Anmeldung oder beim Aufruf einer geschützten Seite) bleibt erhalten.' ) );
 	$c( 'svg', n4s_sec_t( 'SVG-Upload erlauben (bereinigt)' ), n4s_sec_t( 'Erlaubt SVG-Dateien in der Mediathek. Jede Datei wird beim Hochladen bereinigt: Skripte, Ereignis-Attribute, eingebettete Fremdobjekte, externe Verweise und Animationen werden entfernt; Dateien, die sich nicht sicher bereinigen lassen, werden abgelehnt.' ) );
+	$c( 'logouthome', n4s_sec_t( 'Nach der Abmeldung zur Startseite' ), n4s_sec_t( 'Leitet nach dem Logout auf die Startseite statt auf die Anmeldeseite. Ein ausdrücklich angegebenes Ziel (z. B. ein Abmelde-Link mit redirect_to) bleibt erhalten.' ) );
 	echo '</table><p><button class="button button-primary">' . esc_html( n4s_sec_t( 'Speichern' ) ) . '</button></p></form>';
 }
