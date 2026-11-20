@@ -29,7 +29,7 @@ function n4s_theme_color_fields() {
 
 function n4s_theme_defaults() {
 	return array(
-		'on'      => array( 'menus' => 0, 'items' => 0, 'loginout' => 0, 'page' => 0, 'schemes' => 0 ),
+		'on'      => array( 'menus' => 0, 'items' => 0, 'loginout' => 0, 'widget' => 0, 'page' => 0, 'schemes' => 0 ),
 		'menus'   => array(),
 		'default' => 0,
 		'schemes' => array(
@@ -196,6 +196,147 @@ add_filter(
 	5
 );
 
+/* ------------------------------------------------------------------ Zusatzmenü: Widget und Shortcode */
+
+/** Menü-Objekt aus Name, Slug oder ID. */
+function n4s_theme_menu_id( $v ) {
+	$v = trim( (string) $v );
+	if ( '' === $v || '0' === $v ) {
+		return 0;
+	}
+	$m = wp_get_nav_menu_object( ctype_digit( $v ) ? (int) $v : $v );
+	return $m ? (int) $m->term_id : 0;
+}
+
+/** Zusatzmenü als HTML. cfg: menu, gast, user, roles (Rolle => Menü), stil (liste|zeile), tiefe, klasse. */
+function n4s_theme_nav_html( $cfg ) {
+	$def  = n4s_theme_menu_id( isset( $cfg['menu'] ) ? $cfg['menu'] : 0 );
+	if ( ! is_user_logged_in() ) {
+		$id = n4s_theme_menu_id( isset( $cfg['gast'] ) ? $cfg['gast'] : 0 );
+	} else {
+		$id = n4s_theme_menu_for( array( 'user' => n4s_theme_menu_id( isset( $cfg['user'] ) ? $cfg['user'] : 0 ), 'roles' => array_map( 'n4s_theme_menu_id', (array) ( isset( $cfg['roles'] ) ? $cfg['roles'] : array() ) ) ) );
+	}
+	$id = $id ? $id : $def;
+	if ( ! $id ) {
+		return '';
+	}
+	$stil = ( isset( $cfg['stil'] ) && 'zeile' === $cfg['stil'] ) ? 'zeile' : 'liste';
+	$tief = ( isset( $cfg['tiefe'] ) && (int) $cfg['tiefe'] > 1 ) ? 2 : 1;
+	$kl   = isset( $cfg['klasse'] ) ? implode( ' ', array_filter( array_map( 'sanitize_html_class', preg_split( '/\s+/', (string) $cfg['klasse'] ) ) ) ) : '';
+	static $css = false;
+	$out = '';
+	if ( ! $css ) {
+		$css = true;
+		$out = '<style>.n4s-nav .n4s-nav-list,.n4s-nav .n4s-nav-list ul{list-style:none;margin:0;padding:0}.n4s-nav .n4s-nav-list ul{padding-left:1em}.n4s-nav a{text-decoration:none}.n4s-nav-liste .n4s-nav-list>li{margin:0 0 .4em}.n4s-nav-zeile .n4s-nav-list{display:flex;flex-wrap:wrap;gap:.4em 1.2em}.n4s-nav-zeile .n4s-nav-list ul{display:none}</style>';
+	}
+	return $out . wp_nav_menu(
+		array(
+			'menu'            => $id,
+			'container'       => 'nav',
+			'container_class' => 'n4s-nav n4s-nav-' . $stil . ( '' !== $kl ? ' ' . $kl : '' ),
+			'menu_class'      => 'n4s-nav-list',
+			'menu_id'         => '',
+			'depth'           => $tief,
+			'fallback_cb'     => '__return_empty_string',
+			'echo'            => false,
+		)
+	);
+}
+
+add_shortcode(
+	'n4s_nav',
+	function ( $atts ) {
+		if ( ! n4s_theme_on( 'widget' ) ) {
+			return '';
+		}
+		$a     = shortcode_atts( array( 'menu' => '', 'gast' => '', 'angemeldet' => '', 'rollen' => '', 'stil' => 'liste', 'tiefe' => '1', 'klasse' => '' ), $atts, 'n4s_nav' );
+		$roles = array();
+		foreach ( explode( ';', (string) $a['rollen'] ) as $pair ) { // rollen="editor:Redaktion; author:Autorenmenü"
+			$p = array_map( 'trim', explode( ':', $pair, 2 ) );
+			if ( 2 === count( $p ) && '' !== $p[0] ) {
+				$roles[ sanitize_key( $p[0] ) ] = $p[1];
+			}
+		}
+		return n4s_theme_nav_html( array( 'menu' => $a['menu'], 'gast' => $a['gast'], 'user' => $a['angemeldet'], 'roles' => $roles, 'stil' => $a['stil'], 'tiefe' => $a['tiefe'], 'klasse' => $a['klasse'] ) );
+	}
+);
+
+class N4S_Theme_Nav_Widget extends WP_Widget {
+	public function __construct() {
+		parent::__construct( 'n4s_theme_nav', 'n4s – ' . n4s_t( 'Menü', 'Menu' ), array( 'description' => n4s_t( 'Zusatzmenü, optional mit eigener Auswahl für Besucher, Angemeldete und Rollen.', 'Additional menu, optionally with its own choice for visitors, logged-in users and roles.' ) ) );
+	}
+
+	public function widget( $args, $inst ) {
+		$html = n4s_theme_nav_html( (array) $inst );
+		if ( '' === trim( $html ) ) {
+			return;
+		}
+		echo $args['before_widget']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- von WordPress bereitgestellt.
+		if ( ! empty( $inst['title'] ) ) {
+			echo $args['before_title'] . esc_html( $inst['title'] ) . $args['after_title']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		}
+		echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- von wp_nav_menu erzeugt.
+		echo $args['after_widget']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
+
+	private function menu_select( $field, $cur, $label ) {
+		echo '<p><label for="' . esc_attr( $this->get_field_id( $field ) ) . '">' . esc_html( $label ) . '</label><select class="widefat" id="' . esc_attr( $this->get_field_id( $field ) ) . '" name="' . esc_attr( $this->get_field_name( $field ) ) . '"><option value="0">–</option>';
+		foreach ( wp_get_nav_menus() as $m ) {
+			echo '<option value="' . (int) $m->term_id . '"' . selected( (int) $cur, (int) $m->term_id, false ) . '>' . esc_html( $m->name ) . '</option>';
+		}
+		echo '</select></p>';
+	}
+
+	public function form( $inst ) {
+		$inst = wp_parse_args( (array) $inst, array( 'title' => '', 'menu' => 0, 'gast' => 0, 'user' => 0, 'roles' => array(), 'stil' => 'liste', 'tiefe' => 1 ) );
+		echo '<p><label for="' . esc_attr( $this->get_field_id( 'title' ) ) . '">' . esc_html( n4s_t( 'Titel', 'Title' ) ) . '</label><input class="widefat" type="text" id="' . esc_attr( $this->get_field_id( 'title' ) ) . '" name="' . esc_attr( $this->get_field_name( 'title' ) ) . '" value="' . esc_attr( $inst['title'] ) . '"></p>';
+		$this->menu_select( 'menu', $inst['menu'], n4s_t( 'Menü (Standard)', 'Menu (default)' ) );
+		$this->menu_select( 'gast', $inst['gast'], n4s_t( 'Menü für Besucher ohne Anmeldung', 'Menu for logged-out visitors' ) );
+		$this->menu_select( 'user', $inst['user'], n4s_t( 'Menü für alle Angemeldeten', 'Menu for all logged-in users' ) );
+		echo '<details><summary>' . esc_html( n4s_t( 'Menü je Rolle', 'Menu per role' ) ) . '</summary>';
+		foreach ( wp_roles()->get_names() as $r => $label ) {
+			$this->menu_select( 'roles_' . $r, isset( $inst['roles'][ $r ] ) ? $inst['roles'][ $r ] : 0, translate_user_role( $label ) );
+		}
+		echo '</details><p><label for="' . esc_attr( $this->get_field_id( 'stil' ) ) . '">' . esc_html( n4s_t( 'Darstellung', 'Appearance' ) ) . '</label><select class="widefat" id="' . esc_attr( $this->get_field_id( 'stil' ) ) . '" name="' . esc_attr( $this->get_field_name( 'stil' ) ) . '"><option value="liste"' . selected( $inst['stil'], 'liste', false ) . '>' . esc_html( n4s_t( 'Liste (untereinander)', 'List (vertical)' ) ) . '</option><option value="zeile"' . selected( $inst['stil'], 'zeile', false ) . '>' . esc_html( n4s_t( 'Zeile (nebeneinander)', 'Row (side by side)' ) ) . '</option></select></p>';
+		echo '<p><label><input type="checkbox" name="' . esc_attr( $this->get_field_name( 'tiefe' ) ) . '" value="2"' . checked( (int) $inst['tiefe'], 2, false ) . '> ' . esc_html( n4s_t( 'Untermenüs anzeigen (Liste)', 'Show sub-menus (list)' ) ) . '</label></p>';
+	}
+
+	public function update( $new, $old ) {
+		$valid = array_map( function ( $m ) {
+			return (int) $m->term_id;
+		}, wp_get_nav_menus() );
+		$ok    = function ( $v ) use ( $valid ) {
+			$v = (int) $v;
+			return in_array( $v, $valid, true ) ? $v : 0;
+		};
+		$out   = array(
+			'title' => sanitize_text_field( isset( $new['title'] ) ? $new['title'] : '' ),
+			'menu'  => $ok( isset( $new['menu'] ) ? $new['menu'] : 0 ),
+			'gast'  => $ok( isset( $new['gast'] ) ? $new['gast'] : 0 ),
+			'user'  => $ok( isset( $new['user'] ) ? $new['user'] : 0 ),
+			'stil'  => ( isset( $new['stil'] ) && 'zeile' === $new['stil'] ) ? 'zeile' : 'liste',
+			'tiefe' => ( isset( $new['tiefe'] ) && 2 === (int) $new['tiefe'] ) ? 2 : 1,
+			'roles' => array(),
+		);
+		foreach ( array_keys( wp_roles()->get_names() ) as $r ) {
+			$v = $ok( isset( $new[ 'roles_' . $r ] ) ? $new[ 'roles_' . $r ] : 0 );
+			if ( $v ) {
+				$out['roles'][ $r ] = $v;
+			}
+		}
+		return $out;
+	}
+}
+
+add_action(
+	'widgets_init',
+	function () {
+		if ( n4s_theme_on( 'widget' ) ) {
+			register_widget( 'N4S_Theme_Nav_Widget' );
+		}
+	}
+);
+
 /* ------------------------------------------------------------------ Seitengestaltung und Farbschemen je Seite */
 
 function n4s_theme_post_types() {
@@ -258,6 +399,50 @@ add_filter(
 	3
 );
 
+/** Zusätzliche Regeln für Themes ohne Neve: Variablen der WordPress-Standardthemes (Blocktheme-Farben, Twenty Twenty-One) und Links, Überschriften, Kopf-/Fußzeile. */
+function n4s_theme_scheme_generic_css( $n, $s ) {
+	if ( 'neve' === strtolower( (string) wp_get_theme()->get_template() ) ) {
+		return '';
+	}
+	$g = function ( $k ) use ( $s ) {
+		return isset( $s[ $k ] ) ? sanitize_hex_color( $s[ $k ] ) : '';
+	};
+	$map = array(
+		'bg'     => array( '--wp--preset--color--base', '--global--color-background', '--global--color-white' ),
+		'text'   => array( '--wp--preset--color--contrast', '--global--color-primary', '--global--color-black' ),
+		'accent' => array( '--wp--preset--color--accent-1', '--wp--preset--color--primary', '--global--color-secondary' ),
+		'hover'  => array( '--wp--preset--color--accent-2', '--wp--preset--color--secondary' ),
+		'light'  => array( '--wp--preset--color--accent-5', '--wp--preset--color--tertiary', '--global--color-light-gray' ),
+	);
+	$p   = 'body.n4s-scheme-' . $n;
+	$v   = '';
+	foreach ( $map as $k => $vars ) {
+		if ( $g( $k ) ) {
+			foreach ( $vars as $var ) {
+				$v .= $var . ':' . $g( $k ) . ';';
+			}
+		}
+	}
+	$css = '' !== $v ? $p . '{' . $v . '}' : '';
+	if ( $g( 'accent' ) ) {
+		$css .= $p . ' :where(a:not([class*="button"]):not([class*="btn"])){color:' . $g( 'accent' ) . '}';
+		$css .= $p . ' :where(.wp-block-button__link,.wp-element-button,button[type="submit"],input[type="submit"]):not(.has-background){background-color:' . $g( 'accent' ) . ';' . ( $g( 'btntext' ) ? 'color:' . $g( 'btntext' ) . ';' : '' ) . '}';
+	}
+	if ( $g( 'heading' ) ) {
+		$css .= $p . ' :where(h1,h2,h3,h4,h5,h6){color:' . $g( 'heading' ) . '}';
+	}
+	if ( $g( 'bg' ) ) {
+		$css .= $p . ' :where(header.wp-block-template-part,.site-header,#masthead,header[role="banner"]){background-color:' . $g( 'bg' ) . '}';
+	}
+	if ( $g( 'dark' ) ) {
+		$css .= $p . ' :where(footer.wp-block-template-part,.site-footer,#colophon,footer[role="contentinfo"]){background-color:' . $g( 'dark' ) . ';' . ( $g( 'darktext' ) ? 'color:' . $g( 'darktext' ) . ';' : '' ) . '}';
+		if ( $g( 'darktext' ) ) {
+			$css .= $p . ' :where(footer.wp-block-template-part,.site-footer,#colophon,footer[role="contentinfo"]) :where(a,p,li,h1,h2,h3,h4,h5,h6){color:' . $g( 'darktext' ) . '}';
+		}
+	}
+	return $css;
+}
+
 /** CSS der Seite: Farbschema und Ausblenden (theme-unabhängig, mit Neve-Variablen). */
 add_action(
 	'wp_head',
@@ -281,6 +466,7 @@ add_action(
 			$css .= ( $bg ? 'background-color:' . $bg . ';' : '' ) . ( $tx ? 'color:' . $tx . ';' : '' ) . '}';
 			$ac = isset( $s['accent'] ) ? sanitize_hex_color( $s['accent'] ) : '';
 			$bt = isset( $s['btntext'] ) ? sanitize_hex_color( $s['btntext'] ) : '';
+			$css .= n4s_theme_scheme_generic_css( $n, $s );
 			if ( $ac ) { // Block-Buttons ohne eigene Farbe übernehmen die Hauptfarbe.
 				$css .= 'body.n4s-scheme-' . $n . ' .wp-block-button:not(.is-style-outline) .wp-block-button__link:not(.has-background){background-color:' . $ac . ';' . ( $bt ? 'color:' . $bt . ';' : '' ) . '}';
 			}
@@ -480,6 +666,7 @@ if ( is_admin() ) {
 			'menus'    => array( n4s_t( 'Menü je Anmeldestatus und Rolle', 'Menu by login status and role' ), n4s_t( 'Zeigt für Besucher, Angemeldete und einzelne Rollen unterschiedliche Menüs an derselben Menüposition.', 'Shows different menus at the same menu location for visitors, logged-in users and individual roles.' ) ),
 			'items'    => array( n4s_t( 'Sichtbarkeit je Menüpunkt', 'Visibility per menu item' ), n4s_t( 'Im Menü-Editor kann jeder Punkt für alle, Besucher, Angemeldete oder bestimmte Rollen gelten.', 'In the menu editor each item can apply to everyone, visitors, logged-in users or certain roles.' ) ),
 			'loginout' => array( n4s_t( 'Anmelden / Abmelden als Menüpunkt', 'Log in / Log out as menu item' ), n4s_t( 'Im Menü-Editor eine Box zum Hinzufügen; der Punkt schaltet je nach Status um.', 'A box in the menu editor to add it; the item switches depending on the status.' ) ),
+			'widget'   => array( n4s_t( 'Zusatzmenü (Widget und Shortcode)', 'Additional menu (widget and shortcode)' ), n4s_t( 'Widget „n4s Menü“ für Seitenleisten und Fußzeilen sowie Shortcode [n4s_nav] für Seiten: ein Menü mit eigener Auswahl für Besucher, Angemeldete und Rollen, senkrecht oder in einer Zeile. Funktioniert auch bei Themes mit Block-Navigation.', 'Widget "n4s Menu" for sidebars and footers and shortcode [n4s_nav] for pages: a menu with its own choice for visitors, logged-in users and roles, vertical or in a row. Also works with themes using block navigation.' ) ),
 			'page'     => array( n4s_t( 'Seitengestaltung je Seite', 'Page design per page' ), n4s_t( 'Kopfzeile, Fußzeile und Seitentitel je Seite ausblenden (Feld im Seiteneditor).', 'Hide header, footer and page title per page (field in the page editor).' ) ),
 			'schemes'  => array( n4s_t( 'Farbschemen (bis zu 3)', 'Color schemes (up to 3)' ), n4s_t( 'Drei Farbschemen definieren und je Seite wählen oder als Standard setzen.', 'Define three color schemes and choose per page or set as default.' ) ),
 		);
