@@ -32,6 +32,16 @@ function n4s_snippets_defs() {
 				'angemeldet="ausblenden"' => n4s_t( 'Nichts anzeigen, wenn schon angemeldet', 'Show nothing if already logged in' ),
 			),
 		),
+		'logout' => array(
+			'title'     => n4s_t( 'Abmelden (nur angemeldet)', 'Log out (logged-in only)' ),
+			'desc'      => n4s_t(
+				'Ein Link oder Button „Abmelden“, der nur angezeigt wird, wenn der Besucher angemeldet ist. Optional mit eigener Seite nach der Abmeldung; ohne Angabe gilt die Einstellung unter Sicherheit („Nach der Abmeldung zur Startseite“). Farben und Rundung übernimmt das Theme.',
+				'A "Log out" link or button that is only shown to logged-in visitors. Optionally with its own page after logging out; without it the setting under Security ("Go to the home page after logout") applies. The theme provides colors and corner radius.'
+			),
+			'hint'      => n4s_t( 'Neben der Anmeldung nutzbar: angemeldet erscheint „Abmelden“, sonst „Anmelden“.', 'Works next to the login snippet: logged in shows "Log out", otherwise "Log in".' ),
+			'shortcode' => '[n4s_logout]',
+			'attrs'     => array(),
+		),
 		'link'   => array(
 			'title'     => n4s_t( 'Link (nur angemeldet)', 'Link (logged-in only)' ),
 			'desc'      => n4s_t(
@@ -211,6 +221,24 @@ add_action(
 	}
 );
 
+/** Abmelden als Link oder Button, nur für angemeldete Besucher. */
+function n4s_snippets_sc_logout( $atts ) {
+	if ( ! n4s_snippet_on( 'logout' ) || ! is_user_logged_in() ) {
+		return '';
+	}
+	$a    = shortcode_atts( array( 'text' => '', 'weiterleitung' => '', 'stil' => '', 'klasse' => '', 'titel' => '' ), $atts, 'n4s_logout' );
+	$to   = n4s_snippets_url( $a['weiterleitung'] );
+	$url  = wp_logout_url( $to ); // leer: Einstellung unter Sicherheit bzw. Anmeldeseite.
+	$text = '' !== trim( $a['text'] ) ? $a['text'] : n4s_t( 'Abmelden', 'Log out' );
+	$att  = '' !== trim( $a['titel'] ) ? ' title="' . esc_attr( $a['titel'] ) . '"' : '';
+	$kl   = n4s_snippets_classes( $a['klasse'] );
+	$st   = strtolower( trim( $a['stil'] ) );
+	if ( in_array( $st, array( 'buttons', 'button', 'umrandet', 'outline' ), true ) ) {
+		return n4s_snippets_style() . n4s_snippets_btn( $url, $text, $att, $kl, in_array( $st, array( 'umrandet', 'outline' ), true ) );
+	}
+	return '<a class="n4s-snippet n4s-link' . ( $kl ? ' ' . esc_attr( $kl ) : '' ) . '" href="' . esc_url( $url ) . '"' . $att . '>' . esc_html( $text ) . '</a>';
+}
+
 /** Gemeinsame Daten für Link und Button; null, wenn nichts angezeigt werden soll. */
 function n4s_snippets_link_data( $atts, $tag ) {
 	if ( ! is_user_logged_in() ) {
@@ -299,6 +327,7 @@ add_action(
 	'init',
 	function () {
 		add_shortcode( 'n4s_login', 'n4s_snippets_sc_login' );
+		add_shortcode( 'n4s_logout', 'n4s_snippets_sc_logout' );
 		add_shortcode( 'n4s_link', 'n4s_snippets_sc_link' );
 		add_shortcode( 'n4s_button', 'n4s_snippets_sc_button' );
 		add_shortcode( 'n4s_menue', 'n4s_snippets_sc_menu' );
@@ -336,7 +365,7 @@ if ( is_admin() ) {
 			'Kleine Funktionen, die per Shortcode in jede Seite eingebunden werden können. Ein Snippet muss zuerst aktiviert werden; dann erscheint der Shortcode zum Kopieren. Ausgeschaltet bleiben die Shortcodes leer. Die Darstellung übernimmt immer das aktive Theme.',
 			'Small functions that can be embedded in any page with a shortcode. A snippet must be activated first; then its shortcode is shown for copying. When switched off, the shortcodes stay empty. The active theme always provides the design.'
 		) ) . '</p>';
-		if ( n4s_snippet_on( 'login' ) || n4s_snippet_on( 'link' ) || n4s_snippet_on( 'button' ) || n4s_snippet_on( 'menu' ) ) {
+		if ( n4s_snippet_on( 'login' ) || n4s_snippet_on( 'logout' ) || n4s_snippet_on( 'link' ) || n4s_snippet_on( 'button' ) || n4s_snippet_on( 'menu' ) ) {
 			n4s_snippets_tab_import();
 		}
 		n4s_apps_form_head( 'n4s_snippets_save', false, 'display:block' );
@@ -369,19 +398,19 @@ N4SJS;
 	/** Vorhandenen Shortcode (Link, Button, Menü) einlesen: füllt die Einstellhilfe des passenden Snippets zum Bearbeiten. */
 	function n4s_snippets_tab_import() {
 		echo '<div style="margin:0 0 14px;padding:10px 12px;background:#fff;border:1px solid #c3c4c7;width:100%;box-sizing:border-box"><strong>' . esc_html( n4s_t( 'Shortcode einlesen und bearbeiten', 'Load and edit a shortcode' ) ) . '</strong>';
-		echo '<p class="description" style="margin:2px 0 6px;max-width:none">' . esc_html( n4s_t( 'Einen vorhandenen Shortcode (Anmeldung, Link, Button oder Menü) hier einfügen und „Einlesen“ wählen. Die Einstellhilfe des passenden Snippets wird damit gefüllt; dort lässt er sich ändern und wieder kopieren.', 'Paste an existing shortcode (login, link, button or menu) here and choose "Load". The helper of the matching snippet is filled with it; change it there and copy it again.' ) ) . '</p>';
+		echo '<p class="description" style="margin:2px 0 6px;max-width:none">' . esc_html( n4s_t( 'Einen vorhandenen Shortcode (Anmeldung, Abmelden, Link, Button oder Menü) hier einfügen und „Einlesen“ wählen. Die Einstellhilfe des passenden Snippets wird damit gefüllt; dort lässt er sich ändern und wieder kopieren.', 'Paste an existing shortcode (login, logout, link, button or menu) here and choose "Load". The helper of the matching snippet is filled with it; change it there and copy it again.' ) ) . '</p>';
 		echo '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input type="text" id="n4s-imp-in" class="code" style="flex:1;min-width:240px" placeholder="[n4s_button url=&quot;/mein-bereich/&quot; text=&quot;Mein Bereich&quot;]">';
 		echo '<button type="button" class="button" id="n4s-imp-go">' . esc_html( n4s_t( 'Einlesen', 'Load' ) ) . '</button> <span id="n4s-imp-msg" class="description"></span></div></div>';
 		$js = <<<'N4SJS'
 (function(){var i=document.getElementById("n4s-imp-in"),b=document.getElementById("n4s-imp-go"),m=document.getElementById("n4s-imp-msg");if(!i||!b)return;
-var T={login:"login",link:"link",button:"button",menue:"menu"},M={bad:"%BAD%",off:"%OFF%",ok:"%OK%"};
-function go(){var v=i.value.trim(),r=/^\[\s*n4s_(login|link|button|menue)\b([^\]]*)\]?/i.exec(v);if(!r){m.textContent=M.bad;return}
+var T={login:"login",logout:"logout",link:"link",button:"button",menue:"menu"},M={bad:"%BAD%",off:"%OFF%",ok:"%OK%"};
+function go(){var v=i.value.trim(),r=/^\[\s*n4s_(login|logout|link|button|menue)\b([^\]]*)\]?/i.exec(v);if(!r){m.textContent=M.bad;return}
 var k=T[r[1].toLowerCase()],a={},re=/([a-z_]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/gi,x;while((x=re.exec(r[2]))){a[x[1].toLowerCase()]=x[2]!==undefined?x[2]:x[3]}
 var g=document.getElementById("n4s-gen-"+k);if(!g){m.textContent=M.off;return}
 g.dispatchEvent(new CustomEvent("n4s-load",{detail:a}));g.scrollIntoView({behavior:"smooth",block:"center"});m.textContent=M.ok}
 b.addEventListener("click",go);i.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();go()}})})();
 N4SJS;
-		echo '<script>' . str_replace( array( '%BAD%', '%OFF%', '%OK%' ), array( esc_js( n4s_t( 'Kein Shortcode für Anmeldung, Link, Button oder Menü erkannt.', 'No login, link, button or menu shortcode recognised.' ) ), esc_js( n4s_t( 'Dieses Snippet ist nicht aktiv: zuerst aktivieren und speichern.', 'This snippet is not active: activate and save it first.' ) ), esc_js( n4s_t( 'Eingelesen: unten in der Einstellhilfe bearbeiten.', 'Loaded: edit it in the helper below.' ) ) ), $js ) . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- feste Skriptvorlage, Werte mit esc_js.
+		echo '<script>' . str_replace( array( '%BAD%', '%OFF%', '%OK%' ), array( esc_js( n4s_t( 'Kein Shortcode für Anmeldung, Abmelden, Link, Button oder Menü erkannt.', 'No login, logout, link, button or menu shortcode recognised.' ) ), esc_js( n4s_t( 'Dieses Snippet ist nicht aktiv: zuerst aktivieren und speichern.', 'This snippet is not active: activate and save it first.' ) ), esc_js( n4s_t( 'Eingelesen: unten in der Einstellhilfe bearbeiten.', 'Loaded: edit it in the helper below.' ) ) ), $js ) . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- feste Skriptvorlage, Werte mit esc_js.
 	}
 
 	/** Shortcode (mit Kopieren-Schaltfläche) und Einstellhilfe eines aktiven Snippets. */
@@ -393,6 +422,10 @@ N4SJS;
 		$id = 'n4s-gen-' . $key;
 		if ( 'login' === $key ) {
 			n4s_snippets_tab_login_helper( $id, $d );
+			return;
+		}
+		if ( 'logout' === $key ) {
+			n4s_snippets_tab_logout_helper( $id );
 			return;
 		}
 		if ( 'menu' === $key ) {
@@ -417,6 +450,29 @@ g.addEventListener("n4s-load",function(ev){var a=ev.detail||{};["url","text","st
 g.addEventListener("input",up);g.addEventListener("change",up);up()})();
 N4SJS;
 		echo '<script>' . str_replace( array( '%ID%', '%KEY%' ), array( esc_js( $id ), esc_js( $key ) ), $js ) . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- feste Skriptvorlage, Werte mit esc_js.
+	}
+
+	/** Einstellhilfe für Abmelden: Darstellung als Auswahl, übrige Angaben als Checkboxen mit Eingabefeld, Shortcode live. */
+	function n4s_snippets_tab_logout_helper( $id ) {
+		$rows = array(
+			array( 'text', 'Abmelden', n4s_t( 'Beschriftung ändern', 'Change the label' ) ),
+			array( 'weiterleitung', '/', n4s_t( 'Seite nach der Abmeldung festlegen (sonst gilt die Einstellung unter Sicherheit)', 'Set the page after logging out (otherwise the setting under Security applies)' ) ),
+			array( 'titel', '', n4s_t( 'Tooltip', 'Tooltip' ) ),
+			array( 'klasse', '', n4s_t( 'Zusätzliche CSS-Klasse', 'Extra CSS class' ) ),
+		);
+		echo '<div id="' . esc_attr( $id ) . '" style="width:100%;margin-top:6px"><p class="description" style="margin:0 0 6px">' . esc_html( n4s_t( 'Optionale Angaben (Häkchen setzen, der Shortcode wird oben angepasst):', 'Optional settings (tick a box, the shortcode above is updated):' ) ) . '</p>';
+		echo '<div style="margin:0 0 6px"><label>' . esc_html( n4s_t( 'Darstellung', 'Appearance' ) ) . ' <select data-stil><option value="">' . esc_html( n4s_t( 'Link', 'Link' ) ) . '</option><option value="button">' . esc_html( n4s_t( 'Button gefüllt', 'Filled button' ) ) . '</option><option value="umrandet">' . esc_html( n4s_t( 'Button umrandet', 'Outlined button' ) ) . '</option></select> <code>stil</code></label></div>';
+		foreach ( $rows as $r ) {
+			echo '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 6px"><label style="min-width:340px"><input type="checkbox" data-a="' . esc_attr( $r[0] ) . '"> ' . esc_html( $r[2] ) . ' <code>' . esc_html( $r[0] ) . '</code></label><input type="text" data-av="' . esc_attr( $r[0] ) . '" value="' . esc_attr( $r[1] ) . '" disabled style="min-width:220px"></div>';
+		}
+		echo '</div>';
+		$js = <<<'N4SJS'
+(function(){var g=document.getElementById("%ID%"),o=document.querySelector('[data-n4s-out="logout"]');if(!g||!o)return;var sel=g.querySelector("[data-stil]");
+function up(){var s="[n4s_logout";if(sel.value)s+=' stil="'+sel.value+'"';g.querySelectorAll("[data-a]").forEach(function(c){var n=c.getAttribute("data-a"),t=g.querySelector('[data-av="'+n+'"]');t.disabled=!c.checked;if(!c.checked)return;var v=t.value.trim();if(v==="")return;s+=" "+n+'="'+v.replace(/"/g,"'")+'"'});o.value=s+"]"}
+g.addEventListener("n4s-load",function(ev){var a=ev.detail||{},st=(a.stil||"").toLowerCase();if(st==="buttons")st="button";if(st==="outline")st="umrandet";sel.value=(st==="button"||st==="umrandet")?st:"";g.querySelectorAll("[data-a]").forEach(function(c){var n=c.getAttribute("data-a"),t=g.querySelector('[data-av="'+n+'"]'),has=Object.prototype.hasOwnProperty.call(a,n);c.checked=has;if(has)t.value=a[n]});up()});
+g.addEventListener("input",up);g.addEventListener("change",up);up()})();
+N4SJS;
+		echo '<script>' . str_replace( '%ID%', esc_js( $id ), $js ) . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- feste Skriptvorlage, ID mit esc_js.
 	}
 
 	/** Einstellhilfe für die Anmeldung: optionale Angaben als Checkboxen (bei Textangaben mit Eingabefeld), Shortcode live. */
