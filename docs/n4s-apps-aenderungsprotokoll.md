@@ -1,6 +1,6 @@
 # n4s Apps: Änderungsprotokoll
 
-Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.28.1.
+Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.29.1.
 
 | Datum | Version | Änderung |
 |---|---|---|
@@ -54,3 +54,5 @@ Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Di
 | 21.11.2026 | 2.27.0 | Farbschemen: neue Farben für Header (Hintergrund, Text und Menü) und Footer (Hintergrund, Text). Leer = wie bisher (Header wie Seite, Footer wie Theme). Bei Neve über die Zeilenfarben, bei anderen Themes über die Elemente von Header und Footer; Headermenü und Footermenü folgen mit. Die Vorschläge lassen Header und Footer leer. |
 | 21.11.2026 | 2.28.0 | Zusatzmenü leichter zu finden und anzulegen: neuer Block „n4s – Menü“ im Block-Editor (Seiten, Beiträge, Vorlagen, Block-Widgets; Auswahl je Besucher, Angemeldete, Rolle, Darstellung); im Tab Theme erklärt das Feld „Zusatzmenü“ die Schritte (Menü anlegen mit Link auf Design → Menüs, Block, Widgets-Seite, Shortcode) und stellt den Shortcode `[n4s_nav …]` per Auswahl zusammen, mit Kopieren. |
 | 21.11.2026 | 2.28.1 | Farben vorschlagen: Der erste Vorschlag nutzt die eingelesenen Farben des Themes (bzw. des ZIP) und heißt wie das Theme (auf 20 Zeichen gekürzt); der zweite ist das Gegenstück (Dunkel bei hellem, Hell bei dunklem Theme), der dritte bleibt Komplementär. Tab Theme: Die aufgeklappten Felder bleiben nach Speichern, Zurücksetzen und Einlesen offen (Zustand wird im Browser gemerkt, nach dem Einlesen aus einem ZIP ist das Farbschema offen). |
+| 21.11.2026 | 2.29.0 | Zusatzmenü: Ausrichtung links, Mitte oder rechts (Widget, Block „n4s – Menü“, Shortcode `[n4s_nav ausrichtung="mitte"]` und Zusammenstellung im Tab Theme). |
+| 21.11.2026 | 2.29.1 | Tab Theme: Die einklappbaren Felder stehen in derselben Reihenfolge wie die Funktionen in der Übersicht. |
