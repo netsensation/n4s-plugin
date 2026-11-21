@@ -1,6 +1,6 @@
 # n4s Apps: Änderungsprotokoll
 
-Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.32.0.
+Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.33.0.
 
 | Datum | Version | Änderung |
 |---|---|---|
@@ -59,3 +59,4 @@ Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Di
 | 21.11.2026 | 2.30.0 | Theme, Zusatzmenü: Darstellung erweitert um „Button gefüllt" und „Button umrandet" (Widget, Block, Shortcode `stil=button` / `stil=umrandet`, Generator); Links im Design der Snippet-Buttons, nebeneinander, ohne Untermenüs. |
 | 21.11.2026 | 2.31.0 | Neue Funktion „KI-Anbindung (Royal MCP)“ (Tab Funktionen, Standard aus) mit Tab „KI“: n4s-Werkzeuge für KI-Assistenten über die Filter von Royal MCP. Lesend: Status, Apps, Theme, Sicherheit (ohne Mail und Sperrliste), Snippets, Farbvorschläge. Schreibend nur nach Hauptschalter und Gruppe im Tab KI (Standard aus), mit Vorher/Nachher; kein Hochladen, Löschen, Zugangsschlüssel oder Plugin-Update. |
 | 21.11.2026 | 2.32.0 | Theme, Zusatzmenü: Shortcode einlesen (vorhandenen [n4s_nav …] einfügen, die Auswahl übernimmt Menü, Darstellung, Ausrichtung, Untermenüs und Rollen, unbekannte Menüs werden gemeldet). Tab KI: Anleitung zur Einrichtung in Royal MCP mit Adresse des Connectors. |
+| 21.11.2026 | 2.33.0 | Neue Oberfläche der Verwaltung: Kopfzeile mit Logo und Version, Navigation links, Karten, Schalter statt Häkchen. Neue Tabs „Übersicht“ (Kennzahlen, Status, Ereignisse, nächste Schritte; erste Seite des Menüs), „Katalog“ (aus Apps herausgelöst) und „Update“ (aus Funktionen herausgelöst); Funktionen ist jetzt `page=n4s-features`. Gilt auch für Sicherheit, Snippets, Theme, KI und den Admin-Tab (Rahmen). |
