@@ -11,9 +11,53 @@ function n4s_apps_ui_toggle( $name, $on, $title, $desc = '' ) {
 	echo '<div class="n4s-set"><div><b>' . esc_html( $title ) . '</b>' . ( '' !== $desc ? '<small>' . esc_html( $desc ) . '</small>' : '' ) . '</div><label class="n4s-sw"><input type="checkbox" name="' . esc_attr( $name ) . '" value="1"' . checked( ! empty( $on ), true, false ) . '><span class="screen-reader-text">' . esc_html( $title ) . '</span></label></div>';
 }
 
-/** Kennzahl-Kachel. */
-function n4s_apps_ui_stat( $value, $label, $cls = '' ) {
-	return '<div class="n4s-stat ' . esc_attr( $cls ) . '"><b>' . esc_html( $value ) . '</b><span>' . esc_html( $label ) . '</span></div>';
+/**
+ * Einstellungszeile: links Überschrift und Erklärung (optional weitere Bedienelemente darunter), rechts mittig das Bedienelement.
+ * $control und $extra sind fertiges, schon escaptes HTML.
+ */
+function n4s_apps_ui_row( $title, $desc, $control, $extra = '' ) {
+	echo '<div class="n4s-set"><div><b>' . esc_html( $title ) . '</b>' . ( '' !== $desc ? '<small>' . esc_html( $desc ) . '</small>' : '' ) . $extra . '</div><div class="n4s-ctl">' . $control . '</div></div>'; // phpcs:ignore WordPress.Security.EscapeOutput -- Bausteine sind escaped.
+}
+
+/** Schalter als HTML (Checkbox mit Name). */
+function n4s_apps_ui_switch( $name, $on, $label ) {
+	return '<label class="n4s-sw"><input type="checkbox" name="' . esc_attr( $name ) . '" value="1"' . checked( ! empty( $on ), true, false ) . '><span class="screen-reader-text">' . esc_html( $label ) . '</span></label>';
+}
+
+/** Schalter, der beim Umlegen sofort eine Aktion (admin-post) ausführt. */
+function n4s_apps_ui_switch_action( $action, $fields, $on, $label ) {
+	$h = '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="n4s-swform"><input type="hidden" name="action" value="' . esc_attr( $action ) . '"><input type="hidden" name="_wpnonce" value="' . esc_attr( wp_create_nonce( $action ) ) . '">';
+	foreach ( $fields as $k => $v ) {
+		$h .= '<input type="hidden" name="' . esc_attr( $k ) . '" value="' . esc_attr( $v ) . '">';
+	}
+	return $h . '<label class="n4s-sw"><input type="checkbox" onchange="this.form.submit()"' . checked( ! empty( $on ), true, false ) . '><span class="screen-reader-text">' . esc_html( $label ) . '</span></label></form>';
+}
+
+/** Apps und Plugin bei jedem Aufruf der Übersicht und der Apps auf Updates prüfen (höchstens einmal je Minute, damit schnelles Neuladen den Katalog nicht belastet). */
+function n4s_apps_refresh_updates() {
+	static $done = false;
+	if ( $done ) {
+		return;
+	}
+	$done = true;
+	if ( get_transient( 'n4s_apps_refresh' ) ) {
+		return;
+	}
+	set_transient( 'n4s_apps_refresh', 1, 60 );
+	if ( n4s_feature_on( 'apps' ) && function_exists( 'n4s_apps_update_sources' ) && n4s_apps_update_sources() ) {
+		n4s_apps_updates( true );
+	}
+	if ( current_user_can( 'update_plugins' ) ) {
+		n4s_apps_gh_release( true );
+		delete_site_transient( 'update_plugins' );
+		wp_update_plugins();
+	}
+}
+
+/** Kennzahl-Kachel; mit $url als Link. */
+function n4s_apps_ui_stat( $value, $label, $cls = '', $url = '' ) {
+	$tag = '' !== $url ? 'a href="' . esc_url( $url ) . '"' : 'div';
+	return '<' . $tag . ' class="n4s-stat ' . esc_attr( $cls ) . '"><b>' . esc_html( $value ) . '</b><span>' . esc_html( $label ) . '</span></' . ( '' !== $url ? 'a' : 'div' ) . '>';
 }
 
 /** Status-Zeile (nur Anzeige) mit Link zum Tab. */
@@ -23,6 +67,7 @@ function n4s_apps_ui_status( $on, $title, $desc, $page ) {
 
 /** Tab Übersicht. */
 function n4s_apps_tab_overview() {
+	n4s_apps_refresh_updates();
 	$f      = n4s_features();
 	$keys   = array( 'apps', 'security', 'dup', 'mediareplace', 'login', 'theme', 'mcp' );
 	$active = 0;
@@ -58,14 +103,15 @@ function n4s_apps_tab_overview() {
 	$newer  = ( $pu && isset( $pu->response[ $self ] ) ) ? $pu->response[ $self ]->new_version : '';
 
 	echo '<h2>' . esc_html( n4s_t( 'Übersicht', 'Overview' ) ) . '</h2><p class="n4s-lead">' . esc_html( n4s_t( 'Zustand von n4s Apps auf einen Blick', 'State of n4s Apps at a glance' ) ) . '</p>';
+	$pg = function ( $page ) {
+		return admin_url( 'admin.php?page=' . $page );
+	};
 	echo '<div class="n4s-stats">';
-	echo n4s_apps_ui_stat( N4S_APPS_VERSION, n4s_t( 'Version', 'Version' ) ); // phpcs:ignore WordPress.Security.EscapeOutput -- in n4s_apps_ui_stat escaped.
-	echo n4s_apps_ui_stat( $active . ' / ' . count( $keys ), n4s_t( 'Funktionen aktiv', 'Features active' ), 'ok' ); // phpcs:ignore WordPress.Security.EscapeOutput
-	echo n4s_apps_ui_stat( $apps_on . ' / ' . $apps, n4s_t( 'Apps aktiv', 'Apps active' ) ); // phpcs:ignore WordPress.Security.EscapeOutput
-	echo n4s_apps_ui_stat( (string) $upd, n4s_t( 'App-Updates', 'App updates' ), $upd ? 'warn' : '' ); // phpcs:ignore WordPress.Security.EscapeOutput
-	if ( ! empty( $f['security'] ) ) {
-		echo n4s_apps_ui_stat( (string) $locks, n4s_t( 'Aktive Sperren', 'Active locks' ), $locks ? 'warn' : '' ); // phpcs:ignore WordPress.Security.EscapeOutput
-	}
+	echo n4s_apps_ui_stat( N4S_APPS_VERSION, $newer ? sprintf( n4s_t( 'Version (%s verfügbar)', 'Version (%s available)' ), $newer ) : n4s_t( 'Version', 'Version' ), $newer ? 'warn' : '', $pg( 'n4s' ) . '#n4s-update' ); // phpcs:ignore WordPress.Security.EscapeOutput -- in n4s_apps_ui_stat escaped.
+	echo n4s_apps_ui_stat( $active . ' / ' . count( $keys ), n4s_t( 'Funktionen aktiv', 'Features active' ), 'ok', $pg( 'n4s-features' ) ); // phpcs:ignore WordPress.Security.EscapeOutput
+	echo n4s_apps_ui_stat( $apps_on . ' / ' . $apps, n4s_t( 'Apps aktiv', 'Apps active' ), '', $pg( 'n4s-apps' ) ); // phpcs:ignore WordPress.Security.EscapeOutput
+	echo n4s_apps_ui_stat( (string) $upd, n4s_t( 'App-Updates', 'App updates' ), $upd ? 'warn' : '', $pg( 'n4s-apps' ) ); // phpcs:ignore WordPress.Security.EscapeOutput
+	echo n4s_apps_ui_stat( ! empty( $f['security'] ) ? (string) $locks : '–', n4s_t( 'Aktive Sperren', 'Active locks' ), $locks ? 'warn' : '', $pg( ! empty( $f['security'] ) ? 'n4s-security' : 'n4s-features' ) ); // phpcs:ignore WordPress.Security.EscapeOutput
 	echo '</div>';
 
 	$mcp = function_exists( 'n4s_mcp_opt' ) ? n4s_mcp_opt() : array( 'on' => 0 );
@@ -91,30 +137,17 @@ function n4s_apps_tab_overview() {
 	}
 	echo '</section></div>';
 
-	$steps = array();
-	if ( $newer ) {
-		$steps[] = array( sprintf( n4s_t( 'Plugin-Update auf %s verfügbar', 'Plugin update to %s available' ), $newer ), 'n4s-update' );
-	}
-	if ( $upd ) {
-		$steps[] = array( sprintf( n4s_t( '%d App-Update(s) im Katalog prüfen', 'Check %d app update(s) in the catalog' ), $upd ), 'n4s-catalog' );
-	}
-	if ( ! empty( $f['mcp'] ) && ! empty( $mcp['on'] ) ) {
-		$steps[] = array( n4s_t( 'KI-Schreibzugriff ist eingeschaltet: nach der Arbeit wieder ausschalten', 'AI write access is on: switch it off again after the work' ), 'n4s-ki' );
-	}
-	if ( $locks ) {
-		$steps[] = array( sprintf( n4s_t( '%d aktive IP-Sperre(n) im Anmeldeschutz prüfen', 'Check %d active IP lock(s) in the login protection' ), $locks ), 'n4s-security' );
-	}
-	echo '<section class="n4s-card"><h3>' . esc_html( n4s_t( 'Nächste Schritte', 'Next steps' ) ) . '</h3>';
-	if ( $steps ) {
-		echo '<ol class="n4s-steps">';
-		foreach ( $steps as $st ) {
-			echo '<li><a href="' . esc_url( admin_url( 'admin.php?page=' . $st[1] ) ) . '">' . esc_html( $st[0] ) . '</a></li>';
+	/* Updates: Apps und Plugin (bei jedem Aufruf geprüft) */
+	echo '<h2 id="n4s-update">' . esc_html( n4s_t( 'Update', 'Update' ) ) . '</h2>';
+	$pend = ( ! empty( $f['apps'] ) && function_exists( 'n4s_apps_update_sources' ) && n4s_apps_update_sources() ) ? (array) n4s_apps_pending_updates( false, true ) : array();
+	if ( $pend ) {
+		echo '<div class="n4s-card"><h3>' . esc_html( n4s_t( 'App-Updates', 'App updates' ) ) . '</h3>';
+		foreach ( $pend as $slug => $u ) {
+			n4s_apps_ui_row( (string) $slug, n4s_t( 'Neue Version ', 'New version ' ) . $u['version'], '<a class="button button-primary" href="' . esc_url( $pg( 'n4s-apps' ) ) . '">' . esc_html( n4s_t( 'Zu den Apps', 'Go to apps' ) ) . '</a>' );
 		}
-		echo '</ol>';
-	} else {
-		echo '<p class="n4s-lead">' . esc_html( n4s_t( 'Nichts zu tun.', 'Nothing to do.' ) ) . '</p>';
+		echo '</div>';
 	}
-	echo '</section>';
+	n4s_apps_update_section();
 }
 
 /** Stil der Verwaltung. */
@@ -136,7 +169,25 @@ function n4s_apps_ui_css() {
 .n4s-ui .n4s-main details{padding:12px 18px}.n4s-ui .n4s-main details[open]{border-color:#5b4bdb}.n4s-ui .n4s-main details>summary{cursor:pointer;font-weight:600}
 .n4s-ui .n4s-set{display:flex;align-items:center;gap:14px;padding:11px 0;border-top:1px solid #eef0f5;color:inherit;text-decoration:none}
 .n4s-ui .n4s-card>.n4s-set:first-child,.n4s-ui .n4s-card>h3+.n4s-set{border-top:0}
-.n4s-ui .n4s-set>div{flex:1}.n4s-ui .n4s-set small{display:block;color:#6b7385;font-size:12px;margin-top:1px}
+.n4s-ui .n4s-set>div:first-child{flex:1;min-width:0}.n4s-ui .n4s-set small{display:block;color:#6b7385;font-size:12px;margin-top:1px}
+.n4s-ui .n4s-set .n4s-ctl{flex:none;display:flex;align-items:center;gap:6px;margin-left:auto}
+.n4s-ui .n4s-set .n4s-extra{margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.n4s-ui .n4s-swform{margin:0;display:inline-flex}
+.n4s-ui a.n4s-stat{color:inherit;text-decoration:none;display:block}.n4s-ui a.n4s-stat:hover{border-color:#5b4bdb;box-shadow:0 1px 4px rgba(91,75,219,.15)}
+.n4s-ui .n4s-swtable{border:0!important;background:transparent!important;box-shadow:none!important}
+.n4s-ui .n4s-swtable thead{display:none}
+.n4s-ui .n4s-swtable tbody{display:block;background:#fff;border:1px solid #e3e6ee;border-radius:12px;padding:0 20px}
+.n4s-ui .n4s-swtable tr{display:flex;flex-direction:row-reverse;align-items:center;gap:14px;background:transparent!important;border-top:1px solid #eef0f5}.n4s-ui .n4s-swtable tr:first-child{border-top:0}
+.n4s-ui .n4s-swtable td{display:block;border:0!important;background:transparent!important;padding:12px 0}
+.n4s-ui .n4s-swtable td:first-child{flex:none;width:80px;text-align:right}.n4s-ui .n4s-swtable td:nth-child(2){flex:1;min-width:0}
+.n4s-ui .n4s-t-apps{max-width:1500px}
+.n4s-ui .n4s-apptbl{border:0!important;background:transparent!important;box-shadow:none!important;border-collapse:separate;border-spacing:0 8px}
+.n4s-ui .n4s-apptbl thead th{background:transparent!important;border:0!important;text-transform:uppercase;font-size:11px;letter-spacing:.04em;color:#6b7385;padding:2px 12px}
+.n4s-ui .n4s-apptbl tbody td{background:#fff!important;border-top:1px solid #e3e6ee;border-bottom:1px solid #e3e6ee;padding:12px;vertical-align:middle}
+.n4s-ui .n4s-apptbl tbody td:first-child{border-left:1px solid #e3e6ee;border-radius:12px 0 0 12px}.n4s-ui .n4s-apptbl tbody td:last-child{border-right:1px solid #e3e6ee;border-radius:0 12px 12px 0}
+.n4s-ui .n4s-apptbl tbody tr.n4s-off td{opacity:.8}
+.n4s-ui .n4s-apptbl .n4s-upd{margin-top:6px;padding:6px 8px;background:#f4f2ff;border-radius:8px}
+.n4s-ui .n4s-apptbl details{border:0;padding:0;margin:6px 0 0;background:transparent}
 .n4s-ui a.n4s-linkrow:hover{background:#fafbfd}
 .n4s-ui .n4s-stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
 .n4s-ui .n4s-stat{flex:1;min-width:130px;background:#fff;border:1px solid #e3e6ee;border-radius:12px;padding:14px 16px}

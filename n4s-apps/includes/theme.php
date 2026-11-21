@@ -1418,7 +1418,7 @@ N4SJS;
 			'schemes'     => array( n4s_t( 'Farbschemen (bis zu 3)', 'Color schemes (up to 3)' ), n4s_t( 'Drei Farbschemen definieren und je Seite wählen oder als Standard setzen.', 'Define three color schemes and choose per page or set as default.' ) ),
 		);
 		// Funktionsübersicht: ein-/ausschalten. Darunter ein zweiter Speichern-Button (speichert wie der am Ende).
-		echo '<table class="widefat striped" style="width:100%"><thead><tr><th style="width:90px">' . esc_html( n4s_t( 'Aktiv', 'Active' ) ) . '</th><th>' . esc_html( n4s_t( 'Funktion', 'Feature' ) ) . '</th></tr></thead><tbody>';
+		echo '<table class="widefat n4s-swtable" style="width:100%"><thead><tr><th style="width:90px">' . esc_html( n4s_t( 'Aktiv', 'Active' ) ) . '</th><th>' . esc_html( n4s_t( 'Funktion', 'Feature' ) ) . '</th></tr></thead><tbody>';
 		foreach ( $mods as $k => $m ) {
 			echo '<tr><td><label><input type="checkbox" name="on[' . esc_attr( $k ) . ']" value="1"' . checked( ! empty( $o['on'][ $k ] ), true, false ) . '> ' . esc_html( ! empty( $o['on'][ $k ] ) ? n4s_t( 'an', 'on' ) : n4s_t( 'aus', 'off' ) ) . '</label></td><td><strong>' . esc_html( $m[0] ) . '</strong><br><span class="description">' . esc_html( $m[1] ) . '</span></td></tr>';
 		}
