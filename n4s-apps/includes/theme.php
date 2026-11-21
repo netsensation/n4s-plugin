@@ -629,9 +629,14 @@ function n4s_theme_fit( $hex, $bg, $min, $dir ) {
 	return n4s_theme_from_hsl( $h, $s, max( 0, min( 1, $l ) ) );
 }
 
-/** Drei Vorschläge (Hell, Dunkel, Komplementär) aus einer Hauptfarbe. */
-function n4s_theme_proposals( $accent ) {
-	$accent = n4s_theme_hex( $accent );
+/**
+ * Drei Vorschläge aus einem Theme. $base: Hauptfarbe (Text) oder Farben des Themes (accent, bg, text, hover, light, dark, darktext).
+ * Mit $label (Theme-Name): 1. die eingelesenen Farben des Themes, 2. das Gegenstück (Dunkel bei hellem, Hell bei dunklem Theme), 3. Komplementär.
+ * Ohne $label: Hell, Dunkel, Komplementär aus der Hauptfarbe.
+ */
+function n4s_theme_proposals( $base, $label = '' ) {
+	$own    = is_array( $base ) ? $base : array( 'accent' => $base );
+	$accent = n4s_theme_hex( isset( $own['accent'] ) ? $own['accent'] : '' );
 	if ( '' === $accent ) {
 		return array();
 	}
@@ -666,10 +671,40 @@ function n4s_theme_proposals( $accent ) {
 		'darktext' => '#ffffff', 'btntext' => n4s_theme_on_color( $a3 ), 'heading' => '#ffffff',
 	);
 	$blank = array( 'hdrbg' => '', 'hdrtext' => '', 'ftrbg' => '', 'ftrtext' => '' ); // Header und Footer folgen dem Schema (oder dem Theme)
+	$light = array_merge( $light, $blank );
+	$dark  = array_merge( $dark, $blank );
+	$comp  = array_merge( $comp, $blank );
+	$set   = array( 'bg', 'text', 'hover', 'light', 'dark', 'darktext' );
+	$have  = false;
+	foreach ( $set as $k ) {
+		if ( ! empty( $own[ $k ] ) && n4s_theme_hex( $own[ $k ] ) ) {
+			$have = true;
+		}
+	}
+	if ( '' === $label || ! $have ) {
+		return array(
+			array( 'name' => n4s_t( 'Hell', 'Light' ), 'colors' => $light ),
+			array( 'name' => n4s_t( 'Dunkel', 'Dark' ), 'colors' => $dark ),
+			array( 'name' => n4s_t( 'Komplementär', 'Complementary' ), 'colors' => $comp ),
+		);
+	}
+	// Eigene Farben des Themes; Fehlendes wird passend zur Helligkeit ergänzt.
+	$bg    = isset( $own['bg'] ) ? n4s_theme_hex( $own['bg'] ) : '';
+	$tx    = isset( $own['text'] ) ? n4s_theme_hex( $own['text'] ) : '';
+	$is_light = $bg ? n4s_theme_lum( $bg ) > 0.35 : ( $tx ? n4s_theme_lum( $tx ) < 0.5 : true );
+	$mine  = $is_light ? $light : $dark;
+	foreach ( $set as $k ) {
+		if ( ! empty( $own[ $k ] ) && n4s_theme_hex( $own[ $k ] ) ) {
+			$mine[ $k ] = n4s_theme_hex( $own[ $k ] );
+		}
+	}
+	$mine['accent']  = $accent;
+	$mine['btntext'] = n4s_theme_on_color( $accent );
+	$name = mb_strlen( $label ) > 20 ? mb_substr( $label, 0, 19 ) . '…' : $label;
 	return array(
-		array( 'name' => n4s_t( 'Hell', 'Light' ), 'colors' => array_merge( $light, $blank ) ),
-		array( 'name' => n4s_t( 'Dunkel', 'Dark' ), 'colors' => array_merge( $dark, $blank ) ),
-		array( 'name' => n4s_t( 'Komplementär', 'Complementary' ), 'colors' => array_merge( $comp, $blank ) ),
+		array( 'name' => $name, 'colors' => $mine ),
+		$is_light ? array( 'name' => n4s_t( 'Dunkel', 'Dark' ), 'colors' => $dark ) : array( 'name' => n4s_t( 'Hell', 'Light' ), 'colors' => $light ),
+		array( 'name' => n4s_t( 'Komplementär', 'Complementary' ), 'colors' => $comp ),
 	);
 }
 
@@ -843,7 +878,21 @@ function n4s_theme_zip_colors( $path ) {
 	if ( '' === $accent ) {
 		return new WP_Error( 'n4s', n4s_t( 'Im ZIP wurde keine Hauptfarbe gefunden (weder theme.json noch Farben in CSS-Dateien).', 'No main color was found in the ZIP (neither theme.json nor colors in CSS files).' ) );
 	}
-	return array( 'name' => '' !== $name ? $name : 'ZIP', 'accent' => $accent );
+	$pick = function ( $slugs ) use ( $pal ) {
+		foreach ( $slugs as $sl ) {
+			if ( ! empty( $pal[ $sl ] ) ) {
+				return $pal[ $sl ];
+			}
+		}
+		return '';
+	};
+	$cols = array_filter( array(
+		'bg'    => $pick( array( 'base', 'background', 'white', 'site-bg' ) ),
+		'text'  => $pick( array( 'contrast', 'foreground', 'text', 'black' ) ),
+		'hover' => $pick( array( 'secondary', 'accent-2' ) ),
+		'light' => $pick( array( 'tertiary', 'accent-5', 'light', 'light-gray' ) ),
+	) );
+	return array( 'name' => '' !== $name ? $name : 'ZIP', 'accent' => $accent, 'colors' => $cols );
 }
 
 /* ------------------------------------------------------------------ Seitengestaltung und Farbschemen je Seite */
@@ -1286,7 +1335,7 @@ N4SJS;
 		}
 		echo '</p>';
 		if ( ! empty( $read['colors']['accent'] ) ) {
-			n4s_theme_proposal_cards( n4s_theme_proposals( $read['colors']['accent'] ), n4s_t( 'Vorschläge aus der Hauptfarbe des Themes', 'Suggestions from the main color of the theme' ) );
+			n4s_theme_proposal_cards( n4s_theme_proposals( $read['colors'], $read['source'] ), n4s_t( 'Vorschläge aus den Farben des Themes (1 = Farben des Themes)', 'Suggestions from the colors of the theme (1 = colors of the theme)' ) );
 		} else {
 			echo '<p class="description">' . esc_html( n4s_t( 'Im aktiven Theme wurde keine Hauptfarbe gefunden. Nutze unten ein Theme-ZIP oder trage die Farben selbst ein.', 'No main color was found in the active theme. Use a theme ZIP below or enter the colors yourself.' ) ) . '</p>';
 		}
@@ -1295,7 +1344,7 @@ N4SJS;
 		echo '<p style="margin:0 0 6px"><input type="file" name="n4s_theme_zip" accept=".zip" form="n4s-theme-upload"> <button type="submit" form="n4s-theme-upload" class="button">' . esc_html( n4s_t( 'Farben lesen', 'Read colors' ) ) . '</button></p>';
 		if ( is_array( $imp ) && ! empty( $imp['accent'] ) ) {
 			echo '<p style="margin:6px 0">' . esc_html( n4s_t( 'Aus dem ZIP „', 'From the ZIP "' ) . $imp['name'] . n4s_t( '“: Farbe 1 = ', '": color 1 = ' ) ) . '<span style="display:inline-block;width:26px;height:18px;vertical-align:middle;border:1px solid rgba(0,0,0,.2);background:' . esc_attr( $imp['accent'] ) . '"></span> <code>' . esc_html( $imp['accent'] ) . '</code></p>';
-			n4s_theme_proposal_cards( n4s_theme_proposals( $imp['accent'] ), n4s_t( 'Vorschläge aus der Farbe des ZIP', 'Suggestions from the ZIP color' ) );
+			n4s_theme_proposal_cards( n4s_theme_proposals( array_merge( isset( $imp['colors'] ) ? (array) $imp['colors'] : array(), array( 'accent' => $imp['accent'] ) ), $imp['name'] ), n4s_t( 'Vorschläge aus dem ZIP (1 = Farben des ZIP, Farbe 1 = Hauptfarbe)', 'Suggestions from the ZIP (1 = colors of the ZIP, color 1 = main color)' ) );
 		}
 		echo '</div>';
 		echo '<script>jQuery(function($){$(document).on("click",".n4s-prop-apply",function(){var b=$(this),n=b.closest("div").find(".n4s-prop-target").val(),c=JSON.parse(b.attr("data-colors")),k;$("input[name=\'schemes["+n+"][name]\']").val(b.attr("data-name"));for(k in c){var i=$("input[name=\'schemes["+n+"][colors]["+k+"]\']");if(!i.length)continue;i.val(c[k]);if(c[k]){try{i.wpColorPicker("color",c[k])}catch(e){}}else{i.closest(".wp-picker-container").find(".wp-color-result").css("background-color","")}}b.text(b.text().replace(/ ✓$/,"")+" ✓")})})</script>';
@@ -1348,7 +1397,7 @@ N4SJS;
 			if ( empty( $o['on'][ $key ] ) ) {
 				return;
 			}
-			echo '<details style="background:#fff;border:1px solid #c3c4c7;margin:-1px 0 0;padding:8px 14px"><summary style="cursor:pointer"><strong>' . esc_html( $mods[ $key ][0] ) . '</strong></summary><div style="padding:10px 0 4px">';
+			echo '<details data-n4s-p="' . esc_attr( $key ) . '" style="background:#fff;border:1px solid #c3c4c7;margin:-1px 0 0;padding:8px 14px"><summary style="cursor:pointer"><strong>' . esc_html( $mods[ $key ][0] ) . '</strong></summary><div style="padding:10px 0 4px">';
 			$body();
 			if ( in_array( $key, array( 'menus', 'above', 'abovefooter', 'items', 'page', 'schemes' ), true ) ) { // Zurücksetzen: immer der letzte Punkt
 				echo '<p style="margin:14px 0 2px;padding-top:10px;border-top:1px solid #dcdcde"><button type="submit" name="n4s_reset" value="' . esc_attr( $key ) . '" class="button" onclick="return confirm(' . esc_attr( wp_json_encode( n4s_t( 'Einstellungen dieser Funktion auf den Ausgangszustand zurücksetzen?', 'Reset the settings of this feature to their defaults?' ) ) ) . ')">' . esc_html( n4s_t( 'Zurücksetzen', 'Reset' ) ) . '</button> <span class="description">' . esc_html( $key === 'items' ? n4s_t( 'Entfernt alle Sichtbarkeits-Angaben der Menüpunkte.', 'Removes all visibility settings of the menu items.' ) : ( 'page' === $key ? n4s_t( 'Entfernt alle Ausblende-Angaben der Seiten (Kopfzeile, Menüs, Fußzeile, Titel).', 'Removes all hide settings of the pages (header, menus, footer, title).' ) : n4s_t( 'Stellt die Standardwerte dieser Funktion wieder her.', 'Restores the default values of this feature.' ) ) ) . '</span></p>';
@@ -1378,7 +1427,7 @@ N4SJS;
 				}
 				foreach ( $locs as $loc => $label ) {
 					$c = isset( $o['menus'][ $loc ] ) ? $o['menus'][ $loc ] : array();
-					echo '<details style="border:1px solid #dcdcde;margin:-1px 0 0;padding:6px 12px"' . ( $c ? ' open' : '' ) . '><summary><strong>' . esc_html( $label ) . '</strong> <code>' . esc_html( $loc ) . '</code></summary><table class="form-table" style="margin:6px 0"><tbody>';
+					echo '<details data-n4s-p="loc:' . esc_attr( $loc ) . '" style="border:1px solid #dcdcde;margin:-1px 0 0;padding:6px 12px"' . ( $c ? ' open' : '' ) . '><summary><strong>' . esc_html( $label ) . '</strong> <code>' . esc_html( $loc ) . '</code></summary><table class="form-table" style="margin:6px 0"><tbody>';
 					echo '<tr><th>' . esc_html( n4s_t( 'Besucher ohne Anmeldung', 'Logged-out visitors' ) ) . '</th><td>' . n4s_theme_menu_select( 'menus[' . $loc . '][gast]', isset( $c['gast'] ) ? $c['gast'] : 0 ) . '</td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Select-HTML selbst escaped.
 					echo '<tr><th>' . esc_html( n4s_t( 'Alle Angemeldeten', 'All logged-in users' ) ) . '</th><td>' . n4s_theme_menu_select( 'menus[' . $loc . '][user]', isset( $c['user'] ) ? $c['user'] : 0 ) . '</td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 					foreach ( wp_roles()->get_names() as $r => $rl ) {
@@ -1428,7 +1477,7 @@ N4SJS;
 		);
 		echo '<p style="margin-top:14px">';
 		submit_button( n4s_t( 'Speichern', 'Save' ), 'primary', 'submit', false );
-		echo '</p></form><form id="n4s-theme-upload" method="post" enctype="multipart/form-data" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="n4s_theme_import"><input type="hidden" name="_wpnonce" value="' . esc_attr( wp_create_nonce( 'n4s_theme_import' ) ) . '"></form><script>jQuery(function($){$(".n4s-cp").wpColorPicker({clear:function(){}})});</script>';
+		echo '</p></form><script>(function(){var K="n4s_theme_open",m={};try{m=JSON.parse(localStorage.getItem(K)||"{}")}catch(e){}if(/[?&]open=schemes/.test(location.search))m.schemes=1;var d=document.querySelectorAll("details[data-n4s-p]");for(var i=0;i<d.length;i++){(function(e){var k=e.getAttribute("data-n4s-p");if(Object.prototype.hasOwnProperty.call(m,k))e.open=!!m[k];e.addEventListener("toggle",function(){m[k]=e.open?1:0;try{localStorage.setItem(K,JSON.stringify(m))}catch(x){}})})(d[i])}document.addEventListener("submit",function(){for(var j=0;j<d.length;j++){m[d[j].getAttribute("data-n4s-p")]=d[j].open?1:0}try{localStorage.setItem(K,JSON.stringify(m))}catch(x){}},true)})();</script><form id="n4s-theme-upload" method="post" enctype="multipart/form-data" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="n4s_theme_import"><input type="hidden" name="_wpnonce" value="' . esc_attr( wp_create_nonce( 'n4s_theme_import' ) ) . '"></form><script>jQuery(function($){$(".n4s-cp").wpColorPicker({clear:function(){}})});</script>';
 	}
 
 	/** Theme-ZIP hochladen: nur lesen (theme.json, CSS), Farbe 1 merken. */
@@ -1451,7 +1500,8 @@ N4SJS;
 			}
 			set_transient( 'n4s_theme_import_' . get_current_user_id(), $r, 30 * MINUTE_IN_SECONDS );
 			n4s_apps_notice( 'success', sprintf( n4s_t( 'Farbe 1 aus „%1$s“: %2$s. Die Vorschläge stehen bei den Farbschemen.', 'Color 1 from "%1$s": %2$s. The suggestions are in the color schemes.' ), $r['name'], $r['accent'] ) );
-			n4s_apps_back( false, 'n4s-theme' );
+			wp_safe_redirect( admin_url( 'admin.php?page=n4s-theme&open=schemes' ) );
+			exit;
 		}
 	);
 
