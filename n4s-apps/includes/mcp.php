@@ -432,7 +432,8 @@ if ( is_admin() ) {
 		n4s_apps_form_head( 'n4s_mcp_save', false, 'display:block' );
 		echo '<h3>' . esc_html( n4s_t( 'Schreibzugriff', 'Write access' ) ) . '</h3>';
 		echo '<p class="description" style="max-width:900px">' . esc_html( n4s_t( 'Standard: aus. Schreibende Werkzeuge werden erst angeboten, wenn der Hauptschalter und die jeweilige Gruppe eingeschaltet sind. Jede Änderung meldet den Zustand davor und danach.', 'Default: off. Write tools are only offered when the main switch and the group are on. Each change reports the state before and after.' ) ) . '</p>';
-		echo '<p><label><input type="checkbox" name="on" value="1"' . checked( ! empty( $o['on'] ), true, false ) . '> <strong>' . esc_html( n4s_t( 'Schreibzugriff erlauben (Hauptschalter)', 'Allow write access (main switch)' ) ) . '</strong></label></p>';
+		echo '<div class="n4s-card">';
+		n4s_apps_ui_toggle( 'on', ! empty( $o['on'] ), n4s_t( 'Schreibzugriff erlauben (Hauptschalter)', 'Allow write access (main switch)' ), n4s_t( 'Standard: aus', 'Default: off' ) );
 		foreach ( n4s_mcp_groups() as $g => $label ) {
 			$tools = array();
 			foreach ( n4s_mcp_defs() as $name => $d ) {
@@ -440,8 +441,9 @@ if ( is_admin() ) {
 					$tools[] = $name;
 				}
 			}
-			echo '<p style="margin-left:22px"><label><input type="checkbox" name="groups[' . esc_attr( $g ) . ']" value="1"' . checked( ! empty( $o['groups'][ $g ] ), true, false ) . '> ' . esc_html( $label ) . '</label><br><span class="description"><code>' . esc_html( implode( '</code>, <code>', $tools ) ) . '</code></span></p>';
+			n4s_apps_ui_toggle( 'groups[' . $g . ']', ! empty( $o['groups'][ $g ] ), $label, implode( ', ', $tools ) );
 		}
+		echo '</div>';
 		echo '<p class="description" style="max-width:900px">' . esc_html( n4s_t( 'Nicht möglich, auch nicht mit Schreibzugriff: Code hochladen oder ändern, Apps löschen, Zugangsschlüssel, Plugin-Update.', 'Not possible, even with write access: uploading or changing code, deleting apps, access keys, plugin update.' ) ) . '</p>';
 		submit_button( n4s_t( 'Speichern', 'Save' ), 'primary', 'submit', true );
 		echo '</form>';
