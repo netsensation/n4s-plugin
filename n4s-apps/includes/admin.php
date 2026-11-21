@@ -425,6 +425,7 @@ add_action(
 				'mediareplace' => empty( $_POST['mediareplace'] ) ? 0 : 1,
 				'login'        => empty( $_POST['login'] ) ? 0 : 1,
 				'theme'        => empty( $_POST['theme'] ) ? 0 : 1,
+				'mcp'          => empty( $_POST['mcp'] ) ? 0 : 1,
 			)
 		);
 		n4s_apps_notice( 'success', n4s_t( 'Funktionen gespeichert.', 'Features saved.' ) );
@@ -782,6 +783,10 @@ function n4s_apps_tab_features() {
 		'theme'        => array(
 			n4s_t( 'Theme-Engine', 'Theme engine' ),
 			n4s_t( 'Neuer Tab „Theme“: Menü je Anmeldestatus und Rolle, Sichtbarkeit je Menüpunkt, Anmelden/Abmelden als Menüpunkt, Zusatzmenü-Widget und Shortcode, Seitengestaltung je Seite und bis zu drei Farbschemen. Ausgeschaltet: Tab und alle Theme-Funktionen sind inaktiv; Einstellungen bleiben gespeichert.', 'New tab "Theme": menu by login status and role, visibility per menu item, log in/out as menu item, additional menu widget and shortcode, page design per page and up to three color schemes. Switched off: the tab and all theme features are inactive; settings stay saved.' ),
+		),
+		'mcp'          => array(
+			n4s_t( 'KI-Anbindung (Royal MCP)', 'AI connection (Royal MCP)' ),
+			n4s_t( 'Neuer Tab „KI“: eigene Werkzeuge von n4s Apps für KI-Assistenten über das Plugin Royal MCP (Status, Theme, Snippets, Sicherheit lesen; Änderungen nur nach Freigabe im Tab, standardmäßig aus). Royal MCP wird separat installiert und eingerichtet.', 'New tab "AI": n4s Apps tools for AI assistants via the Royal MCP plugin (read status, theme, snippets, security; changes only after approval in the tab, off by default). Royal MCP is installed and set up separately.' ),
 		),
 		'login'        => array(
 			n4s_t( 'Eigenes Login-Design', 'Custom login design' ),
