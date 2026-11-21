@@ -94,6 +94,25 @@ function n4s_theme_menu_for( $cfg ) {
 	return empty( $cfg['user'] ) ? 0 : (int) $cfg['user'];
 }
 
+/** Wahl für eine Menüposition: 0 = Standard, -1 = kein Menü, sonst Menü-ID. */
+function n4s_theme_menu_choice( $location ) {
+	$cfg = n4s_theme_opt()['menus'];
+	return empty( $cfg[ $location ] ) ? 0 : (int) n4s_theme_menu_for( $cfg[ $location ] );
+}
+
+/** „Kein Menü“: die Position liefert nichts. */
+add_filter(
+	'pre_wp_nav_menu',
+	function ( $out, $args ) {
+		if ( n4s_theme_on( 'menus' ) && ! empty( $args->theme_location ) && n4s_theme_menu_choice( $args->theme_location ) < 0 ) {
+			return '';
+		}
+		return $out;
+	},
+	9,
+	2
+);
+
 add_filter(
 	'wp_nav_menu_args',
 	function ( $args ) {
@@ -311,6 +330,9 @@ function n4s_theme_menu_id( $v ) {
 	if ( '' === $v || '0' === $v ) {
 		return 0;
 	}
+	if ( in_array( strtolower( $v ), array( '-1', 'kein', 'none' ), true ) ) {
+		return -1; // kein Menü
+	}
 	$m = wp_get_nav_menu_object( ctype_digit( $v ) ? (int) $v : $v );
 	return $m ? (int) $m->term_id : 0;
 }
@@ -324,8 +346,8 @@ function n4s_theme_nav_html( $cfg ) {
 		$id = n4s_theme_menu_for( array( 'user' => n4s_theme_menu_id( isset( $cfg['user'] ) ? $cfg['user'] : 0 ), 'roles' => array_map( 'n4s_theme_menu_id', (array) ( isset( $cfg['roles'] ) ? $cfg['roles'] : array() ) ) ) );
 	}
 	$id = $id ? $id : $def;
-	if ( ! $id ) {
-		return '';
+	if ( $id <= 0 ) {
+		return ''; // kein Menü gewählt oder keines vorhanden
 	}
 	$stil = ( isset( $cfg['stil'] ) && 'zeile' === $cfg['stil'] ) ? 'zeile' : 'liste';
 	$tief = ( isset( $cfg['tiefe'] ) && (int) $cfg['tiefe'] > 1 ) ? 2 : 1;
@@ -387,7 +409,7 @@ class N4S_Theme_Nav_Widget extends WP_Widget {
 	}
 
 	private function menu_select( $field, $cur, $label ) {
-		echo '<p><label for="' . esc_attr( $this->get_field_id( $field ) ) . '">' . esc_html( $label ) . '</label><select class="widefat" id="' . esc_attr( $this->get_field_id( $field ) ) . '" name="' . esc_attr( $this->get_field_name( $field ) ) . '"><option value="0">–</option>';
+		echo '<p><label for="' . esc_attr( $this->get_field_id( $field ) ) . '">' . esc_html( $label ) . '</label><select class="widefat" id="' . esc_attr( $this->get_field_id( $field ) ) . '" name="' . esc_attr( $this->get_field_name( $field ) ) . '"><option value="0">–</option><option value="-1"' . selected( (int) $cur, -1, false ) . '>' . esc_html( n4s_t( 'Kein Menü', 'No menu' ) ) . '</option>';
 		foreach ( wp_get_nav_menus() as $m ) {
 			echo '<option value="' . (int) $m->term_id . '"' . selected( (int) $cur, (int) $m->term_id, false ) . '>' . esc_html( $m->name ) . '</option>';
 		}
@@ -414,7 +436,7 @@ class N4S_Theme_Nav_Widget extends WP_Widget {
 		}, wp_get_nav_menus() );
 		$ok    = function ( $v ) use ( $valid ) {
 			$v = (int) $v;
-			return in_array( $v, $valid, true ) ? $v : 0;
+			return ( -1 === $v || in_array( $v, $valid, true ) ) ? $v : 0; // -1 = kein Menü
 		};
 		$out   = array(
 			'title' => sanitize_text_field( isset( $new['title'] ) ? $new['title'] : '' ),
@@ -778,7 +800,7 @@ if ( is_admin() ) {
 
 	/** Menü-Auswahl (Select) für die Einstellungen. */
 	function n4s_theme_menu_select( $name, $cur ) {
-		$h = '<select name="' . esc_attr( $name ) . '"><option value="0">' . esc_html( n4s_t( 'Standard', 'Default' ) ) . '</option>';
+		$h = '<select name="' . esc_attr( $name ) . '"><option value="0">' . esc_html( n4s_t( 'Standard', 'Default' ) ) . '</option><option value="-1"' . selected( (int) $cur, -1, false ) . '>' . esc_html( n4s_t( 'Kein Menü', 'No menu' ) ) . '</option>';
 		foreach ( wp_get_nav_menus() as $m ) {
 			$h .= '<option value="' . (int) $m->term_id . '"' . selected( (int) $cur, (int) $m->term_id, false ) . '>' . esc_html( $m->name ) . '</option>';
 		}
@@ -838,7 +860,7 @@ if ( is_admin() ) {
 		$panel(
 			'menus',
 			function () use ( $o ) {
-				echo '<input type="hidden" name="has[menus]" value="1"><p class="description">' . esc_html( n4s_t( 'Standard = das der Position zugewiesene Menü (unter Design → Menüs). Für Angemeldete gilt zuerst die Rolle (Administrator vor Redakteur …), dann „Alle Angemeldeten“.', 'Default = the menu assigned to the location (under Appearance → Menus). For logged-in users the role applies first (administrator before editor …), then "All logged-in users".' ) ) . '</p>';
+				echo '<input type="hidden" name="has[menus]" value="1"><p class="description">' . esc_html( n4s_t( 'Standard = das der Position zugewiesene Menü (unter Design → Menüs), „Kein Menü“ = an dieser Position wird nichts angezeigt. Für Angemeldete gilt zuerst die Rolle (Administrator vor Redakteur …), dann „Alle Angemeldeten“.', 'Default = the menu assigned to the location (under Appearance → Menus), "No menu" = nothing is shown at this location. For logged-in users the role applies first (administrator before editor …), then "All logged-in users".' ) ) . '</p>';
 				$locs = get_registered_nav_menus();
 				if ( ! $locs ) {
 					echo '<p>' . esc_html( n4s_t( 'Das Theme registriert keine Menüpositionen.', 'The theme registers no menu locations.' ) ) . '</p>';
@@ -867,7 +889,7 @@ if ( is_admin() ) {
 				$bar_settings( 'abovefooter', array( n4s_t( 'Footermenü (über dem Footer)', 'Footer menu (above the footer)' ), n4s_t( 'Fußzeile', 'footer' ) ) );
 			}
 		);
-		$panel( 'widget', $help( n4s_t( 'Unter Design → Widgets gibt es das Widget „n4s Menü“ (Seitenleisten, Fußzeilen). Für Seiten gilt der Shortcode [n4s_nav menu="Name" gast="Menü" angemeldet="Menü" rollen="editor:Menü; author:Menü" stil="zeile" tiefe="2"]. Beide wählen das Menü je Besucher, Angemeldete und Rolle und funktionieren auch bei Themes mit Block-Navigation.', 'Under Appearance → Widgets there is the widget "n4s Menu" (sidebars, footers). For pages use the shortcode [n4s_nav menu="Name" gast="menu" angemeldet="menu" rollen="editor:menu; author:menu" stil="zeile" tiefe="2"]. Both choose the menu per visitor, logged-in user and role and also work with themes using block navigation.' ) ) );
+		$panel( 'widget', $help( n4s_t( 'Unter Design → Widgets gibt es das Widget „n4s Menü“ (Seitenleisten, Fußzeilen). Für Seiten gilt der Shortcode [n4s_nav menu="Name" gast="Menü" angemeldet="Menü" rollen="editor:Menü; author:Menü" stil="zeile" tiefe="2"] („kein“ statt eines Menünamens blendet das Menü aus). Beide wählen das Menü je Besucher, Angemeldete und Rolle und funktionieren auch bei Themes mit Block-Navigation.', 'Under Appearance → Widgets there is the widget "n4s Menu" (sidebars, footers). For pages use the shortcode [n4s_nav menu="Name" gast="menu" angemeldet="menu" rollen="editor:menu; author:menu" stil="zeile" tiefe="2"] ("none" instead of a menu name hides the menu). Both choose the menu per visitor, logged-in user and role and also work with themes using block navigation.' ) ) );
 		$panel( 'items', $help( n4s_t( 'Im Menü-Editor (Design → Menüs) hat jeder Menüpunkt das Feld „n4s – Sichtbar für“: alle Besucher, nur Besucher ohne Anmeldung, nur Angemeldete oder nur bestimmte Rollen.', 'In the menu editor (Appearance → Menus) each menu item has the field "n4s – Visible for": all visitors, logged-out visitors only, logged-in users only or only certain roles.' ) ) );
 		$panel( 'loginout', $help( n4s_t( 'Im Menü-Editor (Design → Menüs) gibt es die Box „n4s – Anmelden / Abmelden“. Der Menüpunkt „Anmelden|Abmelden“ zeigt links den Text für Besucher und rechts den für Angemeldete.', 'In the menu editor (Appearance → Menus) there is the box "n4s – Log in / Log out". The item "Log in|Log out" shows the text on the left for visitors and on the right for logged-in users.' ) ) );
 		$panel( 'page', $help( n4s_t( 'Im Editor jeder Seite gibt es die Box „n4s – Seitengestaltung“: Kopfzeile, Hauptmenü, Headermenü, Footermenü, Fußzeile und Seitentitel einzeln ausblenden.', 'In the editor of every page there is the box "n4s – Page design": hide header, main menu, header menu, footer menu, footer and page title individually.' ) ) );
@@ -923,7 +945,7 @@ if ( is_admin() ) {
 				}, wp_get_nav_menus() );
 				$ok_menu     = function ( $v ) use ( $valid_menus ) {
 					$v = (int) $v;
-					return in_array( $v, $valid_menus, true ) ? $v : 0;
+					return ( -1 === $v || in_array( $v, $valid_menus, true ) ) ? $v : 0; // -1 = kein Menü
 				};
 				$roles       = array_keys( wp_roles()->get_names() );
 				$posted      = isset( $_POST['menus'] ) && is_array( $_POST['menus'] ) ? wp_unslash( $_POST['menus'] ) : array(); // phpcs:ignore WordPress.Security
