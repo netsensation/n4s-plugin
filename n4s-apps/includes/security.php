@@ -903,7 +903,7 @@ function n4s_sec_render() {
 	$o = n4s_sec_opt();
 	$s = n4s_sec_state();
 	$f = function ( $k, $label, $suffix = '' ) use ( $o ) {
-		n4s_apps_ui_row( $label, '', '<input type="number" min="1" id="' . esc_attr( $k ) . '" name="' . esc_attr( $k ) . '" value="' . esc_attr( $o[ $k ] ) . '" class="small-text"> ' . esc_html( $suffix ) );
+		n4s_apps_ui_row( $label, '', '<span class="n4s-num"><input type="number" min="1" id="' . esc_attr( $k ) . '" name="' . esc_attr( $k ) . '" value="' . esc_attr( $o[ $k ] ) . '" class="small-text"><span>' . esc_html( $suffix ) . '</span></span>' );
 	};
 	$c = function ( $k, $label, $desc ) use ( $o ) {
 		n4s_apps_ui_row( $label, $desc, n4s_apps_ui_switch( $k, $o[ $k ], $label ) );
