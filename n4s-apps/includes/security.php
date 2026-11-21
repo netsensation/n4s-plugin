@@ -914,7 +914,7 @@ function n4s_sec_render() {
 	n4s_sec_summary( $s );
 	echo '<p>' . esc_html( n4s_sec_t( 'Ihre erkannte IP-Adresse:' ) ) . ' <code>' . esc_html( n4s_sec_ip() ) . '</code></p>';
 
-	echo '<h2>' . esc_html( n4s_sec_t( 'Aktive Sperren' ) ) . '</h2>';
+	echo '<div class="n4s-card"><h3>' . esc_html( n4s_sec_t( 'Aktive Sperren' ) ) . '</h3>';
 	if ( ! $s['locks'] ) {
 		echo '<p>' . esc_html( n4s_sec_t( 'Keine.' ) ) . '</p>';
 	} else {
@@ -926,8 +926,9 @@ function n4s_sec_render() {
 		}
 		echo '</tbody></table>';
 	}
+	echo '</div>';
 
-	echo '<h2>' . esc_html( n4s_sec_t( 'Protokoll (letzte 30 Tage, max. 200)' ) ) . '</h2>';
+	echo '<div class="n4s-card"><h3>' . esc_html( n4s_sec_t( 'Protokoll (letzte 30 Tage, max. 200)' ) ) . '</h3>';
 	if ( ! $s['log'] ) {
 		echo '<p>' . esc_html( n4s_sec_t( 'Leer.' ) ) . '</p>';
 	} else {
@@ -940,8 +941,9 @@ function n4s_sec_render() {
 		wp_nonce_field( 'n4s_sec' );
 		echo '<input type="hidden" name="n4s_sec_action" value="clearlog"><button class="button">' . esc_html( n4s_sec_t( 'Protokoll leeren' ) ) . '</button></form>';
 	}
+	echo '</div>';
 
-	echo '<hr style="margin:28px 0 8px"><h2>' . esc_html( n4s_sec_t( 'Einstellungen' ) ) . '</h2>';
+	echo '<h2>' . esc_html( n4s_sec_t( 'Einstellungen' ) ) . '</h2>';
 	echo '<form method="post">';
 	wp_nonce_field( 'n4s_sec' );
 	echo '<input type="hidden" name="n4s_sec_action" value="save">';

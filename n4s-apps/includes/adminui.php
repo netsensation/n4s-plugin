@@ -8,7 +8,7 @@ defined( 'ABSPATH' ) || exit;
 
 /** Schalterzeile: Titel, Beschreibung, Schalter (Checkbox mit Name). */
 function n4s_apps_ui_toggle( $name, $on, $title, $desc = '' ) {
-	echo '<div class="n4s-row"><div><b>' . esc_html( $title ) . '</b>' . ( '' !== $desc ? '<small>' . esc_html( $desc ) . '</small>' : '' ) . '</div><label class="n4s-sw"><input type="checkbox" name="' . esc_attr( $name ) . '" value="1"' . checked( ! empty( $on ), true, false ) . '><i></i><span class="screen-reader-text">' . esc_html( $title ) . '</span></label></div>';
+	echo '<div class="n4s-set"><div><b>' . esc_html( $title ) . '</b>' . ( '' !== $desc ? '<small>' . esc_html( $desc ) . '</small>' : '' ) . '</div><label class="n4s-sw"><input type="checkbox" name="' . esc_attr( $name ) . '" value="1"' . checked( ! empty( $on ), true, false ) . '><span class="screen-reader-text">' . esc_html( $title ) . '</span></label></div>';
 }
 
 /** Kennzahl-Kachel. */
@@ -18,7 +18,7 @@ function n4s_apps_ui_stat( $value, $label, $cls = '' ) {
 
 /** Status-Zeile (nur Anzeige) mit Link zum Tab. */
 function n4s_apps_ui_status( $on, $title, $desc, $page ) {
-	return '<a class="n4s-row n4s-linkrow" href="' . esc_url( admin_url( 'admin.php?page=' . $page ) ) . '"><div><b>' . esc_html( $title ) . '</b><small>' . esc_html( $desc ) . '</small></div><span class="n4s-pill ' . ( $on ? 'g' : 'x' ) . '">' . esc_html( $on ? n4s_t( 'an', 'on' ) : n4s_t( 'aus', 'off' ) ) . '</span></a>';
+	return '<a class="n4s-set n4s-linkrow" href="' . esc_url( admin_url( 'admin.php?page=' . $page ) ) . '"><div><b>' . esc_html( $title ) . '</b><small>' . esc_html( $desc ) . '</small></div><span class="n4s-pill ' . ( $on ? 'g' : 'x' ) . '">' . esc_html( $on ? n4s_t( 'an', 'on' ) : n4s_t( 'aus', 'off' ) ) . '</span></a>';
 }
 
 /** Tab Übersicht. */
@@ -127,24 +127,17 @@ function n4s_apps_ui_css() {
 .n4s-ui .n4s-side{flex:0 0 190px;background:#fff;border:1px solid #e3e6ee;border-radius:12px;padding:10px;position:sticky;top:42px}
 .n4s-ui .n4s-side a{display:block;padding:9px 12px;border-radius:8px;color:#3b4357;text-decoration:none;margin-bottom:2px}
 .n4s-ui .n4s-side a:hover{background:#f3f4f8}.n4s-ui .n4s-side a.act{background:#eceaff;color:#4a3bc7;font-weight:600}
-.n4s-ui .n4s-main{flex:1;min-width:0;max-width:1000px}
+.n4s-ui .n4s-main{flex:1;min-width:0;max-width:1240px}
 .n4s-ui .n4s-main>h2:first-child,.n4s-ui .n4s-main>form>h2:first-child{font-size:22px;margin:0 0 4px}
 .n4s-ui .n4s-lead{color:#6b7385;margin:2px 0 16px}
 .n4s-ui .n4s-main h2{font-size:17px;margin:22px 0 8px}.n4s-ui .n4s-main h3{font-size:15px}
 .n4s-ui .n4s-card,.n4s-ui .n4s-main details{background:#fff;border:1px solid #e3e6ee;border-radius:12px;padding:16px 20px;margin-bottom:14px}
 .n4s-ui .n4s-card>h3{margin:0 0 8px}
 .n4s-ui .n4s-main details{padding:12px 18px}.n4s-ui .n4s-main details[open]{border-color:#5b4bdb}.n4s-ui .n4s-main details>summary{cursor:pointer;font-weight:600}
-.n4s-ui .n4s-row{display:flex;align-items:center;gap:14px;padding:11px 0;border-top:1px solid #eef0f5;color:inherit;text-decoration:none}
-.n4s-ui .n4s-card>.n4s-row:first-child,.n4s-ui .n4s-card>h3+.n4s-row{border-top:0}
-.n4s-ui .n4s-row>div{flex:1}.n4s-ui .n4s-row small{display:block;color:#6b7385;font-size:12px;margin-top:1px}
+.n4s-ui .n4s-set{display:flex;align-items:center;gap:14px;padding:11px 0;border-top:1px solid #eef0f5;color:inherit;text-decoration:none}
+.n4s-ui .n4s-card>.n4s-set:first-child,.n4s-ui .n4s-card>h3+.n4s-set{border-top:0}
+.n4s-ui .n4s-set>div{flex:1}.n4s-ui .n4s-set small{display:block;color:#6b7385;font-size:12px;margin-top:1px}
 .n4s-ui a.n4s-linkrow:hover{background:#fafbfd}
-.n4s-ui .n4s-sw{position:relative;display:inline-block;width:40px;height:22px;flex:none}
-.n4s-ui .n4s-sw input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer;z-index:1;width:100%;height:100%}
-.n4s-ui .n4s-sw i{position:absolute;inset:0;border-radius:12px;background:#cdd2de;transition:background .15s}
-.n4s-ui .n4s-sw i:after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s}
-.n4s-ui .n4s-sw input:checked+i{background:#5b4bdb}.n4s-ui .n4s-sw input:checked+i:after{left:21px}
-.n4s-ui .n4s-sw input:focus-visible+i{outline:2px solid #5b4bdb;outline-offset:2px}
-.n4s-ui .form-table input[type=checkbox],.n4s-ui .n4s-main label>input[type=checkbox]{accent-color:#5b4bdb}
 .n4s-ui .n4s-stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
 .n4s-ui .n4s-stat{flex:1;min-width:130px;background:#fff;border:1px solid #e3e6ee;border-radius:12px;padding:14px 16px}
 .n4s-ui .n4s-stat b{display:block;font-size:24px;line-height:1.2}.n4s-ui .n4s-stat span{color:#6b7385;font-size:12px}
@@ -161,10 +154,31 @@ function n4s_apps_ui_css() {
 .n4s-ui .n4s-main .button-primary{background:#5b4bdb;border-color:#5b4bdb;color:#fff}.n4s-ui .n4s-main .button-primary:hover{background:#4a3bc7;border-color:#4a3bc7}
 .n4s-ui .n4s-main input[type=text],.n4s-ui .n4s-main input[type=number],.n4s-ui .n4s-main input[type=password],.n4s-ui .n4s-main select,.n4s-ui .n4s-main textarea{border-radius:8px;border-color:#cdd2de}
 .n4s-ui .n4s-main .notice{border-radius:8px}
-.n4s-ui .n4s-main{overflow-x:auto}
 .n4s-ui .n4s-main .form-table{background:#fff;border:1px solid #e3e6ee;border-radius:12px;padding:6px 18px;margin:8px 0 14px;width:100%;box-sizing:border-box}
 .n4s-ui .n4s-main .form-table th{padding:14px 10px 14px 0}.n4s-ui .n4s-main .form-table td{padding:10px 0}
 .n4s-ui .n4s-main .form-table tr+tr th,.n4s-ui .n4s-main .form-table tr+tr td{border-top:1px solid #eef0f5}
+.n4s-ui .n4s-main{overflow-x:auto;padding-bottom:2px}
+.n4s-ui .n4s-t-admin .n4s-cols{grid-template-columns:1em minmax(100px,1.2fr) minmax(90px,1fr) 70px minmax(80px,.8fr) 80px minmax(90px,1fr) minmax(190px,auto)!important}
+.n4s-ui .n4s-title{font-size:22px;margin:0 0 2px;padding:0}
+.n4s-ui .n4s-main input[type=checkbox]{-webkit-appearance:none;appearance:none;position:relative;display:inline-block;vertical-align:middle;width:40px;height:22px;min-width:40px;margin:0 8px 0 0;border:0;border-radius:12px;background:#cdd2de;cursor:pointer;box-shadow:none;transition:background .15s}
+.n4s-ui .n4s-main input[type=checkbox]::before{content:"";position:absolute;float:none;top:3px;left:3px;width:16px;height:16px;margin:0;border-radius:50%;background:#fff;box-shadow:none;transition:left .15s}
+.n4s-ui .n4s-main input[type=checkbox]:checked{background:#5b4bdb}.n4s-ui .n4s-main input[type=checkbox]:checked::before{content:"";left:21px;background:#fff}
+.n4s-ui .n4s-main input[type=checkbox]:focus{outline:2px solid #5b4bdb;outline-offset:2px;box-shadow:none}
+.n4s-ui .n4s-main input[type=checkbox]:disabled{opacity:.55;cursor:default}
+.n4s-ui .n4s-sw{display:inline-flex;flex:none}.n4s-ui .n4s-sw input{margin:0!important}
+.n4s-ui .n4s-main div[style*="max-width"],.n4s-ui .n4s-main table[style*="max-width"],.n4s-ui .n4s-main form[style*="max-width"]{max-width:none!important}
+.n4s-ui .n4s-main p{max-width:900px}.n4s-ui .n4s-main p.description{max-width:900px}
+.n4s-ui .n4s-main .widefat th{white-space:nowrap}.n4s-ui .n4s-main .widefat td,.n4s-ui .n4s-main .widefat th{vertical-align:top}
+.n4s-ui .n4s-main .widefat td code{white-space:normal;word-break:break-all}
+.n4s-ui .n4s-main div[style*="dcdcde"],.n4s-ui .n4s-main svg[style*="dcdcde"]{border-color:#e3e6ee!important;border-radius:12px!important}
+.n4s-ui .n4s-main .n4s-card .widefat{border:0}
+.n4s-ui .n4s-main .n4s-card>.n4s-card,.n4s-ui .n4s-card .n4s-card{border:0;padding:0;margin:0}
+.n4s-ui .n4s-main input[type=file]{max-width:100%}
+.n4s-ui .n4s-main .widefat .button,.n4s-ui .n4s-main .widefat form{margin:0 4px 4px 0}
+.n4s-ui .n4s-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#fff;border:1px solid #e3e6ee;border-radius:12px;padding:10px 16px;margin:0 0 14px}
+.n4s-ui .n4s-toolbar .description{margin:0}
+.n4s-ui .n4s-main .form-table td p.description{max-width:none}
+.n4s-ui .n4s-main .form-table input.regular-text,.n4s-ui .n4s-main .form-table textarea{max-width:100%}
 .n4s-ui .n4s-main hr{border:0;border-top:1px solid #e3e6ee}
 N4SCSS;
 }
