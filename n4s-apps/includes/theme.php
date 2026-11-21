@@ -376,21 +376,89 @@ function n4s_theme_nav_html( $cfg ) {
 	);
 }
 
+/** Zusatzmenü aus Angaben wie im Shortcode (menu, gast, angemeldet, rollen, stil, tiefe, klasse). */
+function n4s_theme_nav_from_atts( $a ) {
+	$a     = wp_parse_args( (array) $a, array( 'menu' => '', 'gast' => '', 'angemeldet' => '', 'rollen' => '', 'stil' => 'liste', 'tiefe' => '1', 'klasse' => '' ) );
+	$roles = array();
+	foreach ( explode( ';', (string) $a['rollen'] ) as $pair ) { // rollen="editor:Redaktion; author:Autorenmenü"
+		$p = array_map( 'trim', explode( ':', $pair, 2 ) );
+		if ( 2 === count( $p ) && '' !== $p[0] ) {
+			$roles[ sanitize_key( $p[0] ) ] = $p[1];
+		}
+	}
+	return n4s_theme_nav_html( array( 'menu' => $a['menu'], 'gast' => $a['gast'], 'user' => $a['angemeldet'], 'roles' => $roles, 'stil' => $a['stil'], 'tiefe' => $a['tiefe'], 'klasse' => $a['klasse'] ) );
+}
+
 add_shortcode(
 	'n4s_nav',
 	function ( $atts ) {
 		if ( ! n4s_theme_on( 'widget' ) ) {
 			return '';
 		}
-		$a     = shortcode_atts( array( 'menu' => '', 'gast' => '', 'angemeldet' => '', 'rollen' => '', 'stil' => 'liste', 'tiefe' => '1', 'klasse' => '' ), $atts, 'n4s_nav' );
-		$roles = array();
-		foreach ( explode( ';', (string) $a['rollen'] ) as $pair ) { // rollen="editor:Redaktion; author:Autorenmenü"
-			$p = array_map( 'trim', explode( ':', $pair, 2 ) );
-			if ( 2 === count( $p ) && '' !== $p[0] ) {
-				$roles[ sanitize_key( $p[0] ) ] = $p[1];
-			}
+		return n4s_theme_nav_from_atts( shortcode_atts( array( 'menu' => '', 'gast' => '', 'angemeldet' => '', 'rollen' => '', 'stil' => 'liste', 'tiefe' => '1', 'klasse' => '' ), $atts, 'n4s_nav' ) );
+	}
+);
+
+/** Block „n4s Menü“ (Seiten, Beiträge, Block-Widgets, Site-Editor): dynamisch, gleiche Auswahl wie Widget und Shortcode. */
+add_action(
+	'init',
+	function () {
+		if ( ! n4s_theme_on( 'widget' ) || ! function_exists( 'register_block_type' ) ) {
+			return;
 		}
-		return n4s_theme_nav_html( array( 'menu' => $a['menu'], 'gast' => $a['gast'], 'user' => $a['angemeldet'], 'roles' => $roles, 'stil' => $a['stil'], 'tiefe' => $a['tiefe'], 'klasse' => $a['klasse'] ) );
+		wp_register_script( 'n4s-nav-block', false, array( 'wp-blocks', 'wp-element', 'wp-components', 'wp-block-editor', 'wp-server-side-render' ), N4S_APPS_VERSION, true );
+		$menus = array();
+		foreach ( wp_get_nav_menus() as $m ) {
+			$menus[] = array( 'value' => (string) $m->term_id, 'label' => $m->name );
+		}
+		$data = array(
+			'menus' => $menus,
+			't'     => array(
+				'title'   => 'n4s – ' . n4s_t( 'Menü', 'Menu' ),
+				'desc'    => n4s_t( 'Zusatzmenü mit eigener Auswahl für Besucher, Angemeldete und Rollen.', 'Additional menu with its own choice for visitors, logged-in users and roles.' ),
+				'panel'   => n4s_t( 'Menü', 'Menu' ),
+				'def'     => n4s_t( 'Menü (Standard)', 'Menu (default)' ),
+				'gast'    => n4s_t( 'Menü für Besucher ohne Anmeldung', 'Menu for logged-out visitors' ),
+				'user'    => n4s_t( 'Menü für alle Angemeldeten', 'Menu for all logged-in users' ),
+				'roles'   => n4s_t( 'Menü je Rolle (z. B. editor:Redaktion; author:Autoren)', 'Menu per role (e.g. editor:Editors; author:Authors)' ),
+				'style'   => n4s_t( 'Darstellung', 'Appearance' ),
+				'list'    => n4s_t( 'Liste (untereinander)', 'List (vertical)' ),
+				'row'     => n4s_t( 'Zeile (nebeneinander)', 'Row (side by side)' ),
+				'depth'   => n4s_t( 'Untermenüs anzeigen (Liste)', 'Show sub-menus (list)' ),
+				'standard' => n4s_t( 'Standard', 'Default' ),
+				'none'    => n4s_t( 'Kein Menü', 'No menu' ),
+			),
+		);
+		wp_add_inline_script( 'n4s-nav-block', 'window.n4sNav=' . wp_json_encode( $data ) . ';(function(wp){var el=wp.element.createElement,be=wp.blockEditor||wp.editor,C=wp.components,SSR=wp.serverSideRender,N=window.n4sNav,T=N.t;'
+			. 'function sel(a,set,label,key,first){return el(C.SelectControl,{label:label,value:a[key],options:first.concat(N.menus),onChange:function(v){var o={};o[key]=v;set(o)}})}'
+			. 'wp.blocks.registerBlockType("n4s/nav",{title:T.title,icon:"menu",category:"widgets",description:T.desc,'
+			. 'attributes:{menu:{type:"string",default:""},gast:{type:"string",default:""},angemeldet:{type:"string",default:""},rollen:{type:"string",default:""},stil:{type:"string",default:"liste"},tiefe:{type:"string",default:"1"}},'
+			. 'edit:function(p){var a=p.attributes,set=p.setAttributes,d=[{value:"",label:T.standard},{value:"-1",label:T.none}];'
+			. 'return el(wp.element.Fragment,null,el(be.InspectorControls,null,el(C.PanelBody,{title:T.panel,initialOpen:true},'
+			. 'el(C.SelectControl,{label:T.def,value:a.menu,options:[{value:"",label:"–"}].concat(N.menus),onChange:function(v){set({menu:v})}}),'
+			. 'sel(a,set,T.gast,"gast",d),sel(a,set,T.user,"angemeldet",d),'
+			. 'el(C.TextControl,{label:T.roles,value:a.rollen,onChange:function(v){set({rollen:v})}}),'
+			. 'el(C.SelectControl,{label:T.style,value:a.stil,options:[{value:"liste",label:T.list},{value:"zeile",label:T.row}],onChange:function(v){set({stil:v})}}),'
+			. 'el(C.ToggleControl,{label:T.depth,checked:a.tiefe==="2",onChange:function(v){set({tiefe:v?"2":"1"})}}))),'
+			. 'el(SSR,{block:"n4s/nav",attributes:a}))},save:function(){return null}})})(window.wp);' );
+		register_block_type(
+			'n4s/nav',
+			array(
+				'editor_script'   => 'n4s-nav-block',
+				'attributes'      => array(
+					'menu'       => array( 'type' => 'string', 'default' => '' ),
+					'gast'       => array( 'type' => 'string', 'default' => '' ),
+					'angemeldet' => array( 'type' => 'string', 'default' => '' ),
+					'rollen'     => array( 'type' => 'string', 'default' => '' ),
+					'stil'       => array( 'type' => 'string', 'default' => 'liste' ),
+					'tiefe'      => array( 'type' => 'string', 'default' => '1' ),
+				),
+				'render_callback' => function ( $attrs ) {
+					$h = n4s_theme_nav_from_atts( (array) $attrs );
+					return '' === trim( $h ) && is_admin() ? '<p style="opacity:.6">' . esc_html( n4s_t( 'Zusatzmenü: kein Menü gewählt.', 'Additional menu: no menu chosen.' ) ) . '</p>' : $h;
+				},
+			)
+		);
 	}
 );
 
@@ -1149,6 +1217,48 @@ if ( is_admin() ) {
 		}
 	);
 
+	/** Zusatzmenü: Fundstellen (Widget, Block, Shortcode), Link zum Anlegen eines Menüs und Shortcode-Zusammenstellung. */
+	function n4s_theme_widget_panel() {
+		$menus = wp_get_nav_menus();
+		echo '<p style="max-width:900px">' . esc_html( n4s_t( 'Ein Zusatzmenü besteht aus einem Menü (das du unter Design → Menüs anlegst) und einer Stelle, an der es erscheint:', 'An additional menu consists of a menu (which you create under Appearance → Menus) and a place where it appears:' ) ) . '</p><ol style="max-width:900px;margin-left:20px">';
+		echo '<li>' . esc_html( n4s_t( 'Menü anlegen oder bearbeiten: ', 'Create or edit a menu: ' ) ) . '<a href="' . esc_url( admin_url( 'nav-menus.php?action=edit&menu=0' ) ) . '">' . esc_html( n4s_t( 'Neues Menü anlegen', 'Create new menu' ) ) . '</a> · <a href="' . esc_url( admin_url( 'nav-menus.php' ) ) . '">' . esc_html( n4s_t( 'Menüs bearbeiten', 'Edit menus' ) ) . '</a></li>';
+		echo '<li>' . esc_html( n4s_t( 'In Seiten, Beiträgen und Vorlagen: im Block-Editor den Block „n4s – Menü“ einfügen (Suche „n4s“ oder „Menü“). Rechts wählst du das Menü je Besucher, Angemeldete und Rolle.', 'In pages, posts and templates: insert the block "n4s – Menu" in the block editor (search "n4s" or "menu"). On the right you choose the menu per visitor, logged-in user and role.' ) ) . '</li>';
+		echo '<li>' . esc_html( n4s_t( 'In Seitenleisten und Fußzeilen: unter ', 'In sidebars and footers: under ' ) ) . '<a href="' . esc_url( admin_url( 'widgets.php' ) ) . '">' . esc_html( n4s_t( 'Design → Widgets', 'Appearance → Widgets' ) ) . '</a> ' . esc_html( n4s_t( 'denselben Block „n4s – Menü“ einfügen (bei älteren Widget-Bereichen: Widget „n4s – Menü“). Bei Neve auch im Customizer unter Footer-Widgets.', 'insert the same block "n4s – Menu" (for older widget areas: widget "n4s – Menu"). With Neve also in the Customizer under footer widgets.' ) ) . '</li>';
+		echo '<li>' . esc_html( n4s_t( 'Überall sonst per Shortcode (unten zusammenstellen und kopieren).', 'Everywhere else with the shortcode (compose and copy it below).' ) ) . '</li></ol>';
+		echo '<p style="margin:12px 0 4px"><strong>' . esc_html( n4s_t( 'Shortcode zusammenstellen', 'Compose shortcode' ) ) . '</strong></p>';
+		$opt = function ( $first ) use ( $menus ) {
+			$h = '';
+			foreach ( $first as $v => $l ) {
+				$h .= '<option value="' . esc_attr( $v ) . '">' . esc_html( $l ) . '</option>';
+			}
+			foreach ( $menus as $m ) {
+				$h .= '<option value="' . esc_attr( $m->name ) . '">' . esc_html( $m->name ) . '</option>';
+			}
+			return $h;
+		};
+		$def  = array( '' => '–', 'kein' => n4s_t( 'Kein Menü', 'No menu' ) );
+		$none = array( '' => n4s_t( 'Standard', 'Default' ), 'kein' => n4s_t( 'Kein Menü', 'No menu' ) );
+		echo '<div id="n4s-navgen" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px;max-width:900px">';
+		echo '<label>' . esc_html( n4s_t( 'Menü (Standard)', 'Menu (default)' ) ) . '<br><select data-n="menu" style="width:100%">' . $opt( array( '' => '–' ) ) . '</select></label>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Option-HTML selbst escaped.
+		echo '<label>' . esc_html( n4s_t( 'Besucher ohne Anmeldung', 'Logged-out visitors' ) ) . '<br><select data-n="gast" style="width:100%">' . $opt( $none ) . '</select></label>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo '<label>' . esc_html( n4s_t( 'Alle Angemeldeten', 'All logged-in users' ) ) . '<br><select data-n="angemeldet" style="width:100%">' . $opt( $none ) . '</select></label>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo '<label>' . esc_html( n4s_t( 'Darstellung', 'Appearance' ) ) . '<br><select data-n="stil" style="width:100%"><option value="">' . esc_html( n4s_t( 'Liste (untereinander)', 'List (vertical)' ) ) . '</option><option value="zeile">' . esc_html( n4s_t( 'Zeile (nebeneinander)', 'Row (side by side)' ) ) . '</option></select></label>';
+		echo '<label style="align-self:end"><input type="checkbox" data-n="tiefe" value="2"> ' . esc_html( n4s_t( 'Untermenüs anzeigen', 'Show sub-menus' ) ) . '</label></div>';
+		echo '<div style="max-width:900px;margin-top:8px"><strong>' . esc_html( n4s_t( 'Menü je Rolle', 'Menu per role' ) ) . '</strong><br>';
+		foreach ( wp_roles()->get_names() as $r => $rl ) {
+			echo '<label style="display:inline-block;margin:2px 14px 2px 0">' . esc_html( translate_user_role( $rl ) ) . ' <select data-role="' . esc_attr( $r ) . '">' . $opt( $none ) . '</select></label>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		}
+		echo '</div><div style="display:flex;gap:8px;align-items:center;max-width:900px;margin-top:10px"><strong>Shortcode:</strong><input type="text" readonly id="n4s-navgen-out" class="code" style="flex:1;min-width:0" value="[n4s_nav]" onclick="this.select()"><button type="button" class="button" id="n4s-navgen-copy" data-done="' . esc_attr( n4s_t( 'Kopiert', 'Copied' ) ) . '">' . esc_html( n4s_t( 'Kopieren', 'Copy' ) ) . '</button></div>';
+		$js = <<<'N4SJS'
+(function(){var g=document.getElementById("n4s-navgen"),o=document.getElementById("n4s-navgen-out"),c=document.getElementById("n4s-navgen-copy");if(!g||!o)return;var wrap=g.parentNode;
+function up(){var s="[n4s_nav";["menu","gast","angemeldet","stil"].forEach(function(n){var e=g.querySelector('[data-n="'+n+'"]');if(e&&e.value)s+=" "+n+'="'+e.value.replace(/"/g,"'")+'"'});
+var t=g.querySelector('[data-n="tiefe"]');if(t&&t.checked)s+=' tiefe="2"';var r=[];wrap.querySelectorAll("[data-role]").forEach(function(e){if(e.value)r.push(e.getAttribute("data-role")+":"+e.value.replace(/[;:"]/g," "))});if(r.length)s+=' rollen="'+r.join("; ")+'"';o.value=s+"]"}
+wrap.addEventListener("input",up);wrap.addEventListener("change",up);
+c.addEventListener("click",function(){o.select();var d=function(){var x=c.textContent;c.textContent=c.getAttribute("data-done");setTimeout(function(){c.textContent=x},1600)};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(o.value).then(d,function(){document.execCommand("copy");d()})}else{document.execCommand("copy");d()}});up()})();
+N4SJS;
+		echo '<script>' . $js . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- feste Skriptvorlage.
+	}
+
 	/** Vorschlagskarten (Hell, Dunkel, Komplementär) mit Übernehmen-Schaltflächen. */
 	function n4s_theme_proposal_cards( $props, $label ) {
 		echo '<p style="margin:8px 0 4px"><strong>' . esc_html( $label ) . '</strong></p><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin:0 0 12px">';
@@ -1290,7 +1400,9 @@ if ( is_admin() ) {
 				$bar_settings( 'abovefooter', array( n4s_t( 'Footermenü (über dem Footer)', 'Footer menu (above the footer)' ), n4s_t( 'Fußzeile', 'footer' ) ) );
 			}
 		);
-		$panel( 'widget', $help( n4s_t( 'Unter Design → Widgets gibt es das Widget „n4s Menü“ (Seitenleisten, Fußzeilen). Für Seiten gilt der Shortcode [n4s_nav menu="Name" gast="Menü" angemeldet="Menü" rollen="editor:Menü; author:Menü" stil="zeile" tiefe="2"] („kein“ statt eines Menünamens blendet das Menü aus). Beide wählen das Menü je Besucher, Angemeldete und Rolle und funktionieren auch bei Themes mit Block-Navigation.', 'Under Appearance → Widgets there is the widget "n4s Menu" (sidebars, footers). For pages use the shortcode [n4s_nav menu="Name" gast="menu" angemeldet="menu" rollen="editor:menu; author:menu" stil="zeile" tiefe="2"] ("none" instead of a menu name hides the menu). Both choose the menu per visitor, logged-in user and role and also work with themes using block navigation.' ) ) );
+		$panel( 'widget', function () {
+			n4s_theme_widget_panel();
+		} );
 		$panel( 'items', $help( n4s_t( 'Im Menü-Editor (Design → Menüs) hat jeder Menüpunkt das Feld „n4s – Sichtbar für“: alle Besucher, nur Besucher ohne Anmeldung, nur Angemeldete oder nur bestimmte Rollen.', 'In the menu editor (Appearance → Menus) each menu item has the field "n4s – Visible for": all visitors, logged-out visitors only, logged-in users only or only certain roles.' ) ) );
 		$panel( 'loginout', $help( n4s_t( 'Im Menü-Editor (Design → Menüs) gibt es die Box „n4s – Anmelden / Abmelden“. Der Menüpunkt „Anmelden|Abmelden“ zeigt links den Text für Besucher und rechts den für Angemeldete.', 'In the menu editor (Appearance → Menus) there is the box "n4s – Log in / Log out". The item "Log in|Log out" shows the text on the left for visitors and on the right for logged-in users.' ) ) );
 		$panel( 'page', $help( n4s_t( 'Im Editor jeder Seite gibt es die Box „n4s – Seitengestaltung“: Kopfzeile, Hauptmenü, Headermenü, Footermenü, Fußzeile und Seitentitel einzeln ausblenden.', 'In the editor of every page there is the box "n4s – Page design": hide header, main menu, header menu, footer menu, footer and page title individually.' ) ) );
