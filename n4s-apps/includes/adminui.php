@@ -180,6 +180,9 @@ function n4s_apps_ui_css() {
 .n4s-ui .n4s-swtable tr{display:flex;flex-direction:row-reverse;align-items:center;gap:14px;background:transparent!important;border-top:1px solid #eef0f5}.n4s-ui .n4s-swtable tr:first-child{border-top:0}
 .n4s-ui .n4s-swtable td{display:block;border:0!important;background:transparent!important;padding:12px 0}
 .n4s-ui .n4s-swtable td:first-child{flex:none;width:80px;text-align:right}.n4s-ui .n4s-swtable td:nth-child(2){flex:1;min-width:0}
+.n4s-ui .n4s-num{display:inline-flex;align-items:center;gap:8px;width:240px}.n4s-ui .n4s-num input{width:80px;flex:none}.n4s-ui .n4s-num span{color:#3b4357}
+.n4s-ui .n4s-main label:has(>input[type=checkbox]){display:inline-flex;align-items:center;gap:6px}
+.n4s-ui .n4s-swtable td strong{color:#1d2433;font-size:14px}
 .n4s-ui .n4s-t-apps{max-width:1500px}
 .n4s-ui .n4s-apptbl{border:0!important;background:transparent!important;box-shadow:none!important;border-collapse:separate;border-spacing:0 8px}
 .n4s-ui .n4s-apptbl thead th{background:transparent!important;border:0!important;text-transform:uppercase;font-size:11px;letter-spacing:.04em;color:#6b7385;padding:2px 12px}
