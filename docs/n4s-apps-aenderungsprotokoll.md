@@ -1,6 +1,6 @@
 # n4s Apps: Änderungsprotokoll
 
-Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.29.1.
+Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.30.0.
 
 | Datum | Version | Änderung |
 |---|---|---|
@@ -56,3 +56,4 @@ Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Di
 | 21.11.2026 | 2.28.1 | Farben vorschlagen: Der erste Vorschlag nutzt die eingelesenen Farben des Themes (bzw. des ZIP) und heißt wie das Theme (auf 20 Zeichen gekürzt); der zweite ist das Gegenstück (Dunkel bei hellem, Hell bei dunklem Theme), der dritte bleibt Komplementär. Tab Theme: Die aufgeklappten Felder bleiben nach Speichern, Zurücksetzen und Einlesen offen (Zustand wird im Browser gemerkt, nach dem Einlesen aus einem ZIP ist das Farbschema offen). |
 | 21.11.2026 | 2.29.0 | Zusatzmenü: Ausrichtung links, Mitte oder rechts (Widget, Block „n4s – Menü“, Shortcode `[n4s_nav ausrichtung="mitte"]` und Zusammenstellung im Tab Theme). |
 | 21.11.2026 | 2.29.1 | Tab Theme: Die einklappbaren Felder stehen in derselben Reihenfolge wie die Funktionen in der Übersicht. |
+| 21.11.2026 | 2.30.0 | Theme, Zusatzmenü: Darstellung erweitert um „Button gefüllt" und „Button umrandet" (Widget, Block, Shortcode `stil=button` / `stil=umrandet`, Generator); Links im Design der Snippet-Buttons, nebeneinander, ohne Untermenüs. |
