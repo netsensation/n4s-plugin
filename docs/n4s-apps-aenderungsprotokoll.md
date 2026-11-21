@@ -1,6 +1,6 @@
 # n4s Apps: Änderungsprotokoll
 
-Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.26.0.
+Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.27.0.
 
 | Datum | Version | Änderung |
 |---|---|---|
@@ -51,3 +51,4 @@ Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Di
 | 20.11.2026 | 2.24.1 | Tab Theme: Die Funktionsübersicht ist wieder die Tabelle mit Aktiv-Schalter und ausführlicher Beschreibung (wie 2.23.0); darunter ein zweiter Speichern-Button, der wie der am Ende speichert. Einstellungen der Funktionen unverändert (eingeschaltete Funktionen als einklappbare Felder). |
 | 21.11.2026 | 2.25.0 | Theme-Engine, Menü je Anmeldestatus und Rolle: neue Auswahl „Kein Menü“ (neben „Standard“ und den Menüs) für Besucher, Angemeldete und jede Rolle; die Menüposition zeigt dann nichts (auch Headermenü und Footermenü). Gilt ebenso im Widget „n4s Menü“ und im Shortcode `[n4s_nav]` (`kein` statt eines Menünamens). |
 | 21.11.2026 | 2.26.0 | Theme-Engine: (1) „Zurücksetzen“ als letzter Punkt in den Einstellungen von Menü je Rolle, Headermenü, Footermenü, Sichtbarkeit je Menüpunkt (entfernt alle Angaben), Seitengestaltung (entfernt alle Ausblende-Angaben) und Farbschemen (Ausgangsfarben, Standard „Theme-Farben“), mit Rückfrage. (2) Der zweite Speichern-Button erscheint nur, wenn mindestens eine Funktion eingeschaltet ist. (3) Farbschemen: Farben des aktiven Themes werden ausgelesen (Neve-Palette, theme.json/Block-Palette, Editor-Palette) und daraus drei Vorschläge erzeugt (Hell, Dunkel, Komplementär, mit Kontrastprüfung), die per Klick in Schema 1 bis 3 eingetragen werden (gespeichert wird erst mit „Speichern“). (4) Farben aus einem hochladbaren Theme-ZIP: es wird nichts installiert oder ausgeführt, gelesen werden nur theme.json und CSS; die gefundene Hauptfarbe wird zu Farbe 1, die übrigen werden daraus erzeugt. |
+| 21.11.2026 | 2.27.0 | Farbschemen: neue Farben für Header (Hintergrund, Text und Menü) und Footer (Hintergrund, Text). Leer = wie bisher (Header wie Seite, Footer wie Theme). Bei Neve über die Zeilenfarben, bei anderen Themes über die Elemente von Header und Footer; Headermenü und Footermenü folgen mit. Die Vorschläge lassen Header und Footer leer. |

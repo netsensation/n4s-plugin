@@ -24,6 +24,10 @@ function n4s_theme_color_fields() {
 		'darktext' => array( n4s_t( 'Text auf dunkler Fläche', 'Text on dark surface' ), array( '--nv-text-dark-bg' ) ),
 		'btntext'  => array( n4s_t( 'Text auf Buttons', 'Button text' ), array( '--primarybtncolor', '--primarybtnhovercolor' ) ),
 		'heading'  => array( n4s_t( 'Überschriften (leer = Textfarbe)', 'Headings (empty = text color)' ), array( '--headingcolor' ) ),
+		'hdrbg'    => array( n4s_t( 'Header: Hintergrund (leer = wie Seite)', 'Header: background (empty = like page)' ), array() ),
+		'hdrtext'  => array( n4s_t( 'Header: Text und Menü (leer = wie Seite)', 'Header: text and menu (empty = like page)' ), array() ),
+		'ftrbg'    => array( n4s_t( 'Footer: Hintergrund (leer = Theme)', 'Footer: background (empty = theme)' ), array() ),
+		'ftrtext'  => array( n4s_t( 'Footer: Text (leer = Theme)', 'Footer: text (empty = theme)' ), array() ),
 	);
 }
 
@@ -37,15 +41,15 @@ function n4s_theme_defaults() {
 		'schemes' => array(
 			1 => array(
 				'name'   => n4s_t( 'Hell', 'Light' ),
-				'colors' => array( 'bg' => '#ffffff', 'text' => '#272626', 'accent' => '#2f5aae', 'hover' => '#24478c', 'light' => '#f4f5f7', 'dark' => '#121212', 'darktext' => '#ffffff', 'btntext' => '#ffffff', 'heading' => '' ),
+				'colors' => array( 'bg' => '#ffffff', 'text' => '#272626', 'accent' => '#2f5aae', 'hover' => '#24478c', 'light' => '#f4f5f7', 'dark' => '#121212', 'darktext' => '#ffffff', 'btntext' => '#ffffff', 'heading' => '', 'hdrbg' => '', 'hdrtext' => '', 'ftrbg' => '', 'ftrtext' => '' ),
 			),
 			2 => array(
 				'name'   => n4s_t( 'Dunkel', 'Dark' ),
-				'colors' => array( 'bg' => '#0f1419', 'text' => '#e6e9ee', 'accent' => '#4098e0', 'hover' => '#6ec1f5', 'light' => '#1a212a', 'dark' => '#06090c', 'darktext' => '#e6e9ee', 'btntext' => '#0f1419', 'heading' => '' ),
+				'colors' => array( 'bg' => '#0f1419', 'text' => '#e6e9ee', 'accent' => '#4098e0', 'hover' => '#6ec1f5', 'light' => '#1a212a', 'dark' => '#06090c', 'darktext' => '#e6e9ee', 'btntext' => '#0f1419', 'heading' => '', 'hdrbg' => '', 'hdrtext' => '', 'ftrbg' => '', 'ftrtext' => '' ),
 			),
 			3 => array(
 				'name'   => n4s_t( 'Akzent', 'Accent' ),
-				'colors' => array( 'bg' => '#2f5aae', 'text' => '#ffffff', 'accent' => '#ffd54a', 'hover' => '#ffe27d', 'light' => '#3a68c2', 'dark' => '#1d3a75', 'darktext' => '#ffffff', 'btntext' => '#1d1d1d', 'heading' => '#ffffff' ),
+				'colors' => array( 'bg' => '#2f5aae', 'text' => '#ffffff', 'accent' => '#ffd54a', 'hover' => '#ffe27d', 'light' => '#3a68c2', 'dark' => '#1d3a75', 'darktext' => '#ffffff', 'btntext' => '#1d1d1d', 'heading' => '#ffffff', 'hdrbg' => '', 'hdrtext' => '', 'ftrbg' => '', 'ftrtext' => '' ),
 			),
 		),
 	);
@@ -593,10 +597,11 @@ function n4s_theme_proposals( $accent ) {
 		'light' => n4s_theme_from_hsl( $h, $s_acc, min( 0.6, n4s_theme_hsl( $bg3 )[2] + 0.08 ) ), 'dark' => n4s_theme_from_hsl( $h, $s_acc, max( 0.05, n4s_theme_hsl( $bg3 )[2] - 0.14 ) ),
 		'darktext' => '#ffffff', 'btntext' => n4s_theme_on_color( $a3 ), 'heading' => '#ffffff',
 	);
+	$blank = array( 'hdrbg' => '', 'hdrtext' => '', 'ftrbg' => '', 'ftrtext' => '' ); // Header und Footer folgen dem Schema (oder dem Theme)
 	return array(
-		array( 'name' => n4s_t( 'Hell', 'Light' ), 'colors' => $light ),
-		array( 'name' => n4s_t( 'Dunkel', 'Dark' ), 'colors' => $dark ),
-		array( 'name' => n4s_t( 'Komplementär', 'Complementary' ), 'colors' => $comp ),
+		array( 'name' => n4s_t( 'Hell', 'Light' ), 'colors' => array_merge( $light, $blank ) ),
+		array( 'name' => n4s_t( 'Dunkel', 'Dark' ), 'colors' => array_merge( $dark, $blank ) ),
+		array( 'name' => n4s_t( 'Komplementär', 'Complementary' ), 'colors' => array_merge( $comp, $blank ) ),
 	);
 }
 
@@ -879,6 +884,44 @@ function n4s_theme_scheme_generic_css( $n, $s ) {
 	return $css;
 }
 
+/** Header- und Footer-Farben eines Schemas (Neve: Zeilenvariablen, sonst Elemente des Themes). */
+function n4s_theme_scheme_header_footer_css( $n, $s ) {
+	$g = function ( $k ) use ( $s ) {
+		return isset( $s[ $k ] ) ? sanitize_hex_color( $s[ $k ] ) : '';
+	};
+	$p     = 'body.n4s-scheme-' . $n;
+	$neve  = 'neve' === strtolower( (string) wp_get_theme()->get_template() );
+	$css   = '';
+	$parts = array(
+		'hdr' => array( $neve ? '.header-top,.header-main,.header-bottom,.header-menu-sidebar-bg' : '', 'header.wp-block-template-part,.site-header,#masthead,header[role="banner"]' ),
+		'ftr' => array( $neve ? '.footer-top,.footer-main,.footer-bottom' : '', 'footer.wp-block-template-part,.site-footer,#colophon,footer[role="contentinfo"]' ),
+	);
+	foreach ( $parts as $k => $sel ) {
+		$bg = $g( $k . 'bg' );
+		$tx = $g( $k . 'text' );
+		if ( ! $bg && ! $tx ) {
+			continue;
+		}
+		if ( $neve ) { // Neve liest Farben je Zeile aus --bgcolor und --color.
+			$list = array_map( function ( $x ) use ( $p ) {
+				return $p . ' ' . $x;
+			}, explode( ',', $sel[0] ) );
+			$css .= implode( ',', $list ) . '{' . ( $bg ? '--bgcolor:' . $bg . ';' : '' ) . ( $tx ? '--color:' . $tx . ';' : '' ) . '}';
+		}
+		$list = array_map( function ( $x ) use ( $p ) {
+			return $p . ' ' . $x;
+		}, explode( ',', $sel[1] ) );
+		$css .= implode( ',', $list ) . '{' . ( $bg ? 'background-color:' . $bg . ';' : '' ) . ( $tx ? 'color:' . $tx . ';' : '' ) . '}';
+		if ( $tx ) {
+			$inner = array_map( function ( $x ) use ( $p ) {
+				return $p . ' ' . $x . ' :where(a,p,li,span,h1,h2,h3,h4,h5,h6,.menu-item a)';
+			}, explode( ',', $sel[1] ) );
+			$css  .= implode( ',', $inner ) . '{color:' . $tx . '}';
+		}
+	}
+	return $css;
+}
+
 /** CSS der Seite: Farbschema und Ausblenden (theme-unabhängig, mit Neve-Variablen). */
 add_action(
 	'wp_head',
@@ -903,6 +946,7 @@ add_action(
 			$ac = isset( $s['accent'] ) ? sanitize_hex_color( $s['accent'] ) : '';
 			$bt = isset( $s['btntext'] ) ? sanitize_hex_color( $s['btntext'] ) : '';
 			$css .= n4s_theme_scheme_generic_css( $n, $s );
+			$css .= n4s_theme_scheme_header_footer_css( $n, $s );
 			if ( $ac ) { // Block-Buttons ohne eigene Farbe übernehmen die Hauptfarbe.
 				$css .= 'body.n4s-scheme-' . $n . ' .wp-block-button:not(.is-style-outline) .wp-block-button__link:not(.has-background){background-color:' . $ac . ';' . ( $bt ? 'color:' . $bt . ';' : '' ) . '}';
 			}
