@@ -421,6 +421,7 @@ if ( is_admin() ) {
 		} else {
 			echo '<p><span class="dashicons dashicons-warning" style="color:#b32d2e"></span> ' . esc_html( n4s_t( 'Royal MCP ist nicht aktiv. Ohne dieses Plugin sind die Werkzeuge nicht erreichbar.', 'Royal MCP is not active. Without it the tools cannot be reached.' ) ) . '</p>';
 		}
+		n4s_mcp_guide();
 		echo '<h3>' . esc_html( n4s_t( 'Lesende Werkzeuge (immer verfügbar)', 'Read tools (always available)' ) ) . '</h3><ul style="list-style:disc;margin-left:20px">';
 		foreach ( n4s_mcp_defs() as $name => $d ) {
 			if ( '' === $d[2] ) {
@@ -444,6 +445,25 @@ if ( is_admin() ) {
 		echo '<p class="description" style="max-width:900px">' . esc_html( n4s_t( 'Nicht möglich, auch nicht mit Schreibzugriff: Code hochladen oder ändern, Apps löschen, Zugangsschlüssel, Plugin-Update.', 'Not possible, even with write access: uploading or changing code, deleting apps, access keys, plugin update.' ) ) . '</p>';
 		submit_button( n4s_t( 'Speichern', 'Save' ), 'primary', 'submit', true );
 		echo '</form>';
+	}
+
+	/** Anleitung zur Einrichtung in Royal MCP. */
+	function n4s_mcp_guide() {
+		$url   = rest_url( 'royal-mcp/v1/mcp' );
+		$steps = array(
+			n4s_t( 'Royal MCP installieren und aktivieren (Plugins → Installieren, Suche „Royal MCP“). Im Menü Royal MCP die Verbindung einschalten.', 'Install and activate Royal MCP (Plugins → Add new, search "Royal MCP"). In the Royal MCP menu switch the connection on.' ),
+			n4s_t( 'In Royal MCP einen Zugriffsschlüssel (API-Key) erzeugen und sofort kopieren, er wird nur einmal angezeigt. Alternativ meldet sich ein KI-Dienst per Anmeldung (OAuth) an; dann gibt es keinen Schlüssel.', 'In Royal MCP create an access key (API key) and copy it right away, it is shown only once. Alternatively an AI service signs in via OAuth; then there is no key.' ),
+			n4s_t( 'Beim KI-Dienst (z. B. Claude oder ChatGPT) einen eigenen MCP-Connector mit der Adresse unten anlegen; als Anmeldung den Schlüssel als Bearer-Token angeben (Header Authorization: Bearer …).', 'In the AI service (e.g. Claude or ChatGPT) add a custom MCP connector with the address below; as sign-in use the key as Bearer token (header Authorization: Bearer …).' ),
+			n4s_t( 'In Royal MCP unter Einstellungen die Sicherheit festlegen: „Nur lesen“ sperrt alle Werkzeuge, die etwas ändern (auch die schreibenden von n4s). „Nur Entwürfe“ erlaubt nur Entwürfe, n4s-Schreibwerkzeuge bleiben dann gesperrt. Zugriffsstufen je Verbindung gelten ebenso.', 'In Royal MCP under Settings set the security: "Read only" blocks every tool that changes something (including the n4s write tools). "Drafts only" allows drafts only, n4s write tools stay blocked then. Access levels per connection apply as well.' ),
+			n4s_t( 'Zum Testen den KI-Dienst fragen: „Rufe n4s_get_status auf“. Es kommen Version, Funktionen und Schalterzustand zurück.', 'To test ask the AI service: "Call n4s_get_status". It returns version, features and switch state.' ),
+			n4s_t( 'Änderungen erst erlauben, wenn alles läuft: unten Hauptschalter und nur die Gruppen einschalten, die gebraucht werden, und Royals „Nur lesen“ ausschalten. Danach wieder zurückschalten, wenn die Arbeit erledigt ist.', 'Only allow changes once everything works: below switch on the main switch and only the groups you need, and switch off Royal\'s "Read only". Switch them back when the work is done.' ),
+		);
+		echo '<details style="max-width:900px;margin:12px 0;border:1px solid #c3c4c7;background:#fff;padding:8px 12px"><summary style="cursor:pointer;font-weight:600">' . esc_html( n4s_t( 'Anleitung: Einrichtung in Royal MCP', 'Guide: setting up Royal MCP' ) ) . '</summary><ol style="margin:10px 0 6px 20px">';
+		foreach ( $steps as $st ) {
+			echo '<li style="margin-bottom:6px">' . esc_html( $st ) . '</li>';
+		}
+		echo '</ol><p style="margin:6px 0"><strong>' . esc_html( n4s_t( 'Adresse des Connectors:', 'Connector address:' ) ) . '</strong> <code>' . esc_html( $url ) . '</code></p>';
+		echo '<p class="description" style="margin:4px 0">' . esc_html( n4s_t( 'Die Verbindung braucht https und einen Server, der den Authorization-Header durchreicht; Royal MCP zeigt einen Hinweis, falls nicht. Die Werkzeuge von n4s verlangen zusätzlich die Berechtigung „Einstellungen verwalten“ (Administrator).', 'The connection needs https and a server that passes the Authorization header; Royal MCP shows a notice if not. The n4s tools additionally require the "manage options" capability (administrator).' ) ) . '</p></details>';
 	}
 
 	add_action(

@@ -1326,11 +1326,21 @@ if ( is_admin() ) {
 			echo '<label style="display:inline-block;margin:2px 14px 2px 0">' . esc_html( translate_user_role( $rl ) ) . ' <select data-role="' . esc_attr( $r ) . '">' . $opt( $none ) . '</select></label>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		}
 		echo '</div><div style="display:flex;gap:8px;align-items:center;max-width:900px;margin-top:10px"><strong>Shortcode:</strong><input type="text" readonly id="n4s-navgen-out" class="code" style="flex:1;min-width:0" value="[n4s_nav]" onclick="this.select()"><button type="button" class="button" id="n4s-navgen-copy" data-done="' . esc_attr( n4s_t( 'Kopiert', 'Copied' ) ) . '">' . esc_html( n4s_t( 'Kopieren', 'Copy' ) ) . '</button></div>';
+		echo '<div style="display:flex;gap:8px;align-items:center;max-width:900px;margin-top:8px"><strong>' . esc_html( n4s_t( 'Einlesen:', 'Read in:' ) ) . '</strong><input type="text" id="n4s-navgen-in" class="code" style="flex:1;min-width:0" placeholder="[n4s_nav menu=&quot;Haupt&quot; stil=&quot;button&quot;]"><button type="button" class="button" id="n4s-navgen-load" data-miss="' . esc_attr( n4s_t( 'Kein Shortcode [n4s_nav …] gefunden.', 'No [n4s_nav …] shortcode found.' ) ) . '" data-nomenu="' . esc_attr( n4s_t( 'Menü nicht vorhanden: ', 'Menu not found: ' ) ) . '">' . esc_html( n4s_t( 'Einlesen', 'Read in' ) ) . '</button></div><p class="description" id="n4s-navgen-msg" style="max-width:900px;margin:4px 0 0">' . esc_html( n4s_t( 'Einen vorhandenen Shortcode einfügen, die Auswahl oben übernimmt seine Angaben, danach lässt er sich ändern.', 'Paste an existing shortcode, the selection above takes over its settings and can then be changed.' ) ) . '</p>';
 		$js = <<<'N4SJS'
 (function(){var g=document.getElementById("n4s-navgen"),o=document.getElementById("n4s-navgen-out"),c=document.getElementById("n4s-navgen-copy");if(!g||!o)return;var wrap=g.parentNode;
 function up(){var s="[n4s_nav";["menu","gast","angemeldet","stil","ausrichtung"].forEach(function(n){var e=g.querySelector('[data-n="'+n+'"]');if(e&&e.value)s+=" "+n+'="'+e.value.replace(/"/g,"'")+'"'});
 var t=g.querySelector('[data-n="tiefe"]');if(t&&t.checked)s+=' tiefe="2"';var r=[];wrap.querySelectorAll("[data-role]").forEach(function(e){if(e.value)r.push(e.getAttribute("data-role")+":"+e.value.replace(/[;:"]/g," "))});if(r.length)s+=' rollen="'+r.join("; ")+'"';o.value=s+"]"}
 wrap.addEventListener("input",up);wrap.addEventListener("change",up);
+var li=document.getElementById("n4s-navgen-in"),lb=document.getElementById("n4s-navgen-load"),lm=document.getElementById("n4s-navgen-msg");
+function setv(e,v){if(!e)return false;e.value=v;return e.value===v}
+lb.addEventListener("click",function(){var t=li.value,m=t.match(/\[n4s_nav\b([^\]]*)\]/i);if(!m){lm.textContent=lb.getAttribute("data-miss");return}
+var a={},re=/([a-z_]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'\]]+))/gi,x;while((x=re.exec(m[1]))){a[x[1].toLowerCase()]=x[2]!==undefined?x[2]:(x[3]!==undefined?x[3]:x[4])}
+var miss=[];g.querySelectorAll("select[data-n]").forEach(function(e){e.value=""});wrap.querySelectorAll("[data-role]").forEach(function(e){e.value=""});var tt=g.querySelector('[data-n="tiefe"]');tt.checked=false;
+["menu","gast","angemeldet","stil","ausrichtung"].forEach(function(n){if(a[n]){var v=a[n].toLowerCase()==="none"||a[n].toLowerCase()==="-1"?"kein":a[n];if(!setv(g.querySelector('[data-n="'+n+'"]'),v))miss.push(a[n])}});
+if(a.tiefe&&parseInt(a.tiefe,10)>1)tt.checked=true;
+if(a.rollen){a.rollen.split(";").forEach(function(p){var i=p.indexOf(":");if(i<1)return;var r=p.slice(0,i).trim(),v=p.slice(i+1).trim().replace(/^none$|^-1$/i,"kein"),e=wrap.querySelector('[data-role="'+r+'"]');if(!e||!setv(e,v))miss.push(p.trim())})}
+up();lm.textContent=miss.length?lb.getAttribute("data-nomenu")+miss.join(", "):"✓"});
 c.addEventListener("click",function(){o.select();var d=function(){var x=c.textContent;c.textContent=c.getAttribute("data-done");setTimeout(function(){c.textContent=x},1600)};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(o.value).then(d,function(){document.execCommand("copy");d()})}else{document.execCommand("copy");d()}});up()})();
 N4SJS;
 		echo '<script>' . $js . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- feste Skriptvorlage.
