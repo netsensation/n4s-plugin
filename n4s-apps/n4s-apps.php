@@ -2,7 +2,7 @@
 /**
  * Plugin Name: n4s Apps
  * Description: n4s: Rahmen für eigene PHP-Apps und Sicherheit (Anmeldeschutz, Härtung), Funktionen einzeln schaltbar / Framework for custom PHP apps and security (login protection, hardening), features switchable. Shortcode [n4s_app name="..."].
- * Version: 2.25.0
+ * Version: 2.26.0
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: n4s
@@ -13,7 +13,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'N4S_APPS_VERSION', '2.25.0' );
+define( 'N4S_APPS_VERSION', '2.26.0' );
 define( 'N4S_APPS_FILE', __FILE__ );
 define( 'N4S_APPS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'N4S_APPS_URL', plugin_dir_url( __FILE__ ) );
@@ -44,7 +44,7 @@ function n4s_features() {
 	$theme_old = 0;
 	if ( ! isset( $v['theme'] ) ) {
 		$t = get_option( 'n4s_theme', array() );
-		if ( is_array( $t ) && ! empty( $t['on'] ) && array_filter( (array) $t['on'] ) ) {
+		if ( is_array( $t ) && ! empty( $t ) ) { // schon eingerichtet (auch wenn alle Module aus sind)
 			$theme_old = 1;
 		}
 	}
