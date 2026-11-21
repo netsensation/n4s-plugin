@@ -1,6 +1,6 @@
 # n4s Apps: Änderungsprotokoll
 
-Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.33.1.
+Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.34.0.
 
 | Datum | Version | Änderung |
 |---|---|---|
@@ -61,3 +61,4 @@ Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Di
 | 21.11.2026 | 2.32.0 | Theme, Zusatzmenü: Shortcode einlesen (vorhandenen [n4s_nav …] einfügen, die Auswahl übernimmt Menü, Darstellung, Ausrichtung, Untermenüs und Rollen, unbekannte Menüs werden gemeldet). Tab KI: Anleitung zur Einrichtung in Royal MCP mit Adresse des Connectors. |
 | 21.11.2026 | 2.33.0 | Neue Oberfläche der Verwaltung: Kopfzeile mit Logo und Version, Navigation links, Karten, Schalter statt Häkchen. Neue Tabs „Übersicht“ (Kennzahlen, Status, Ereignisse, nächste Schritte; erste Seite des Menüs), „Katalog“ (aus Apps herausgelöst) und „Update“ (aus Funktionen herausgelöst); Funktionen ist jetzt `page=n4s-features`. Gilt auch für Sicherheit, Snippets, Theme, KI und den Admin-Tab (Rahmen). |
 | 21.11.2026 | 2.33.1 | Oberfläche überarbeitet: einheitliche Breiten (Karten füllen den Inhaltsbereich), alle Häkchen in der Verwaltung als Schalter (Sicherheit, Snippets, Theme, Katalog), jeder Tab mit Titel und Untertitel; Apps-Tabelle ohne Spalte „Datei“ (Dateiname unter dem App-Namen); Schaltfläche „Updates jetzt prüfen“ vom Katalog in den Tab Apps; Karten in Katalog, Sicherheit, Update und „Neue App hinzufügen“; Admin-Tab passt in die Breite. |
+| 21.11.2026 | 2.34.0 | Verwaltung umgebaut: Übersicht ohne „Nächste Schritte“, die fünf Kennzahlen verlinken zu ihren Tabs, Update (Plugin und App-Updates) unten in der Übersicht; die Tabs Katalog und Update entfallen, der Katalog steht ganz unten im Tab Apps. Apps als Tabelle im Stil der Admin-App mit Schaltern für Aktiv und Auto-Update; Löschen erscheint bei deaktivierter App anstelle des Auto-Updates; Update-Quelle und Prüf-Schaltfläche entfallen. Funktionen, Sicherheit, KI, Snippets und Theme-Module als Zeilen mit Überschrift, Erklärung und Schalter rechts mittig. Apps und Plugin werden bei jedem Aufruf von Übersicht und Apps auf Updates geprüft (höchstens einmal je Minute). |

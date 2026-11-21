@@ -369,7 +369,7 @@ if ( is_admin() ) {
 			n4s_snippets_tab_import();
 		}
 		n4s_apps_form_head( 'n4s_snippets_save', false, 'display:block' );
-		echo '<table class="widefat striped" style="width:100%"><thead><tr><th style="width:90px">' . esc_html( n4s_t( 'Aktiv', 'Active' ) ) . '</th><th>Snippet</th></tr></thead><tbody>';
+		echo '<table class="widefat n4s-swtable" style="width:100%"><thead><tr><th style="width:90px">' . esc_html( n4s_t( 'Aktiv', 'Active' ) ) . '</th><th>Snippet</th></tr></thead><tbody>';
 		foreach ( $defs as $k => $d ) {
 			$on = n4s_snippet_on( $k );
 			echo '<tr><td><label><input type="checkbox" name="snip[' . esc_attr( $k ) . ']" value="1"' . ( $on ? ' checked' : '' ) . '> ' . esc_html( $on ? n4s_t( 'an', 'on' ) : n4s_t( 'aus', 'off' ) ) . '</label></td><td>';

@@ -422,13 +422,13 @@ if ( is_admin() ) {
 			echo '<p><span class="dashicons dashicons-warning" style="color:#b32d2e"></span> ' . esc_html( n4s_t( 'Royal MCP ist nicht aktiv. Ohne dieses Plugin sind die Werkzeuge nicht erreichbar.', 'Royal MCP is not active. Without it the tools cannot be reached.' ) ) . '</p>';
 		}
 		n4s_mcp_guide();
-		echo '<h3>' . esc_html( n4s_t( 'Lesende Werkzeuge (immer verfügbar)', 'Read tools (always available)' ) ) . '</h3><ul style="list-style:disc;margin-left:20px">';
+		echo '<h3>' . esc_html( n4s_t( 'Lesende Werkzeuge (immer verfügbar)', 'Read tools (always available)' ) ) . '</h3><div class="n4s-card">';
 		foreach ( n4s_mcp_defs() as $name => $d ) {
 			if ( '' === $d[2] ) {
-				echo '<li><code>' . esc_html( $name ) . '</code></li>';
+				n4s_apps_ui_row( $name, $d[0], '<span class="n4s-pill g">' . esc_html( n4s_t( 'lesend', 'read' ) ) . '</span>' );
 			}
 		}
-		echo '</ul>';
+		echo '</div>';
 		n4s_apps_form_head( 'n4s_mcp_save', false, 'display:block' );
 		echo '<h3>' . esc_html( n4s_t( 'Schreibzugriff', 'Write access' ) ) . '</h3>';
 		echo '<p class="description" style="max-width:900px">' . esc_html( n4s_t( 'Standard: aus. Schreibende Werkzeuge werden erst angeboten, wenn der Hauptschalter und die jeweilige Gruppe eingeschaltet sind. Jede Änderung meldet den Zustand davor und danach.', 'Default: off. Write tools are only offered when the main switch and the group are on. Each change reports the state before and after.' ) ) . '</p>';

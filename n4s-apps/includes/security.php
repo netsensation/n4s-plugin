@@ -903,10 +903,10 @@ function n4s_sec_render() {
 	$o = n4s_sec_opt();
 	$s = n4s_sec_state();
 	$f = function ( $k, $label, $suffix = '' ) use ( $o ) {
-		echo '<tr><th><label for="' . esc_attr( $k ) . '">' . esc_html( $label ) . '</label></th><td><input type="number" min="1" id="' . esc_attr( $k ) . '" name="' . esc_attr( $k ) . '" value="' . esc_attr( $o[ $k ] ) . '" class="small-text"> ' . esc_html( $suffix ) . '</td></tr>';
+		n4s_apps_ui_row( $label, '', '<input type="number" min="1" id="' . esc_attr( $k ) . '" name="' . esc_attr( $k ) . '" value="' . esc_attr( $o[ $k ] ) . '" class="small-text"> ' . esc_html( $suffix ) );
 	};
 	$c = function ( $k, $label, $desc ) use ( $o ) {
-		echo '<tr><th>' . esc_html( $label ) . '</th><td><label><input type="checkbox" name="' . esc_attr( $k ) . '" value="1"' . checked( $o[ $k ], 1, false ) . '></label>' . ( $desc ? '<p class="description">' . esc_html( $desc ) . '</p>' : '' ) . '</td></tr>';
+		n4s_apps_ui_row( $label, $desc, n4s_apps_ui_switch( $k, $o[ $k ], $label ) );
 	};
 	if ( $msg ) {
 		echo '<div class="notice notice-success"><p>' . esc_html( $msg ) . '</p></div>';
@@ -947,33 +947,38 @@ function n4s_sec_render() {
 	echo '<form method="post">';
 	wp_nonce_field( 'n4s_sec' );
 	echo '<input type="hidden" name="n4s_sec_action" value="save">';
-	echo '<h3>' . esc_html( n4s_sec_t( 'Anmeldeschutz' ) ) . '</h3><table class="form-table">';
+	echo '<h3>' . esc_html( n4s_sec_t( 'Anmeldeschutz' ) ) . '</h3><div class="n4s-card">';
 	$f( 'retries', n4s_sec_t( 'Erlaubte Fehlversuche' ), n4s_sec_t( 'bis zur Sperre' ) );
 	$f( 'lockout_min', n4s_sec_t( 'Sperrdauer' ), n4s_sec_t( 'Minuten' ) );
 	$f( 'lockouts_long', n4s_sec_t( 'Sperren bis zur langen Sperre' ), '' );
 	$f( 'long_hours', n4s_sec_t( 'Dauer der langen Sperre' ), n4s_sec_t( 'Stunden' ) );
 	$f( 'reset_hours', n4s_sec_t( 'Fehlversuche verfallen nach' ), n4s_sec_t( 'Stunden' ) );
 	$c( 'show_left', n4s_sec_t( 'Verbleibende Versuche anzeigen' ), '' );
-	echo '<tr><th>' . esc_html( n4s_sec_t( 'E-Mail-Benachrichtigung' ) ) . '</th><td><input type="checkbox" name="notify" value="1"' . checked( $o['notify'], 1, false ) . '> ' . esc_html( n4s_sec_t( 'ab' ) ) . ' ';
-	echo '<input type="number" min="1" name="notify_fails" value="' . esc_attr( $o['notify_fails'] ) . '" class="small-text"> ' . esc_html( n4s_sec_t( 'abgelehnten Anmeldeversuchen in 24 Stunden an' ) ) . ' <input type="email" name="email" value="' . esc_attr( $o['email'] ) . '" class="regular-text"><p class="description">' . esc_html( n4s_sec_t( 'Höchstens eine Mail pro 24 Stunden. Zählt alle abgelehnten Versuche, auch von gesperrten IPs.' ) ) . '</p></td></tr>';
-	echo '<tr><th>' . esc_html( n4s_sec_t( 'Quelle der IP-Adresse' ) ) . '</th><td><select name="header">';
+	n4s_apps_ui_row(
+		n4s_sec_t( 'E-Mail-Benachrichtigung' ),
+		n4s_sec_t( 'Höchstens eine Mail pro 24 Stunden. Zählt alle abgelehnten Versuche, auch von gesperrten IPs.' ),
+		n4s_apps_ui_switch( 'notify', $o['notify'], n4s_sec_t( 'E-Mail-Benachrichtigung' ) ),
+		'<div class="n4s-extra">' . esc_html( n4s_sec_t( 'ab' ) ) . ' <input type="number" min="1" name="notify_fails" value="' . esc_attr( $o['notify_fails'] ) . '" class="small-text"> ' . esc_html( n4s_sec_t( 'abgelehnten Anmeldeversuchen in 24 Stunden an' ) ) . ' <input type="email" name="email" value="' . esc_attr( $o['email'] ) . '" class="regular-text"></div>'
+	);
+	$sel = '<select name="header">';
 	foreach ( array( 'REMOTE_ADDR' => n4s_sec_t( 'REMOTE_ADDR (Standard, sicher)' ), 'HTTP_X_FORWARDED_FOR' => n4s_sec_t( 'X-Forwarded-For (hinter Proxy)' ), 'HTTP_CF_CONNECTING_IP' => 'Cloudflare', 'HTTP_X_REAL_IP' => 'X-Real-IP' ) as $k => $l ) {
-		echo '<option value="' . esc_attr( $k ) . '"' . selected( $o['header'], $k, false ) . '>' . esc_html( $l ) . '</option>';
+		$sel .= '<option value="' . esc_attr( $k ) . '"' . selected( $o['header'], $k, false ) . '>' . esc_html( $l ) . '</option>';
 	}
-	echo '</select><p class="description">' . esc_html( n4s_sec_t( 'Nur ändern, wenn die Seite hinter einem Proxy liegt; sonst lassen sich IP-Sperren umgehen.' ) ) . '</p></td></tr>';
-	echo '<tr><th>' . esc_html( n4s_sec_t( 'Blacklist (immer gesperrt)' ) ) . '</th><td><textarea name="blacklist" rows="4" cols="40">' . esc_textarea( $o['blacklist'] ) . '</textarea><p class="description">' . esc_html( n4s_sec_t( 'Eine IP pro Zeile. Geräte, auf denen sich jemand erfolgreich angemeldet hat, werden 30 Tage lang automatisch nie gesperrt (Cookie).' ) ) . '</p></td></tr>';
-	echo '</table>';
-	echo '<h3>' . esc_html( n4s_sec_t( 'Härtung' ) ) . '</h3><table class="form-table">';
+	$sel .= '</select>';
+	n4s_apps_ui_row( n4s_sec_t( 'Quelle der IP-Adresse' ), n4s_sec_t( 'Nur ändern, wenn die Seite hinter einem Proxy liegt; sonst lassen sich IP-Sperren umgehen.' ), $sel );
+	n4s_apps_ui_row( n4s_sec_t( 'Blacklist (immer gesperrt)' ), n4s_sec_t( 'Eine IP pro Zeile. Geräte, auf denen sich jemand erfolgreich angemeldet hat, werden 30 Tage lang automatisch nie gesperrt (Cookie).' ), '', '<div class="n4s-extra"><textarea name="blacklist" rows="4" cols="40">' . esc_textarea( $o['blacklist'] ) . '</textarea></div>' );
+	echo '</div>';
+	echo '<h3>' . esc_html( n4s_sec_t( 'Härtung' ) ) . '</h3><div class="n4s-card">';
 	$c( 'enum', n4s_sec_t( 'Benutzernamen verbergen' ), n4s_sec_t( 'Sperrt ?author=, Autorenseiten, die REST-Benutzerliste und Autorenangaben in oEmbed für Besucher ohne Anmeldung.' ) );
 	$c( 'generic', n4s_sec_t( 'Neutrale Login-Fehlermeldung' ), n4s_sec_t( 'Verrät nicht, ob Benutzername oder Passwort falsch war.' ) );
 	$c( 'xmlrpc', n4s_sec_t( 'XML-RPC abschalten' ), n4s_sec_t( 'Schaltet xmlrpc.php und Pingbacks ab. Deaktivieren, falls eine App oder ein Dienst XML-RPC benötigt.' ) );
 	$c( 'headers', n4s_sec_t( 'Sicherheits-Header senden' ), n4s_sec_t( 'X-Content-Type-Options, X-Frame-Options (SAMEORIGIN), Referrer-Policy, Permissions-Policy. Die Seite lässt sich dann nicht mehr in fremden iframes einbetten.' ) );
 	$c( 'hidever', n4s_sec_t( 'WordPress-Version verbergen' ), n4s_sec_t( 'Entfernt den Generator-Tag und die Versionsnummer an Skript- und Style-Adressen.' ) );
-	echo '</table><h3>' . esc_html( n4s_sec_t( 'Funktionen' ) ) . '</h3><table class="form-table">';
+	echo '</div><h3>' . esc_html( n4s_sec_t( 'Funktionen' ) ) . '</h3><div class="n4s-card">';
 	$c( 'noposts', n4s_sec_t( 'Beiträge deaktivieren' ), n4s_sec_t( 'Blendet „Beiträge" im Admin aus (Menü, Admin-Leiste, Dashboard, Kategorien, Schlagwörter) und liefert Beiträge, Blog-Seite, Archive, Feeds und die REST-Beiträge für Besucher als 404. Vorhandene Beiträge bleiben in der Datenbank. Voraussetzung: Die Startseite ist eine statische Seite.' ) );
 	$c( 'nonotices', n4s_sec_t( 'Admin-Meldungen ausblenden' ), n4s_sec_t( 'Blendet die Meldungen von Plugins und Themes im Admin-Bereich für alle Benutzer aus (Hinweise, Werbung, Bewertungsbitten). Meldungen von WordPress selbst (Updates, Fehler, Einstellungen) und von n4s bleiben sichtbar. Meldungen, die ein Plugin direkt in seine eigene Seite schreibt, lassen sich so nicht ausblenden.' ) );
 	$c( 'homeredirect', n4s_sec_t( 'Nach der Anmeldung zur Startseite' ), n4s_sec_t( 'Leitet nach dem Login auf die Startseite statt in den Admin-Bereich. Ein ausdrücklich angegebenes Ziel (z. B. beim Snippet Anmeldung oder beim Aufruf einer geschützten Seite) bleibt erhalten.' ) );
 	$c( 'logouthome', n4s_sec_t( 'Nach der Abmeldung zur Startseite' ), n4s_sec_t( 'Leitet nach dem Logout auf die Startseite statt auf die Anmeldeseite. Ein ausdrücklich angegebenes Ziel (z. B. ein Abmelde-Link mit redirect_to) bleibt erhalten.' ) );
 	$c( 'svg', n4s_sec_t( 'SVG-Upload erlauben (bereinigt)' ), n4s_sec_t( 'Erlaubt SVG-Dateien in der Mediathek. Jede Datei wird beim Hochladen bereinigt: Skripte, Ereignis-Attribute, eingebettete Fremdobjekte, externe Verweise und Animationen werden entfernt; Dateien, die sich nicht sicher bereinigen lassen, werden abgelehnt.' ) );
-	echo '</table><p><button class="button button-primary">' . esc_html( n4s_sec_t( 'Speichern' ) ) . '</button></p></form>';
+	echo '</div><p><button class="button button-primary">' . esc_html( n4s_sec_t( 'Speichern' ) ) . '</button></p></form>';
 }
