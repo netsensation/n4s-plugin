@@ -355,18 +355,19 @@ function n4s_theme_nav_html( $cfg ) {
 	}
 	$stil = ( isset( $cfg['stil'] ) && 'zeile' === $cfg['stil'] ) ? 'zeile' : 'liste';
 	$tief = ( isset( $cfg['tiefe'] ) && (int) $cfg['tiefe'] > 1 ) ? 2 : 1;
+	$al   = ( isset( $cfg['ausrichtung'] ) && in_array( $cfg['ausrichtung'], array( 'mitte', 'rechts' ), true ) ) ? $cfg['ausrichtung'] : 'links';
 	$kl   = isset( $cfg['klasse'] ) ? implode( ' ', array_filter( array_map( 'sanitize_html_class', preg_split( '/\s+/', (string) $cfg['klasse'] ) ) ) ) : '';
 	static $css = false;
 	$out = '';
 	if ( ! $css ) {
 		$css = true;
-		$out = '<style>.n4s-nav .n4s-nav-list,.n4s-nav .n4s-nav-list ul{list-style:none;margin:0;padding:0}.n4s-nav .n4s-nav-list ul{padding-left:1em}.n4s-nav a{text-decoration:none}.n4s-nav-liste .n4s-nav-list>li{margin:0 0 .4em}.n4s-nav-zeile .n4s-nav-list{display:flex;flex-wrap:wrap;gap:.4em 1.2em}.n4s-nav-zeile .n4s-nav-list ul{display:none}</style>';
+		$out = '<style>.n4s-nav-al-mitte{text-align:center}.n4s-nav-al-rechts{text-align:right}.n4s-nav-al-mitte .n4s-nav-list{justify-content:center}.n4s-nav-al-rechts .n4s-nav-list{justify-content:flex-end}.n4s-nav-al-rechts .n4s-nav-list ul{padding-left:0;padding-right:1em}.n4s-nav .n4s-nav-list,.n4s-nav .n4s-nav-list ul{list-style:none;margin:0;padding:0}.n4s-nav .n4s-nav-list ul{padding-left:1em}.n4s-nav a{text-decoration:none}.n4s-nav-liste .n4s-nav-list>li{margin:0 0 .4em}.n4s-nav-zeile .n4s-nav-list{display:flex;flex-wrap:wrap;gap:.4em 1.2em}.n4s-nav-zeile .n4s-nav-list ul{display:none}</style>';
 	}
 	return $out . wp_nav_menu(
 		array(
 			'menu'            => $id,
 			'container'       => 'nav',
-			'container_class' => 'n4s-nav n4s-nav-' . $stil . ( '' !== $kl ? ' ' . $kl : '' ),
+			'container_class' => 'n4s-nav n4s-nav-' . $stil . ' n4s-nav-al-' . $al . ( '' !== $kl ? ' ' . $kl : '' ),
 			'menu_class'      => 'n4s-nav-list',
 			'menu_id'         => '',
 			'depth'           => $tief,
@@ -378,7 +379,7 @@ function n4s_theme_nav_html( $cfg ) {
 
 /** Zusatzmenü aus Angaben wie im Shortcode (menu, gast, angemeldet, rollen, stil, tiefe, klasse). */
 function n4s_theme_nav_from_atts( $a ) {
-	$a     = wp_parse_args( (array) $a, array( 'menu' => '', 'gast' => '', 'angemeldet' => '', 'rollen' => '', 'stil' => 'liste', 'tiefe' => '1', 'klasse' => '' ) );
+	$a     = wp_parse_args( (array) $a, array( 'menu' => '', 'gast' => '', 'angemeldet' => '', 'rollen' => '', 'stil' => 'liste', 'tiefe' => '1', 'klasse' => '', 'ausrichtung' => 'links' ) );
 	$roles = array();
 	foreach ( explode( ';', (string) $a['rollen'] ) as $pair ) { // rollen="editor:Redaktion; author:Autorenmenü"
 		$p = array_map( 'trim', explode( ':', $pair, 2 ) );
@@ -386,7 +387,7 @@ function n4s_theme_nav_from_atts( $a ) {
 			$roles[ sanitize_key( $p[0] ) ] = $p[1];
 		}
 	}
-	return n4s_theme_nav_html( array( 'menu' => $a['menu'], 'gast' => $a['gast'], 'user' => $a['angemeldet'], 'roles' => $roles, 'stil' => $a['stil'], 'tiefe' => $a['tiefe'], 'klasse' => $a['klasse'] ) );
+	return n4s_theme_nav_html( array( 'menu' => $a['menu'], 'gast' => $a['gast'], 'user' => $a['angemeldet'], 'roles' => $roles, 'stil' => $a['stil'], 'tiefe' => $a['tiefe'], 'klasse' => $a['klasse'], 'ausrichtung' => $a['ausrichtung'] ) );
 }
 
 add_shortcode(
@@ -395,7 +396,7 @@ add_shortcode(
 		if ( ! n4s_theme_on( 'widget' ) ) {
 			return '';
 		}
-		return n4s_theme_nav_from_atts( shortcode_atts( array( 'menu' => '', 'gast' => '', 'angemeldet' => '', 'rollen' => '', 'stil' => 'liste', 'tiefe' => '1', 'klasse' => '' ), $atts, 'n4s_nav' ) );
+		return n4s_theme_nav_from_atts( shortcode_atts( array( 'menu' => '', 'gast' => '', 'angemeldet' => '', 'rollen' => '', 'stil' => 'liste', 'tiefe' => '1', 'klasse' => '', 'ausrichtung' => 'links' ), $atts, 'n4s_nav' ) );
 	}
 );
 
@@ -425,6 +426,10 @@ add_action(
 				'list'    => n4s_t( 'Liste (untereinander)', 'List (vertical)' ),
 				'row'     => n4s_t( 'Zeile (nebeneinander)', 'Row (side by side)' ),
 				'depth'   => n4s_t( 'Untermenüs anzeigen (Liste)', 'Show sub-menus (list)' ),
+				'align'   => n4s_t( 'Ausrichtung', 'Alignment' ),
+				'left'    => n4s_t( 'Links', 'Left' ),
+				'center'  => n4s_t( 'Mitte', 'Center' ),
+				'right'   => n4s_t( 'Rechts', 'Right' ),
 				'standard' => n4s_t( 'Standard', 'Default' ),
 				'none'    => n4s_t( 'Kein Menü', 'No menu' ),
 			),
@@ -432,13 +437,14 @@ add_action(
 		wp_add_inline_script( 'n4s-nav-block', 'window.n4sNav=' . wp_json_encode( $data ) . ';(function(wp){var el=wp.element.createElement,be=wp.blockEditor||wp.editor,C=wp.components,SSR=wp.serverSideRender,N=window.n4sNav,T=N.t;'
 			. 'function sel(a,set,label,key,first){return el(C.SelectControl,{label:label,value:a[key],options:first.concat(N.menus),onChange:function(v){var o={};o[key]=v;set(o)}})}'
 			. 'wp.blocks.registerBlockType("n4s/nav",{title:T.title,icon:"menu",category:"widgets",description:T.desc,'
-			. 'attributes:{menu:{type:"string",default:""},gast:{type:"string",default:""},angemeldet:{type:"string",default:""},rollen:{type:"string",default:""},stil:{type:"string",default:"liste"},tiefe:{type:"string",default:"1"}},'
+			. 'attributes:{menu:{type:"string",default:""},gast:{type:"string",default:""},angemeldet:{type:"string",default:""},rollen:{type:"string",default:""},stil:{type:"string",default:"liste"},tiefe:{type:"string",default:"1"},ausrichtung:{type:"string",default:"links"}},'
 			. 'edit:function(p){var a=p.attributes,set=p.setAttributes,d=[{value:"",label:T.standard},{value:"-1",label:T.none}];'
 			. 'return el(wp.element.Fragment,null,el(be.InspectorControls,null,el(C.PanelBody,{title:T.panel,initialOpen:true},'
 			. 'el(C.SelectControl,{label:T.def,value:a.menu,options:[{value:"",label:"–"}].concat(N.menus),onChange:function(v){set({menu:v})}}),'
 			. 'sel(a,set,T.gast,"gast",d),sel(a,set,T.user,"angemeldet",d),'
 			. 'el(C.TextControl,{label:T.roles,value:a.rollen,onChange:function(v){set({rollen:v})}}),'
 			. 'el(C.SelectControl,{label:T.style,value:a.stil,options:[{value:"liste",label:T.list},{value:"zeile",label:T.row}],onChange:function(v){set({stil:v})}}),'
+			. 'el(C.SelectControl,{label:T.align,value:a.ausrichtung,options:[{value:"links",label:T.left},{value:"mitte",label:T.center},{value:"rechts",label:T.right}],onChange:function(v){set({ausrichtung:v})}}),'
 			. 'el(C.ToggleControl,{label:T.depth,checked:a.tiefe==="2",onChange:function(v){set({tiefe:v?"2":"1"})}}))),'
 			. 'el(SSR,{block:"n4s/nav",attributes:a}))},save:function(){return null}})})(window.wp);' );
 		register_block_type(
@@ -452,6 +458,7 @@ add_action(
 					'rollen'     => array( 'type' => 'string', 'default' => '' ),
 					'stil'       => array( 'type' => 'string', 'default' => 'liste' ),
 					'tiefe'      => array( 'type' => 'string', 'default' => '1' ),
+					'ausrichtung' => array( 'type' => 'string', 'default' => 'links' ),
 				),
 				'render_callback' => function ( $attrs ) {
 					$h = n4s_theme_nav_from_atts( (array) $attrs );
@@ -489,7 +496,7 @@ class N4S_Theme_Nav_Widget extends WP_Widget {
 	}
 
 	public function form( $inst ) {
-		$inst = wp_parse_args( (array) $inst, array( 'title' => '', 'menu' => 0, 'gast' => 0, 'user' => 0, 'roles' => array(), 'stil' => 'liste', 'tiefe' => 1 ) );
+		$inst = wp_parse_args( (array) $inst, array( 'title' => '', 'menu' => 0, 'gast' => 0, 'user' => 0, 'roles' => array(), 'stil' => 'liste', 'tiefe' => 1, 'ausrichtung' => 'links' ) );
 		echo '<p><label for="' . esc_attr( $this->get_field_id( 'title' ) ) . '">' . esc_html( n4s_t( 'Titel', 'Title' ) ) . '</label><input class="widefat" type="text" id="' . esc_attr( $this->get_field_id( 'title' ) ) . '" name="' . esc_attr( $this->get_field_name( 'title' ) ) . '" value="' . esc_attr( $inst['title'] ) . '"></p>';
 		$this->menu_select( 'menu', $inst['menu'], n4s_t( 'Menü (Standard)', 'Menu (default)' ) );
 		$this->menu_select( 'gast', $inst['gast'], n4s_t( 'Menü für Besucher ohne Anmeldung', 'Menu for logged-out visitors' ) );
@@ -499,6 +506,11 @@ class N4S_Theme_Nav_Widget extends WP_Widget {
 			$this->menu_select( 'roles_' . $r, isset( $inst['roles'][ $r ] ) ? $inst['roles'][ $r ] : 0, translate_user_role( $label ) );
 		}
 		echo '</details><p><label for="' . esc_attr( $this->get_field_id( 'stil' ) ) . '">' . esc_html( n4s_t( 'Darstellung', 'Appearance' ) ) . '</label><select class="widefat" id="' . esc_attr( $this->get_field_id( 'stil' ) ) . '" name="' . esc_attr( $this->get_field_name( 'stil' ) ) . '"><option value="liste"' . selected( $inst['stil'], 'liste', false ) . '>' . esc_html( n4s_t( 'Liste (untereinander)', 'List (vertical)' ) ) . '</option><option value="zeile"' . selected( $inst['stil'], 'zeile', false ) . '>' . esc_html( n4s_t( 'Zeile (nebeneinander)', 'Row (side by side)' ) ) . '</option></select></p>';
+		echo '<p><label for="' . esc_attr( $this->get_field_id( 'ausrichtung' ) ) . '">' . esc_html( n4s_t( 'Ausrichtung', 'Alignment' ) ) . '</label><select class="widefat" id="' . esc_attr( $this->get_field_id( 'ausrichtung' ) ) . '" name="' . esc_attr( $this->get_field_name( 'ausrichtung' ) ) . '">';
+		foreach ( array( 'links' => n4s_t( 'Links', 'Left' ), 'mitte' => n4s_t( 'Mitte', 'Center' ), 'rechts' => n4s_t( 'Rechts', 'Right' ) ) as $k => $l ) {
+			echo '<option value="' . esc_attr( $k ) . '"' . selected( $inst['ausrichtung'], $k, false ) . '>' . esc_html( $l ) . '</option>';
+		}
+		echo '</select></p>';
 		echo '<p><label><input type="checkbox" name="' . esc_attr( $this->get_field_name( 'tiefe' ) ) . '" value="2"' . checked( (int) $inst['tiefe'], 2, false ) . '> ' . esc_html( n4s_t( 'Untermenüs anzeigen (Liste)', 'Show sub-menus (list)' ) ) . '</label></p>';
 	}
 
@@ -517,6 +529,7 @@ class N4S_Theme_Nav_Widget extends WP_Widget {
 			'user'  => $ok( isset( $new['user'] ) ? $new['user'] : 0 ),
 			'stil'  => ( isset( $new['stil'] ) && 'zeile' === $new['stil'] ) ? 'zeile' : 'liste',
 			'tiefe' => ( isset( $new['tiefe'] ) && 2 === (int) $new['tiefe'] ) ? 2 : 1,
+			'ausrichtung' => ( isset( $new['ausrichtung'] ) && in_array( $new['ausrichtung'], array( 'mitte', 'rechts' ), true ) ) ? $new['ausrichtung'] : 'links',
 			'roles' => array(),
 		);
 		foreach ( array_keys( wp_roles()->get_names() ) as $r ) {
@@ -1292,7 +1305,7 @@ if ( is_admin() ) {
 		echo '<label>' . esc_html( n4s_t( 'Besucher ohne Anmeldung', 'Logged-out visitors' ) ) . '<br><select data-n="gast" style="width:100%">' . $opt( $none ) . '</select></label>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo '<label>' . esc_html( n4s_t( 'Alle Angemeldeten', 'All logged-in users' ) ) . '<br><select data-n="angemeldet" style="width:100%">' . $opt( $none ) . '</select></label>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo '<label>' . esc_html( n4s_t( 'Darstellung', 'Appearance' ) ) . '<br><select data-n="stil" style="width:100%"><option value="">' . esc_html( n4s_t( 'Liste (untereinander)', 'List (vertical)' ) ) . '</option><option value="zeile">' . esc_html( n4s_t( 'Zeile (nebeneinander)', 'Row (side by side)' ) ) . '</option></select></label>';
-		echo '<label style="align-self:end"><input type="checkbox" data-n="tiefe" value="2"> ' . esc_html( n4s_t( 'Untermenüs anzeigen', 'Show sub-menus' ) ) . '</label></div>';
+		echo '<label>' . esc_html( n4s_t( 'Ausrichtung', 'Alignment' ) ) . '<br><select data-n="ausrichtung" style="width:100%"><option value="">' . esc_html( n4s_t( 'Links', 'Left' ) ) . '</option><option value="mitte">' . esc_html( n4s_t( 'Mitte', 'Center' ) ) . '</option><option value="rechts">' . esc_html( n4s_t( 'Rechts', 'Right' ) ) . '</option></select></label><label style="align-self:end"><input type="checkbox" data-n="tiefe" value="2"> ' . esc_html( n4s_t( 'Untermenüs anzeigen', 'Show sub-menus' ) ) . '</label></div>';
 		echo '<div style="max-width:900px;margin-top:8px"><strong>' . esc_html( n4s_t( 'Menü je Rolle', 'Menu per role' ) ) . '</strong><br>';
 		foreach ( wp_roles()->get_names() as $r => $rl ) {
 			echo '<label style="display:inline-block;margin:2px 14px 2px 0">' . esc_html( translate_user_role( $rl ) ) . ' <select data-role="' . esc_attr( $r ) . '">' . $opt( $none ) . '</select></label>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
@@ -1300,7 +1313,7 @@ if ( is_admin() ) {
 		echo '</div><div style="display:flex;gap:8px;align-items:center;max-width:900px;margin-top:10px"><strong>Shortcode:</strong><input type="text" readonly id="n4s-navgen-out" class="code" style="flex:1;min-width:0" value="[n4s_nav]" onclick="this.select()"><button type="button" class="button" id="n4s-navgen-copy" data-done="' . esc_attr( n4s_t( 'Kopiert', 'Copied' ) ) . '">' . esc_html( n4s_t( 'Kopieren', 'Copy' ) ) . '</button></div>';
 		$js = <<<'N4SJS'
 (function(){var g=document.getElementById("n4s-navgen"),o=document.getElementById("n4s-navgen-out"),c=document.getElementById("n4s-navgen-copy");if(!g||!o)return;var wrap=g.parentNode;
-function up(){var s="[n4s_nav";["menu","gast","angemeldet","stil"].forEach(function(n){var e=g.querySelector('[data-n="'+n+'"]');if(e&&e.value)s+=" "+n+'="'+e.value.replace(/"/g,"'")+'"'});
+function up(){var s="[n4s_nav";["menu","gast","angemeldet","stil","ausrichtung"].forEach(function(n){var e=g.querySelector('[data-n="'+n+'"]');if(e&&e.value)s+=" "+n+'="'+e.value.replace(/"/g,"'")+'"'});
 var t=g.querySelector('[data-n="tiefe"]');if(t&&t.checked)s+=' tiefe="2"';var r=[];wrap.querySelectorAll("[data-role]").forEach(function(e){if(e.value)r.push(e.getAttribute("data-role")+":"+e.value.replace(/[;:"]/g," "))});if(r.length)s+=' rollen="'+r.join("; ")+'"';o.value=s+"]"}
 wrap.addEventListener("input",up);wrap.addEventListener("change",up);
 c.addEventListener("click",function(){o.select();var d=function(){var x=c.textContent;c.textContent=c.getAttribute("data-done");setTimeout(function(){c.textContent=x},1600)};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(o.value).then(d,function(){document.execCommand("copy");d()})}else{document.execCommand("copy");d()}});up()})();
@@ -1393,7 +1406,7 @@ N4SJS;
 			echo '<p class="description" style="margin:10px 0 16px">' . esc_html( n4s_t( 'Funktion einschalten und speichern: Danach erscheinen hier die Einstellungen.', 'Switch a feature on and save: its settings then appear here.' ) ) . '</p>';
 		}
 
-		$panel = function ( $key, $body ) use ( $o, $mods ) {
+		$render = function ( $key, $body ) use ( $o, $mods ) {
 			if ( empty( $o['on'][ $key ] ) ) {
 				return;
 			}
@@ -1403,6 +1416,10 @@ N4SJS;
 				echo '<p style="margin:14px 0 2px;padding-top:10px;border-top:1px solid #dcdcde"><button type="submit" name="n4s_reset" value="' . esc_attr( $key ) . '" class="button" onclick="return confirm(' . esc_attr( wp_json_encode( n4s_t( 'Einstellungen dieser Funktion auf den Ausgangszustand zurücksetzen?', 'Reset the settings of this feature to their defaults?' ) ) ) . ')">' . esc_html( n4s_t( 'Zurücksetzen', 'Reset' ) ) . '</button> <span class="description">' . esc_html( $key === 'items' ? n4s_t( 'Entfernt alle Sichtbarkeits-Angaben der Menüpunkte.', 'Removes all visibility settings of the menu items.' ) : ( 'page' === $key ? n4s_t( 'Entfernt alle Ausblende-Angaben der Seiten (Kopfzeile, Menüs, Fußzeile, Titel).', 'Removes all hide settings of the pages (header, menus, footer, title).' ) : n4s_t( 'Stellt die Standardwerte dieser Funktion wieder her.', 'Restores the default values of this feature.' ) ) ) . '</span></p>';
 			}
 			echo '</div></details>';
+		};
+		$queue = array(); // Felder werden in der Reihenfolge der Funktionsübersicht ausgegeben.
+		$panel = function ( $key, $body ) use ( &$queue ) {
+			$queue[ $key ] = $body;
 		};
 		$bar_settings = function ( $key, $what ) use ( $o ) {
 			echo '<input type="hidden" name="has[' . esc_attr( $key ) . ']" value="1"><p class="description">' . esc_html( sprintf( n4s_t( 'Das Menü wählst du unter Design → Menüs (Position „%1$s“) oder je Besucher, Angemeldete und Rolle im Feld „Menüs je Position“. Farben leer = die Farben von %2$s.', 'Choose the menu under Appearance → Menus (location "%1$s") or per visitor, logged-in user and role in the "Menus per location" panel. Empty colors = the colors of the %2$s.' ), $what[0], $what[1] ) ) . '</p><p><label>' . esc_html( n4s_t( 'Ausrichtung', 'Alignment' ) ) . ' <select name="' . esc_attr( $key ) . '[align]">';
@@ -1475,6 +1492,11 @@ N4SJS;
 				echo '</div>';
 			}
 		);
+		foreach ( array_keys( $mods ) as $k ) {
+			if ( isset( $queue[ $k ] ) ) {
+				$render( $k, $queue[ $k ] );
+			}
+		}
 		echo '<p style="margin-top:14px">';
 		submit_button( n4s_t( 'Speichern', 'Save' ), 'primary', 'submit', false );
 		echo '</p></form><script>(function(){var K="n4s_theme_open",m={};try{m=JSON.parse(localStorage.getItem(K)||"{}")}catch(e){}if(/[?&]open=schemes/.test(location.search))m.schemes=1;var d=document.querySelectorAll("details[data-n4s-p]");for(var i=0;i<d.length;i++){(function(e){var k=e.getAttribute("data-n4s-p");if(Object.prototype.hasOwnProperty.call(m,k))e.open=!!m[k];e.addEventListener("toggle",function(){m[k]=e.open?1:0;try{localStorage.setItem(K,JSON.stringify(m))}catch(x){}})})(d[i])}document.addEventListener("submit",function(){for(var j=0;j<d.length;j++){m[d[j].getAttribute("data-n4s-p")]=d[j].open?1:0}try{localStorage.setItem(K,JSON.stringify(m))}catch(x){}},true)})();</script><form id="n4s-theme-upload" method="post" enctype="multipart/form-data" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="n4s_theme_import"><input type="hidden" name="_wpnonce" value="' . esc_attr( wp_create_nonce( 'n4s_theme_import' ) ) . '"></form><script>jQuery(function($){$(".n4s-cp").wpColorPicker({clear:function(){}})});</script>';
