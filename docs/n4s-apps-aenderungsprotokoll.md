@@ -1,6 +1,6 @@
 # n4s Apps: Änderungsprotokoll
 
-Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.24.1.
+Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.25.0.
 
 | Datum | Version | Änderung |
 |---|---|---|
@@ -49,3 +49,4 @@ Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Di
 | 20.11.2026 | 2.23.0 | Theme-Engine: neues Modul „Menüleiste über dem Header“. Zusätzliche Menüposition „n4s – Leiste über dem Header“ (Design → Menüs, im Tab Theme auch je Besucher, Angemeldete und Rolle wählbar); die Leiste steht über der Kopfzeile (Hook `wp_body_open`, auch bei Neve und Blocktheme), Ausrichtung links/Mitte/rechts, Farben optional (sonst dunkle Fläche des Themes bzw. Farbschemas); „Kopfzeile ausblenden“ blendet sie mit aus. |
 | 20.11.2026 | 2.24.0 | Theme-Engine: „Leiste über dem Header“ heißt jetzt „Headermenü“ (Position `n4s-above`). Neu: „Footermenü“ über dem Footer (Position `n4s-above-footer`; bei Neve direkt vor dem Footer, sonst per Skript vor den Footer gesetzt). Beide Menüs, das Hauptmenü, Kopfzeile, Fußzeile und Seitentitel sind je Seite in „n4s – Seitengestaltung“ ausblendbar (neu: Hauptmenü, Headermenü, Footermenü). Farben der beiden Menüs folgen standardmäßig automatisch Header bzw. Footer (eigene Farben optional). Tab Theme: Funktionen werden kompakt geschaltet, Einstellungen erscheinen nur für eingeschaltete Funktionen in einklappbaren Feldern (eingeklappt); Einstellungen ausgeschalteter Funktionen bleiben gespeichert. Seitenbox „Farbschema“ schmaler. |
 | 20.11.2026 | 2.24.1 | Tab Theme: Die Funktionsübersicht ist wieder die Tabelle mit Aktiv-Schalter und ausführlicher Beschreibung (wie 2.23.0); darunter ein zweiter Speichern-Button, der wie der am Ende speichert. Einstellungen der Funktionen unverändert (eingeschaltete Funktionen als einklappbare Felder). |
+| 21.11.2026 | 2.25.0 | Theme-Engine, Menü je Anmeldestatus und Rolle: neue Auswahl „Kein Menü“ (neben „Standard“ und den Menüs) für Besucher, Angemeldete und jede Rolle; die Menüposition zeigt dann nichts (auch Headermenü und Footermenü). Gilt ebenso im Widget „n4s Menü“ und im Shortcode `[n4s_nav]` (`kein` statt eines Menünamens). |
