@@ -2,7 +2,7 @@
 /**
  * Plugin Name: n4s Apps
  * Description: n4s: Rahmen für eigene PHP-Apps und Sicherheit (Anmeldeschutz, Härtung), Funktionen einzeln schaltbar / Framework for custom PHP apps and security (login protection, hardening), features switchable. Shortcode [n4s_app name="..."].
- * Version: 2.34.1
+ * Version: 2.35.0
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: n4s
@@ -13,7 +13,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'N4S_APPS_VERSION', '2.34.1' );
+define( 'N4S_APPS_VERSION', '2.35.0' );
 define( 'N4S_APPS_FILE', __FILE__ );
 define( 'N4S_APPS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'N4S_APPS_URL', plugin_dir_url( __FILE__ ) );
@@ -245,6 +245,8 @@ if ( n4s_feature_on( 'login' ) ) {
 
 /** Snippets (Shortcodes für Anmeldung, Link und Button nur für Angemeldete): immer geladen, einzeln im Tab Snippets aktivierbar. */
 require_once N4S_APPS_DIR . 'includes/snippets.php';
+/** Farben aus dem Theme lesen und Vorschläge: immer geladen, auch für Apps nutzbar. */
+require_once N4S_APPS_DIR . 'includes/themecolors.php';
 if ( n4s_feature_on( 'theme' ) ) {
 	require_once N4S_APPS_DIR . 'includes/theme.php';
 }
