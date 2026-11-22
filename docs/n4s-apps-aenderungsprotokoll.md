@@ -1,6 +1,6 @@
 # n4s Apps: Änderungsprotokoll
 
-Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.34.1.
+Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.35.0.
 
 | Datum | Version | Änderung |
 |---|---|---|
@@ -63,3 +63,4 @@ Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Di
 | 21.11.2026 | 2.33.1 | Oberfläche überarbeitet: einheitliche Breiten (Karten füllen den Inhaltsbereich), alle Häkchen in der Verwaltung als Schalter (Sicherheit, Snippets, Theme, Katalog), jeder Tab mit Titel und Untertitel; Apps-Tabelle ohne Spalte „Datei“ (Dateiname unter dem App-Namen); Schaltfläche „Updates jetzt prüfen“ vom Katalog in den Tab Apps; Karten in Katalog, Sicherheit, Update und „Neue App hinzufügen“; Admin-Tab passt in die Breite. |
 | 21.11.2026 | 2.34.0 | Verwaltung umgebaut: Übersicht ohne „Nächste Schritte“, die fünf Kennzahlen verlinken zu ihren Tabs, Update (Plugin und App-Updates) unten in der Übersicht; die Tabs Katalog und Update entfallen, der Katalog steht ganz unten im Tab Apps. Apps als Tabelle im Stil der Admin-App mit Schaltern für Aktiv und Auto-Update; Löschen erscheint bei deaktivierter App anstelle des Auto-Updates; Update-Quelle und Prüf-Schaltfläche entfallen. Funktionen, Sicherheit, KI, Snippets und Theme-Module als Zeilen mit Überschrift, Erklärung und Schalter rechts mittig. Apps und Plugin werden bei jedem Aufruf von Übersicht und Apps auf Updates geprüft (höchstens einmal je Minute). |
 | 21.11.2026 | 2.34.1 | Oberfläche: Zahlenfelder im Anmeldeschutz stehen in einer Spalte untereinander; Überschriften der Snippets und Theme-Module so dunkel wie die übrigen; Beschriftungen von Schaltern stehen immer neben dem Schalter. |
+| 22.11.2026 | 2.35.0 | Theme, Farbschemen: Sicherung als Datei (Export und Import als JSON, nur gültige Farben und bekannte Felder werden übernommen). Die Funktionen zum Auslesen von Theme-Farben und für Farbvorschläge (neue Datei `includes/themecolors.php`) sind immer geladen, auch bei ausgeschalteter Theme-Engine, damit Apps sie nutzen können (z. B. Wärmepumpen-Design). |
