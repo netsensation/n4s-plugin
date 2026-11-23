@@ -133,13 +133,90 @@ function n4s_apps_request( $url, $base, $max ) {
 		return new WP_Error( 'n4s_catalog', $res->get_error_message() );
 	}
 	$code = (int) wp_remote_retrieve_response_code( $res );
+	$sent = isset( $headers['Authorization'] ); // mit Zugangsschlüssel angefragt
+	$host = n4s_apps_host( $base );
 	if ( in_array( $code, array( 401, 403 ), true ) ) {
+		$j  = json_decode( (string) wp_remote_retrieve_body( $res ), true );
+		$ec = is_array( $j ) && isset( $j['code'] ) ? (string) $j['code'] : '';
+		if ( $sent && in_array( $ec, array( 'n4s_locked', 'n4s_expired' ), true ) ) { // Lizenz gesperrt oder abgelaufen: private Apps dieses Katalogs stoppen
+			n4s_apps_license_set( $host, 'n4s_locked' === $ec ? 'locked' : 'expired' );
+			return new WP_Error( 'n4s_license', 'n4s_locked' === $ec ? n4s_t( 'Lizenz gesperrt.', 'License locked.' ) : n4s_t( 'Lizenz abgelaufen.', 'License expired.' ) );
+		}
 		return new WP_Error( 'n4s_catalog', n4s_t( 'Zugriff verweigert (Zugangsschlüssel prüfen).', 'Access denied (check the access key).' ) );
 	}
 	if ( 200 !== $code ) {
 		return new WP_Error( 'n4s_catalog', 'HTTP ' . $code );
 	}
+	if ( $sent ) {
+		n4s_apps_license_clear( $host ); // Schlüssel gültig: Sperre aufheben
+	}
 	return array( 'body' => (string) wp_remote_retrieve_body( $res ) );
+}
+
+/* ------------------------------------------------------- Lizenz (gesperrt / abgelaufen) */
+
+/** Lizenzstatus je Katalog-Host (Option n4s_apps_license): host => array( state => locked|expired, time ). Leer = alles in Ordnung. */
+function n4s_apps_license_all() {
+	$o = get_option( 'n4s_apps_license', array() );
+	return is_array( $o ) ? $o : array();
+}
+
+function n4s_apps_license_set( $host, $state ) {
+	$o = n4s_apps_license_all();
+	if ( ! isset( $o[ $host ] ) || $o[ $host ]['state'] !== $state ) {
+		$o[ $host ] = array( 'state' => $state, 'time' => time() );
+		update_option( 'n4s_apps_license', $o, false );
+	}
+}
+
+function n4s_apps_license_clear( $host ) {
+	$o = n4s_apps_license_all();
+	if ( isset( $o[ $host ] ) ) {
+		unset( $o[ $host ] );
+		update_option( 'n4s_apps_license', $o, false );
+	}
+}
+
+/** Zugriff (public/private) der Katalog-Apps aus Antworten merken: slug => public|private. Nur bei Änderung wird gespeichert. */
+function n4s_apps_access_note( $apps ) {
+	if ( ! is_array( $apps ) ) {
+		return;
+	}
+	$cur = get_option( 'n4s_apps_access', array() );
+	$cur = is_array( $cur ) ? $cur : array();
+	$new = $cur;
+	foreach ( $apps as $k => $e ) {
+		$slug = is_array( $e ) && isset( $e['slug'] ) ? (string) $e['slug'] : (string) $k;
+		if ( is_array( $e ) && preg_match( '/^[a-z0-9_-]{1,60}$/', $slug ) && isset( $e['access'] ) ) {
+			$new[ $slug ] = 'private' === $e['access'] ? 'private' : 'public';
+		}
+	}
+	if ( $new !== $cur ) {
+		update_option( 'n4s_apps_access', $new, false );
+	}
+}
+
+/**
+ * Ist diese App wegen gesperrter oder abgelaufener Lizenz zu blockieren? Gibt 'locked', 'expired' oder '' zurück.
+ * Gilt für Apps mit Update URI auf einen Katalog, dessen Lizenz gesperrt oder abgelaufen ist, außer für bekannt öffentliche Apps.
+ */
+function n4s_apps_license_state_for( $meta, $lic = null ) {
+	$lic = null === $lic ? n4s_apps_license_all() : $lic;
+	if ( ! $lic || empty( $meta['update_uri'] ) ) {
+		return '';
+	}
+	$host = n4s_apps_host( n4s_apps_base( $meta['update_uri'] ) );
+	if ( '' === $host || empty( $lic[ $host ]['state'] ) ) {
+		return '';
+	}
+	$access = get_option( 'n4s_apps_access', array() );
+	$access = is_array( $access ) ? $access : array();
+	foreach ( (array) $meta['slugs'] as $s ) {
+		if ( isset( $access[ $s ] ) && 'public' === $access[ $s ] ) {
+			return ''; // öffentliche Apps bleiben nutzbar
+		}
+	}
+	return (string) $lic[ $host ]['state'];
 }
 
 /** JSON-Schnittstelle des Katalogs (REST-Namespace n4s-admin/v1, auch ohne schöne Permalinks erreichbar). */
@@ -150,6 +227,9 @@ function n4s_apps_api( $base, $path, $query = array() ) {
 		return $r;
 	}
 	$j = json_decode( $r['body'], true );
+	if ( is_array( $j ) && isset( $j['apps'] ) && in_array( $path, array( 'check', 'catalog' ), true ) ) {
+		n4s_apps_access_note( (array) $j['apps'] ); // öffentlich oder privat merken (für die Lizenzsperre)
+	}
 	return is_array( $j ) ? $j : new WP_Error( 'n4s_catalog', n4s_t( 'Ungültige Antwort des Katalogs.', 'Invalid response from the catalog.' ) );
 }
 
@@ -313,6 +393,7 @@ function n4s_apps_catalog_fetch( $e ) {
  * Gibt array( name, version ) oder WP_Error zurück.
  */
 function n4s_apps_catalog_apply( $e, $mode ) {
+	n4s_apps_access_note( array( $e['slug'] => $e ) );
 	if ( defined( 'DISALLOW_FILE_MODS' ) && DISALLOW_FILE_MODS ) {
 		return new WP_Error( 'n4s_catalog', n4s_t( 'Dateiänderungen sind gesperrt (DISALLOW_FILE_MODS).', 'File changes are disabled (DISALLOW_FILE_MODS).' ) );
 	}
@@ -402,6 +483,18 @@ register_deactivation_hook(
 	function () {
 		wp_clear_scheduled_hook( 'n4s_apps_cron' );
 	}
+);
+
+/** Nach dem Plugin-Update einmal bald prüfen, damit bekannt ist, welche Katalog-Apps öffentlich sind (Lizenzsperre). */
+add_action(
+	'init',
+	function () {
+		if ( false === get_option( 'n4s_apps_access', false ) && ! get_transient( 'n4s_apps_access_init' ) ) {
+			set_transient( 'n4s_apps_access_init', 1, HOUR_IN_SECONDS );
+			wp_schedule_single_event( time() + 60, 'n4s_apps_cron' );
+		}
+	},
+	20
 );
 
 /** Stündlich: Updates prüfen und Apps mit eingeschalteter Automatik aktualisieren. Ohne Apps mit Update URI passiert nichts. */
