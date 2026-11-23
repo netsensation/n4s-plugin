@@ -139,8 +139,10 @@ function n4s_apps_request( $url, $base, $max ) {
 		$j  = json_decode( (string) wp_remote_retrieve_body( $res ), true );
 		$ec = is_array( $j ) && isset( $j['code'] ) ? (string) $j['code'] : '';
 		if ( $sent && in_array( $ec, array( 'n4s_locked', 'n4s_expired' ), true ) ) { // Lizenz gesperrt oder abgelaufen: private Apps dieses Katalogs stoppen
-			n4s_apps_license_set( $host, 'n4s_locked' === $ec ? 'locked' : 'expired' );
-			return new WP_Error( 'n4s_license', 'n4s_locked' === $ec ? n4s_t( 'Lizenz gesperrt.', 'License locked.' ) : n4s_t( 'Lizenz abgelaufen.', 'License expired.' ) );
+			if ( n4s_apps_license_set( $host, 'n4s_locked' === $ec ? 'locked' : 'expired' ) ) {
+				n4s_apps_license_learn_public( $base );
+			}
+			return new WP_Error( 'n4s_license', 'n4s_locked' === $ec ? n4s_t( 'Lizenz abgelaufen (Zugang gesperrt).', 'License expired (access locked).' ) : n4s_t( 'Lizenz abgelaufen.', 'License expired.' ) );
 		}
 		return new WP_Error( 'n4s_catalog', n4s_t( 'Zugriff verweigert (Zugangsschlüssel prüfen).', 'Access denied (check the access key).' ) );
 	}
@@ -161,11 +163,38 @@ function n4s_apps_license_all() {
 	return is_array( $o ) ? $o : array();
 }
 
+/** Zustand speichern. Gibt true zurück, wenn er neu ist oder sich geändert hat. */
 function n4s_apps_license_set( $host, $state ) {
 	$o = n4s_apps_license_all();
 	if ( ! isset( $o[ $host ] ) || $o[ $host ]['state'] !== $state ) {
 		$o[ $host ] = array( 'state' => $state, 'time' => time() );
 		update_option( 'n4s_apps_license', $o, false );
+		return true;
+	}
+	return false;
+}
+
+/**
+ * Bei neuer Sperre den öffentlichen Teil des Katalogs ohne Schlüssel abrufen: Was ohne Schlüssel sichtbar ist, ist öffentlich und
+ * bleibt nutzbar. So gilt das auch, wenn die Sperre schon bestand, bevor das Plugin die öffentlichen Apps kannte.
+ */
+function n4s_apps_license_learn_public( $base ) {
+	$url = add_query_arg( array( 'rest_route' => '/n4s-admin/v1/catalog' ), $base . '/' );
+	$res = wp_safe_remote_get(
+		$url,
+		array(
+			'timeout'             => 10,
+			'redirection'         => 0,
+			'headers'             => array( 'Accept' => 'application/json', 'User-Agent' => 'n4s-apps/' . N4S_APPS_VERSION ),
+			'limit_response_size' => 262144,
+		)
+	);
+	if ( is_wp_error( $res ) || 200 !== (int) wp_remote_retrieve_response_code( $res ) ) {
+		return;
+	}
+	$j = json_decode( (string) wp_remote_retrieve_body( $res ), true );
+	if ( is_array( $j ) && isset( $j['apps'] ) ) {
+		n4s_apps_access_note( (array) $j['apps'] );
 	}
 }
 
