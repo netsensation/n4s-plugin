@@ -1,6 +1,6 @@
 # n4s Apps: Änderungsprotokoll
 
-Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.35.0.
+Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.36.0.
 
 | Datum | Version | Änderung |
 |---|---|---|
@@ -64,3 +64,4 @@ Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Di
 | 21.11.2026 | 2.34.0 | Verwaltung umgebaut: Übersicht ohne „Nächste Schritte“, die fünf Kennzahlen verlinken zu ihren Tabs, Update (Plugin und App-Updates) unten in der Übersicht; die Tabs Katalog und Update entfallen, der Katalog steht ganz unten im Tab Apps. Apps als Tabelle im Stil der Admin-App mit Schaltern für Aktiv und Auto-Update; Löschen erscheint bei deaktivierter App anstelle des Auto-Updates; Update-Quelle und Prüf-Schaltfläche entfallen. Funktionen, Sicherheit, KI, Snippets und Theme-Module als Zeilen mit Überschrift, Erklärung und Schalter rechts mittig. Apps und Plugin werden bei jedem Aufruf von Übersicht und Apps auf Updates geprüft (höchstens einmal je Minute). |
 | 21.11.2026 | 2.34.1 | Oberfläche: Zahlenfelder im Anmeldeschutz stehen in einer Spalte untereinander; Überschriften der Snippets und Theme-Module so dunkel wie die übrigen; Beschriftungen von Schaltern stehen immer neben dem Schalter. |
 | 22.11.2026 | 2.35.0 | Theme, Farbschemen: Sicherung als Datei (Export und Import als JSON, nur gültige Farben und bekannte Felder werden übernommen). Die Funktionen zum Auslesen von Theme-Farben und für Farbvorschläge (neue Datei `includes/themecolors.php`) sind immer geladen, auch bei ausgeschalteter Theme-Engine, damit Apps sie nutzen können (z. B. Wärmepumpen-Design). |
+| 23.11.2026 | 2.36.0 | Lizenzsperre für private Katalog-Apps: Meldet der Katalog („n4s Admin“ ab 1.11.0) den Zugangsschlüssel als gesperrt oder abgelaufen (HTTP 403 mit Code `n4s_locked` oder `n4s_expired`), lädt das Plugin die privaten Apps dieses Katalogs nicht mehr; im Shortcode erscheint „Lizenz abgelaufen“ (Administratoren sehen zusätzlich den Grund), in der App-Liste steht ein Hinweis. Öffentliche Katalog-Apps laufen weiter. Die Sperre endet mit der nächsten gültigen Antwort des Katalogs (stündlicher Abgleich oder „Updates jetzt prüfen“). Das Plugin merkt sich dafür je Katalog-App, ob sie öffentlich oder privat ist (Option `n4s_apps_access`), der Zustand steht in `n4s_apps_license`. |
