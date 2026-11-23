@@ -51,3 +51,4 @@ Stand: 09.11.2026 · Plugin-Version 2.8.3. Ergänzt die Arbeitsanweisung um das 
 - Beispiel-App `hello` hat einen öffentlichen REST-Endpunkt: auf Produktivseiten (ELCO) deaktivieren und löschen.
 - Erste echte App festlegen (Security-App für ELCO als Ersatz für Limit Login Attempts ist geplant).
 - Wer 2.1.0 installiert hatte: leere Tabelle `n4s_verwaltungen` und Option `n4s_verw_db` können entfernt werden.
+- Vorgemerkt für die nächste Plugin-Version (23.11.2026): Theme (n4s Theme), Zusatzmenü bei Widget: Option „Link in neuem Tab öffnen“ ergänzen.
