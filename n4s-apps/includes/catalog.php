@@ -142,7 +142,7 @@ function n4s_apps_request( $url, $base, $max ) {
 			if ( n4s_apps_license_set( $host, 'n4s_locked' === $ec ? 'locked' : 'expired' ) ) {
 				n4s_apps_license_learn_public( $base );
 			}
-			return new WP_Error( 'n4s_license', 'n4s_locked' === $ec ? n4s_t( 'Lizenz abgelaufen (Zugang gesperrt).', 'License expired (access locked).' ) : n4s_t( 'Lizenz abgelaufen.', 'License expired.' ) );
+			return new WP_Error( 'n4s_license', 'n4s_locked' === $ec ? n4s_t( 'Version abgelaufen (Zugang gesperrt).', 'Version expired (access locked).' ) : n4s_t( 'Version abgelaufen.', 'Version expired.' ) );
 		}
 		return new WP_Error( 'n4s_catalog', n4s_t( 'Zugriff verweigert (Zugangsschlüssel prüfen).', 'Access denied (check the access key).' ) );
 	}
