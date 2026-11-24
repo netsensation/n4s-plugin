@@ -38,7 +38,7 @@ Eintrag:
 }
 ```
 
-Fehler: `401`/`403` ohne gültigen Schlüssel bei privaten Apps (im Client „Zugriff verweigert“), sonst `404`. Ein gesperrter oder abgelaufener Schlüssel wird mit `403` und dem JSON-Feld `code` beantwortet (`n4s_locked` bzw. `n4s_expired`); der Client (ab Plugin 2.36.0) stoppt dann die privaten Apps dieses Katalogs und zeigt „Lizenz abgelaufen“, bis der Katalog wieder mit `200` antwortet. Ein ungültiger Schlüssel (`n4s_forbidden`) ist kein Lizenzfall. Ein Eintrag mit ungültigen Feldern (Slug, Version, Hash, Signatur, Download-Host) wird vom Client verworfen.
+Fehler: `401`/`403` ohne gültigen Schlüssel bei privaten Apps (im Client „Zugriff verweigert“), sonst `404`. Ein gesperrter oder abgelaufener Schlüssel wird mit `403` und dem JSON-Feld `code` beantwortet (`n4s_locked` bzw. `n4s_expired`); der Client (ab Plugin 2.36.0) stoppt dann die privaten Apps dieses Katalogs und zeigt „Version abgelaufen“, bis der Katalog wieder mit `200` antwortet. Ein ungültiger Schlüssel (`n4s_forbidden`) ist kein Lizenzfall. Ein Eintrag mit ungültigen Feldern (Slug, Version, Hash, Signatur, Download-Host) wird vom Client verworfen.
 
 ## Signatur
 - Algorithmus Ed25519 (libsodium, in PHP ab 7.2). Der Schlüssel liegt **nicht** auf dem Katalog-Server, sondern z. B. als GitHub-Secret `N4S_SIGNING_KEY`; der Server verteilt nur fertig signierte Dateien. Wird der Server gehackt, lassen sich keine gefälschten Updates verteilen.

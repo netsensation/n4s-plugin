@@ -2,7 +2,7 @@
 /**
  * Plugin Name: n4s Apps
  * Description: n4s: Rahmen für eigene PHP-Apps und Sicherheit (Anmeldeschutz, Härtung), Funktionen einzeln schaltbar / Framework for custom PHP apps and security (login protection, hardening), features switchable. Shortcode [n4s_app name="..."].
- * Version: 2.36.1
+ * Version: 2.36.2
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: n4s
@@ -13,7 +13,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'N4S_APPS_VERSION', '2.36.1' );
+define( 'N4S_APPS_VERSION', '2.36.2' );
 define( 'N4S_APPS_FILE', __FILE__ );
 define( 'N4S_APPS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'N4S_APPS_URL', plugin_dir_url( __FILE__ ) );
@@ -220,9 +220,9 @@ add_shortcode(
 				: '';
 		}
 		if ( isset( $GLOBALS['n4s_apps_blocked'][ $slug ] ) ) { // Lizenz gesperrt oder abgelaufen
-			$why = 'locked' === $GLOBALS['n4s_apps_blocked'][ $slug ] ? n4s_t( 'Der Zugang wurde gesperrt.', 'Access was locked.' ) : n4s_t( 'Der Zugang ist abgelaufen.', 'Access has expired.' );
-			return '<div class="n4s-license" style="padding:14px 16px;border:1px solid currentColor;border-radius:8px;opacity:.85"><strong>' . esc_html( n4s_t( 'Lizenz abgelaufen', 'License expired' ) ) . '</strong>'
-				. ( current_user_can( 'manage_options' ) ? '<br><span style="font-size:.9em">' . esc_html( $why . ' ' . n4s_t( 'Bitte den Zugangsschlüssel beim Anbieter klären; unter Apps → „Updates jetzt prüfen“ wird er neu geprüft.', 'Please check the access key with the provider; under Apps → "Check for updates now" it is checked again.' ) ) . '</span>' : '' )
+			$why = n4s_t( 'Der Administrator muss auf eine neue Version aktualisieren oder upgraden.', 'The administrator must update or upgrade to a new version.' );
+			return '<div class="n4s-license" style="padding:14px 16px;border:1px solid currentColor;border-radius:8px;opacity:.85"><strong>' . esc_html( n4s_t( 'Version abgelaufen', 'Version expired' ) ) . '</strong>'
+				. ( current_user_can( 'manage_options' ) ? '<br><span style="font-size:.9em">' . esc_html( $why ) . '</span>' : '' )
 				. '</div>';
 		}
 		if ( ! isset( $apps[ $slug ] ) ) {

@@ -1003,7 +1003,7 @@ function n4s_apps_tab_apps() {
 		}
 		$lstate = ( 'user' === $f['source'] ) ? n4s_apps_license_state_for( $meta ) : '';
 		echo '<tr' . ( $off ? ' class="n4s-off"' : '' ) . '>';
-		echo '<td><strong>' . esc_html( $meta['name'] ? $meta['name'] : ( $slugs ? implode( ', ', $slugs ) : '–' ) ) . '</strong>' . ( '' !== $lstate ? ' <span style="color:#b32d2e;font-weight:600">' . esc_html( n4s_t( 'Lizenz abgelaufen', 'License expired' ) ) . '</span>' : '' ) . '<br><span class="description">' . esc_html( $name ) . '</span>';
+		echo '<td><strong>' . esc_html( $meta['name'] ? $meta['name'] : ( $slugs ? implode( ', ', $slugs ) : '–' ) ) . '</strong>' . ( '' !== $lstate ? ' <span style="color:#b32d2e;font-weight:600">' . esc_html( n4s_t( 'Version abgelaufen', 'Version expired' ) ) . '</span>' : '' ) . '<br><span class="description">' . esc_html( $name ) . '</span>';
 		if ( 'user' === $f['source'] && ( $can || $cat ) ) {
 			if ( $s1 && isset( $pending[ $s1 ] ) ) {
 				echo '<div class="n4s-upd"><strong>' . esc_html( n4s_t( 'Update verfügbar: ', 'Update available: ' ) . $pending[ $s1 ]['version'] ) . '</strong>';

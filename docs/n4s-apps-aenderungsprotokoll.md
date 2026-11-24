@@ -1,6 +1,6 @@
 # n4s Apps: Änderungsprotokoll
 
-Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.36.1.
+Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.36.2.
 
 | Datum | Version | Änderung |
 |---|---|---|
@@ -66,3 +66,4 @@ Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Di
 | 22.11.2026 | 2.35.0 | Theme, Farbschemen: Sicherung als Datei (Export und Import als JSON, nur gültige Farben und bekannte Felder werden übernommen). Die Funktionen zum Auslesen von Theme-Farben und für Farbvorschläge (neue Datei `includes/themecolors.php`) sind immer geladen, auch bei ausgeschalteter Theme-Engine, damit Apps sie nutzen können (z. B. Wärmepumpen-Design). |
 | 23.11.2026 | 2.36.0 | Lizenzsperre für private Katalog-Apps: Meldet der Katalog („n4s Admin“ ab 1.11.0) den Zugangsschlüssel als gesperrt oder abgelaufen (HTTP 403 mit Code `n4s_locked` oder `n4s_expired`), lädt das Plugin die privaten Apps dieses Katalogs nicht mehr; im Shortcode erscheint „Lizenz abgelaufen“ (Administratoren sehen zusätzlich den Grund), in der App-Liste steht ein Hinweis. Öffentliche Katalog-Apps laufen weiter. Die Sperre endet mit der nächsten gültigen Antwort des Katalogs (stündlicher Abgleich oder „Updates jetzt prüfen“). Das Plugin merkt sich dafür je Katalog-App, ob sie öffentlich oder privat ist (Option `n4s_apps_access`), der Zustand steht in `n4s_apps_license`. |
 | 23.11.2026 | 2.36.1 | Lizenzsperre: Bei einer neuen Sperre ruft das Plugin den öffentlichen Teil des Katalogs ohne Schlüssel ab und merkt sich, welche Apps öffentlich sind. Öffentliche Katalog-Apps laufen so auch dann weiter, wenn die Sperre schon bestand, bevor das Plugin sie kannte; nur private Apps zeigen „Lizenz abgelaufen“. Auch die Meldung bei der Update-Prüfung (statt „Zugriff verweigert“) lautet bei gesperrtem oder abgelaufenem Zugang „Lizenz abgelaufen“. |
+| 24.11.2026 | 2.36.2 | Meldung bei gesperrtem oder abgelaufenem Zugang: Überschrift „Version abgelaufen“ (statt „Lizenz abgelaufen“), Hinweis: „Der Administrator muss auf eine neue Version aktualisieren oder upgraden.“ Gilt auch für die App-Liste und die Fehlermeldung beim Katalog-Abruf. |
