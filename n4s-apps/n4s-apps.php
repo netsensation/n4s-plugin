@@ -2,7 +2,7 @@
 /**
  * Plugin Name: n4s Apps
  * Description: n4s: Rahmen für eigene PHP-Apps und Sicherheit (Anmeldeschutz, Härtung), Funktionen einzeln schaltbar / Framework for custom PHP apps and security (login protection, hardening), features switchable. Shortcode [n4s_app name="..."].
- * Version: 2.36.2
+ * Version: 2.36.3
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: n4s
@@ -13,7 +13,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'N4S_APPS_VERSION', '2.36.2' );
+define( 'N4S_APPS_VERSION', '2.36.3' );
 define( 'N4S_APPS_FILE', __FILE__ );
 define( 'N4S_APPS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'N4S_APPS_URL', plugin_dir_url( __FILE__ ) );
@@ -114,6 +114,36 @@ function n4s_apps_files() {
 	}
 	return $out;
 }
+
+/**
+ * Aktivitätsprotokoll (Übersicht → Zuletzt): Zeit, Text, Benutzer ('' = automatisch). Höchstens 100 Einträge, neueste zuerst.
+ * Protokolliert werden Apps (Update automatisch/manuell, installiert, gelöscht, aktiviert/deaktiviert), Plugin-Update, Funktionen und Lizenz.
+ */
+function n4s_apps_activity( $text, $by = null ) {
+	if ( null === $by ) {
+		$u  = function_exists( 'wp_get_current_user' ) ? wp_get_current_user() : null;
+		$by = ( $u && $u->ID ) ? $u->user_login : '';
+	}
+	$log = get_option( 'n4s_apps_activity', array() );
+	$log = is_array( $log ) ? $log : array();
+	array_unshift( $log, array( time(), mb_substr( wp_strip_all_tags( (string) $text ), 0, 300 ), (string) $by ) );
+	update_option( 'n4s_apps_activity', array_slice( $log, 0, 100 ), false );
+}
+
+/** Plugin-Update erkennen (egal auf welchem Weg): Version mit der zuletzt gesehenen vergleichen. */
+add_action(
+	'init',
+	function () {
+		$seen = get_option( 'n4s_apps_seen_version', '' );
+		if ( N4S_APPS_VERSION !== $seen ) {
+			update_option( 'n4s_apps_seen_version', N4S_APPS_VERSION, false );
+			if ( '' !== $seen ) {
+				n4s_apps_activity( n4s_t( 'Plugin n4s Apps aktualisiert: ', 'Plugin n4s Apps updated: ' ) . $seen . ' → ' . N4S_APPS_VERSION, '' );
+			}
+		}
+	},
+	5
+);
 
 /** Datei in die Liste der deaktivierten Apps eintragen. */
 function n4s_apps_disable_key( $key ) {

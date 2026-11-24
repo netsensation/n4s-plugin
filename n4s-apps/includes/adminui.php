@@ -135,6 +135,17 @@ function n4s_apps_tab_overview() {
 	} else {
 		echo '<p class="n4s-lead">' . esc_html( n4s_t( 'Keine Ereignisse im Anmeldeschutz.', 'No events in the login protection.' ) ) . '</p>';
 	}
+	$act = get_option( 'n4s_apps_activity', array() );
+	echo '<h4 style="margin:16px 0 6px">' . esc_html( n4s_t( 'Aktivitäten', 'Activity' ) ) . '</h4>';
+	if ( is_array( $act ) && $act ) {
+		echo '<div class="n4s-actlog" style="max-height:260px;overflow:auto"><table class="n4s-tbl"><tr><th>' . esc_html( n4s_t( 'Zeit', 'Time' ) ) . '</th><th>' . esc_html( n4s_t( 'Aktivität', 'Activity' ) ) . '</th><th>' . esc_html( n4s_t( 'Von', 'By' ) ) . '</th></tr>';
+		foreach ( $act as $a ) {
+			echo '<tr><td style="white-space:nowrap">' . esc_html( wp_date( n4s_t( 'd.m.Y H:i', 'Y-m-d H:i' ), (int) $a[0] ) ) . '</td><td>' . esc_html( $a[1] ) . '</td><td>' . esc_html( '' !== $a[2] ? $a[2] : n4s_t( 'automatisch', 'automatic' ) ) . '</td></tr>';
+		}
+		echo '</table></div>';
+	} else {
+		echo '<p class="n4s-lead">' . esc_html( n4s_t( 'Noch keine Aktivitäten aufgezeichnet.', 'No activity recorded yet.' ) ) . '</p>';
+	}
 	echo '</section></div>';
 
 	/* Updates: Apps und Plugin (bei jedem Aufruf geprüft) */

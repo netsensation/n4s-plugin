@@ -169,6 +169,7 @@ function n4s_apps_license_set( $host, $state ) {
 	if ( ! isset( $o[ $host ] ) || $o[ $host ]['state'] !== $state ) {
 		$o[ $host ] = array( 'state' => $state, 'time' => time() );
 		update_option( 'n4s_apps_license', $o, false );
+		n4s_apps_activity( ( 'locked' === $state ? n4s_t( 'Zugang gesperrt: ', 'Access locked: ' ) : n4s_t( 'Version abgelaufen: ', 'Version expired: ' ) ) . $host, '' );
 		return true;
 	}
 	return false;
@@ -537,6 +538,7 @@ function n4s_apps_cron_run() {
 		if ( in_array( $slug, $auto, true ) ) {
 			$r           = n4s_apps_catalog_apply( $e, 'update' );
 			$log[ $slug ] = is_wp_error( $r ) ? $r->get_error_message() : 'OK ' . $r['version'];
+			n4s_apps_activity( is_wp_error( $r ) ? n4s_t( 'Automatisches Update fehlgeschlagen: ', 'Automatic update failed: ' ) . $slug . ' – ' . $r->get_error_message() : n4s_t( 'Automatisches Update: ', 'Automatic update: ' ) . $slug . ' ' . $r['version'], '' );
 		}
 	}
 	if ( $log ) {
