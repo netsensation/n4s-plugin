@@ -56,8 +56,11 @@ function n4s_apps_can_catalog() {
 	return n4s_apps_can_files();
 }
 
-function n4s_apps_notice( $type, $text ) {
+function n4s_apps_notice( $type, $text, $log = true ) {
 	set_transient( 'n4s_apps_notice_' . get_current_user_id(), array( $type, $text ), 120 );
+	if ( 'success' === $type && $log ) {
+		n4s_apps_activity( $text );
+	}
 }
 
 function n4s_apps_back( $review = false, $page = '' ) {
@@ -302,7 +305,7 @@ add_action(
 		}
 		n4s_apps_verify( 'n4s_app_cancel' );
 		delete_transient( n4s_apps_pending_key() );
-		n4s_apps_notice( 'success', n4s_t( 'Update abgebrochen. Nichts wurde verändert.', 'Update cancelled. Nothing was changed.' ) );
+		n4s_apps_notice( 'success', n4s_t( 'Update abgebrochen. Nichts wurde verändert.', 'Update cancelled. Nothing was changed.' ), false );
 		n4s_apps_back();
 	}
 );
@@ -417,7 +420,7 @@ add_action(
 			n4s_apps_notice( 'error', n4s_t( 'Update fehlgeschlagen. ', 'Update failed. ' ) . $why );
 		} else {
 			$now = get_file_data( N4S_APPS_DIR . 'n4s-apps.php', array( 'v' => 'Version' ) );
-			n4s_apps_notice( 'success', n4s_t( 'n4s Apps aktualisiert auf Version ' . $now['v'] . '. Eigene Apps sind unverändert.', 'n4s Apps updated to version ' . $now['v'] . '. Custom apps are unchanged.' ) );
+			n4s_apps_notice( 'success', n4s_t( 'n4s Apps aktualisiert auf Version ' . $now['v'] . '. Eigene Apps sind unverändert.', 'n4s Apps updated to version ' . $now['v'] . '. Custom apps are unchanged.' ), false );
 		}
 		n4s_apps_back( false, 'n4s' );
 	}
@@ -431,6 +434,7 @@ add_action(
 			n4s_apps_deny();
 		}
 		n4s_apps_verify( 'n4s_features_save' );
+		$old_f = n4s_features();
 		update_option(
 			'n4s_features',
 			array(
@@ -443,7 +447,22 @@ add_action(
 				'mcp'          => empty( $_POST['mcp'] ) ? 0 : 1,
 			)
 		);
-		n4s_apps_notice( 'success', n4s_t( 'Funktionen gespeichert.', 'Features saved.' ) );
+		$names = array(
+			'apps'         => n4s_t( 'Apps', 'Apps' ),
+			'security'     => n4s_t( 'Anmeldeschutz', 'Login protection' ),
+			'dup'          => n4s_t( 'Seite duplizieren', 'Duplicate page' ),
+			'mediareplace' => n4s_t( 'Mediendatei ersetzen', 'Replace media file' ),
+			'login'        => n4s_t( 'Eigenes Login-Design', 'Custom login design' ),
+			'theme'        => n4s_t( 'Theme-Engine', 'Theme engine' ),
+			'mcp'          => n4s_t( 'KI-Anbindung', 'AI connection' ),
+		);
+		$new_f = n4s_features();
+		foreach ( $names as $k => $label ) {
+			if ( ! empty( $old_f[ $k ] ) !== ! empty( $new_f[ $k ] ) ) {
+				n4s_apps_activity( ( ! empty( $new_f[ $k ] ) ? n4s_t( 'Funktion eingeschaltet: ', 'Feature switched on: ' ) : n4s_t( 'Funktion ausgeschaltet: ', 'Feature switched off: ' ) ) . $label );
+			}
+		}
+		n4s_apps_notice( 'success', n4s_t( 'Funktionen gespeichert.', 'Features saved.' ), false );
 		n4s_apps_back( false, 'n4s-features' );
 	}
 );
@@ -493,7 +512,7 @@ add_action(
 			n4s_apps_notice( 'error', n4s_t( 'Update-Prüfung fehlgeschlagen: ', 'Update check failed: ' ) . implode( ' · ', $r['errors'] ) );
 		} else {
 			$n = count( n4s_apps_pending_updates( false, true ) );
-			n4s_apps_notice( 'success', $n ? sprintf( n4s_t( '%d App-Update(s) verfügbar.', '%d app update(s) available.' ), $n ) : n4s_t( 'Alle Apps mit Update-Quelle sind aktuell.', 'All apps with an update source are up to date.' ) );
+			n4s_apps_notice( 'success', $n ? sprintf( n4s_t( '%d App-Update(s) verfügbar.', '%d app update(s) available.' ), $n ) : n4s_t( 'Alle Apps mit Update-Quelle sind aktuell.', 'All apps with an update source are up to date.' ), false );
 		}
 		n4s_apps_back( false, 'n4s-apps' );
 	}
@@ -632,9 +651,9 @@ add_action(
 		if ( ! empty( $r['error'] ) ) {
 			n4s_apps_notice( 'error', n4s_t( 'Update-Prüfung fehlgeschlagen: ', 'Update check failed: ' ) . $r['error'] );
 		} elseif ( version_compare( $r['version'], N4S_APPS_VERSION, '>' ) ) {
-			n4s_apps_notice( 'success', n4s_t( 'Neue Version ' . $r['version'] . ' verfügbar. Aktualisieren unter Plugins oder Dashboard → Aktualisierungen.', 'New version ' . $r['version'] . ' available. Update under Plugins or Dashboard → Updates.' ) );
+			n4s_apps_notice( 'success', n4s_t( 'Neue Version ' . $r['version'] . ' verfügbar. Aktualisieren unter Plugins oder Dashboard → Aktualisierungen.', 'New version ' . $r['version'] . ' available. Update under Plugins or Dashboard → Updates.' ), false );
 		} else {
-			n4s_apps_notice( 'success', n4s_t( 'n4s Apps ist aktuell (' . N4S_APPS_VERSION . ').', 'n4s Apps is up to date (' . N4S_APPS_VERSION . ').' ) );
+			n4s_apps_notice( 'success', n4s_t( 'n4s Apps ist aktuell (' . N4S_APPS_VERSION . ').', 'n4s Apps is up to date (' . N4S_APPS_VERSION . ').' ), false );
 		}
 		n4s_apps_back( false, 'n4s' );
 	}
