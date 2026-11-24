@@ -125,7 +125,7 @@ function n4s_apps_tab_overview() {
 	}
 	echo n4s_apps_ui_status( ! empty( $f['login'] ), n4s_t( 'Eigenes Login-Design', 'Custom login design' ), n4s_t( 'Logo und Farben des Themes', 'Logo and colors of the theme' ), 'n4s-features' ); // phpcs:ignore WordPress.Security.EscapeOutput
 	echo n4s_apps_ui_status( ! empty( $f['mcp'] ), n4s_t( 'KI-Anbindung', 'AI connection' ), ! empty( $f['mcp'] ) ? ( ! empty( $mcp['on'] ) ? n4s_t( 'Schreibzugriff erlaubt', 'Write access allowed' ) : n4s_t( 'Schreibzugriff aus', 'Write access off' ) ) : n4s_t( 'Funktion ausgeschaltet', 'Feature switched off' ), ! empty( $f['mcp'] ) ? 'n4s-ki' : 'n4s-features' ); // phpcs:ignore WordPress.Security.EscapeOutput
-	echo '</section><section class="n4s-card"><h3>' . esc_html( n4s_t( 'Zuletzt', 'Recent' ) ) . '</h3>';
+	echo '</section><section class="n4s-card"><h3>' . esc_html( n4s_t( 'Sicherheit', 'Security' ) ) . '</h3>';
 	if ( $log && function_exists( 'n4s_sec_dt' ) ) {
 		echo '<table class="n4s-tbl"><tr><th>' . esc_html( n4s_t( 'Zeit', 'Time' ) ) . '</th><th>' . esc_html( n4s_t( 'Ereignis', 'Event' ) ) . '</th><th>IP</th></tr>';
 		foreach ( $log as $l ) {

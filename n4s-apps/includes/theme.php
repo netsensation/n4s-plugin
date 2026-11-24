@@ -749,7 +749,7 @@ add_action(
 			$css .= 'body.n4s-no-mainmenu .menu-mobile-toggle,body.n4s-no-mainmenu header .wp-block-navigation,body.n4s-no-mainmenu .nv-navbar,body.n4s-no-mainmenu #nv-primary-navigation-main{display:none!important}';
 		}
 		if ( n4s_theme_hidden( 'title' ) ) {
-			$css .= 'body.n4s-no-title .nv-page-title-wrap,body.n4s-no-title .page-header,body.n4s-no-title .entry-header .entry-title,body.n4s-no-title h1.page-title{display:none!important}';
+			$css .= 'body.n4s-no-title .nv-page-title-wrap,body.n4s-no-title .page-header,body.n4s-no-title .entry-header .entry-title,body.n4s-no-title h1.page-title,body.n4s-no-title .n4s-page-head,body.n4s-no-title .n4s-entry__title,body.n4s-no-title .entry-title,body.n4s-no-title .wp-block-post-title,body.n4s-no-title .post-title{display:none!important}';
 		}
 		if ( '' !== $css ) {
 			echo '<style id="n4s-theme-css">' . $css . "</style>\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- nur geprüfte Hex-Farben und feste Selektoren.

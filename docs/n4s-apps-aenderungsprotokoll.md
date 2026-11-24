@@ -1,6 +1,6 @@
 # n4s Apps: Änderungsprotokoll
 
-Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.36.3.
+Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Diese Kopie: Stand 2.36.4.
 
 | Datum | Version | Änderung |
 |---|---|---|
@@ -68,3 +68,4 @@ Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Di
 | 23.11.2026 | 2.36.1 | Lizenzsperre: Bei einer neuen Sperre ruft das Plugin den öffentlichen Teil des Katalogs ohne Schlüssel ab und merkt sich, welche Apps öffentlich sind. Öffentliche Katalog-Apps laufen so auch dann weiter, wenn die Sperre schon bestand, bevor das Plugin sie kannte; nur private Apps zeigen „Lizenz abgelaufen“. Auch die Meldung bei der Update-Prüfung (statt „Zugriff verweigert“) lautet bei gesperrtem oder abgelaufenem Zugang „Lizenz abgelaufen“. |
 | 24.11.2026 | 2.36.2 | Meldung bei gesperrtem oder abgelaufenem Zugang: Überschrift „Version abgelaufen“ (statt „Lizenz abgelaufen“), Hinweis: „Der Administrator muss auf eine neue Version aktualisieren oder upgraden.“ Gilt auch für die App-Liste und die Fehlermeldung beim Katalog-Abruf. |
 | 24.11.2026 | 2.36.3 | Übersicht → Zuletzt: zweite Tabelle „Aktivitäten“ (scrollbar, die letzten 100 Einträge) mit automatischen und manuellen App-Updates, neu installierten, gelöschten, aktivierten und deaktivierten Apps, Plugin-Update, Änderungen bei den Funktionen, Ein-/Ausschalten der automatischen Updates und Lizenzsperre. |
+| 24.11.2026 | 2.36.4 | Theme, Seitentitel ausblenden: wirkt jetzt auch im Theme „n4s CI“ (Seitenkopf und Titel der Vollbreiten-Vorlage) und bei weiteren üblichen Titel-Elementen. Übersicht: die Karte „Zuletzt“ heißt „Sicherheit“. |
