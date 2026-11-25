@@ -172,7 +172,8 @@ function n4s_apps_ui_css() {
 .n4s-ui .n4s-side a{display:block;padding:9px 12px;border-radius:8px;color:#3b4357;text-decoration:none;margin-bottom:2px}
 .n4s-ui .n4s-side a:hover{background:#f3f4f8}.n4s-ui .n4s-side a.act{background:#eceaff;color:#4a3bc7;font-weight:600}
 .n4s-ui .n4s-main{flex:1;min-width:0;max-width:1240px}
-.n4s-ui .n4s-main>h2:first-child,.n4s-ui .n4s-main>form>h2:first-child{font-size:22px;margin:0 0 4px}
+.n4s-ui .n4s-main>h2:first-child,.n4s-ui .n4s-main>form>h2:first-child{font-size:22px;line-height:1.4;margin:0 0 4px;padding:6px 0 2px;overflow:visible}
+.n4s-ui .n4s-main>.n4s-lead:nth-child(2){line-height:1.5;margin-top:0;overflow:visible;white-space:normal}
 .n4s-ui .n4s-lead{color:#6b7385;margin:2px 0 16px}
 .n4s-ui .n4s-main h2{font-size:17px;margin:22px 0 8px}.n4s-ui .n4s-main h3{font-size:15px}
 .n4s-ui .n4s-card,.n4s-ui .n4s-main details{background:#fff;border:1px solid #e3e6ee;border-radius:12px;padding:16px 20px;margin-bottom:14px}

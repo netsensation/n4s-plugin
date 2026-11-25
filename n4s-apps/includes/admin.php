@@ -127,6 +127,38 @@ add_action(
 	}
 );
 
+/** Admin-Leiste: Untermenü „n4s“ im Dropdown des Seitennamens (Funktionen, Apps, Sicherheit, Theme …). */
+add_action(
+	'admin_bar_menu',
+	function ( $bar ) {
+		if ( ! is_user_logged_in() || ! current_user_can( 'edit_pages' ) ) {
+			return;
+		}
+		$bar->add_node(
+			array(
+				'id'     => 'n4s-menu',
+				'parent' => 'site-name',
+				'title'  => 'n4s',
+				'href'   => admin_url( 'admin.php?page=n4s' ),
+			)
+		);
+		foreach ( n4s_apps_tabs_list( current_user_can( 'manage_options' ), true ) as $k => $t ) {
+			if ( ! current_user_can( $t[2] ) ) {
+				continue;
+			}
+			$bar->add_node(
+				array(
+					'id'     => 'n4s-menu-' . sanitize_key( $k ),
+					'parent' => 'n4s-menu',
+					'title'  => esc_html( $t[1] ),
+					'href'   => admin_url( 'admin.php?page=' . $t[0] ),
+				)
+			);
+		}
+	},
+	80
+);
+
 /** Alle Tabs: Schlüssel => [ Seite, Beschriftung, Recht ]. Reihenfolge wie in der Navigation. $menu = für das WordPress-Menü (alle Recht-Stufen). */
 function n4s_apps_tabs_list( $admin, $menu = false ) {
 	$t = array(
