@@ -71,3 +71,4 @@ Die gepflegte Fassung liegt im Claude-Projekt (claude/n4s-apps-changelog.md). Di
 | 24.11.2026 | 2.36.4 | Theme, Seitentitel ausblenden: wirkt jetzt auch im Theme „n4s CI“ (Seitenkopf und Titel der Vollbreiten-Vorlage) und bei weiteren üblichen Titel-Elementen. Übersicht: die Karte „Zuletzt“ heißt „Sicherheit“. |
 | 25.11.2026 | 2.36.5 | Theme → Headermenü und Footermenü: Option „Alle Links in neuem Tab/Fenster öffnen“ |
 | 25.11.2026 | 2.36.6 | Admin-Leiste: Untermenü „n4s“ im Dropdown des Seitennamens (Übersicht, Funktionen, Apps, Sicherheit, Snippets, Theme …); Übersicht: Überschrift und Untertitel mit mehr Abstand, nicht mehr abgeschnitten |
+| 25.11.2026 | 2.36.7 | Theme: eigene Funktion „Neuer Tab je Menüpunkt“ für alle Menüs (Feld je Menüpunkt im Menü-Editor und Customizer, ein-/ausschaltbar, zurücksetzbar); die Option nur für das Headermenü aus 2.36.5 entfällt |
