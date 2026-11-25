@@ -33,9 +33,10 @@ function n4s_theme_color_fields() {
 
 function n4s_theme_defaults() {
 	return array(
-		'on'          => array( 'menus' => 0, 'items' => 0, 'loginout' => 0, 'newtab' => 0, 'widget' => 0, 'above' => 0, 'abovefooter' => 0, 'page' => 0, 'schemes' => 0 ),
+		'on'          => array( 'menus' => 0, 'items' => 0, 'loginout' => 0, 'newtab' => 0, 'adminbar' => 0, 'widget' => 0, 'above' => 0, 'abovefooter' => 0, 'page' => 0, 'schemes' => 0 ),
 		'above'       => array( 'align' => 'right', 'bg' => '', 'text' => '' ),
 		'abovefooter' => array( 'align' => 'right', 'bg' => '', 'text' => '' ),
+		'adminbar'    => array( 'parent' => 'site-name', 'hide' => array() ),
 		'menus'   => array(),
 		'default' => 0,
 		'schemes' => array(
@@ -62,7 +63,7 @@ function n4s_theme_opt( $reset = false ) {
 		$s = get_option( 'n4s_theme', array() );
 		$s = is_array( $s ) ? $s : array();
 		$o = $d;
-		foreach ( array( 'on', 'menus', 'default', 'above', 'abovefooter' ) as $k ) {
+		foreach ( array( 'on', 'menus', 'default', 'above', 'abovefooter', 'adminbar' ) as $k ) {
 			if ( isset( $s[ $k ] ) ) {
 				$o[ $k ] = is_array( $d[ $k ] ) ? array_merge( $d[ $k ], (array) $s[ $k ] ) : $s[ $k ];
 			}
@@ -242,6 +243,74 @@ add_filter(
 	2
 );
 
+/* ------------------------------------------------------------------ Admin-Leiste oben (Dropdown pflegen) */
+
+/** Standard-Einträge der Admin-Leiste, die sich ausblenden lassen: Knoten-ID => Beschriftung. */
+function n4s_theme_adminbar_nodes() {
+	return array(
+		'wp-logo'     => n4s_t( 'WordPress-Logo und Menü', 'WordPress logo and menu' ),
+		'dashboard'   => n4s_t( 'Dashboard (im Dropdown)', 'Dashboard (in the dropdown)' ),
+		'themes'      => n4s_t( 'Themes (im Dropdown)', 'Themes (in the dropdown)' ),
+		'widgets'     => n4s_t( 'Widgets (im Dropdown)', 'Widgets (in the dropdown)' ),
+		'menus'       => n4s_t( 'Menüs (im Dropdown)', 'Menus (in the dropdown)' ),
+		'customize'   => n4s_t( 'Customizer', 'Customizer' ),
+		'updates'     => n4s_t( 'Updates', 'Updates' ),
+		'comments'    => n4s_t( 'Kommentare', 'Comments' ),
+		'new-content' => n4s_t( 'Neu', 'New' ),
+	);
+}
+
+/** Einträge des Menüs „Admin-Leiste“ als Knoten, Standard-Einträge ausblenden. */
+add_action(
+	'admin_bar_menu',
+	function ( $bar ) {
+		if ( ! n4s_theme_on( 'adminbar' ) ) {
+			return;
+		}
+		$o = n4s_theme_opt()['adminbar'];
+		foreach ( (array) $o['hide'] as $id ) {
+			if ( isset( n4s_theme_adminbar_nodes()[ $id ] ) ) {
+				$bar->remove_node( $id );
+			}
+		}
+		$locs = get_nav_menu_locations();
+		if ( empty( $locs['n4s-adminbar'] ) ) {
+			return;
+		}
+		$items = wp_get_nav_menu_items( (int) $locs['n4s-adminbar'] );
+		if ( ! $items ) {
+			return;
+		}
+		$top    = ( 'top' === $o['parent'] ) ? '' : ( $bar->get_node( 'site-name' ) ? 'site-name' : '' );
+		$vis    = n4s_theme_on( 'items' );
+		$newtab = n4s_theme_on( 'newtab' );
+		$drop   = array();
+		foreach ( $items as $it ) {
+			$hidden = isset( $drop[ (int) $it->menu_item_parent ] ) || ( $vis && ! n4s_theme_vis_ok( n4s_theme_item_vis( $it->ID ) ) ) || 0 === strpos( (string) $it->url, '#n4s-' );
+			if ( $hidden ) {
+				$drop[ (int) $it->ID ] = true;
+				continue;
+			}
+			$blank = ( $newtab && get_post_meta( (int) $it->ID, '_n4s_newtab', true ) ) || '_blank' === $it->target;
+			$meta  = array( 'class' => implode( ' ', array_filter( (array) $it->classes ) ) );
+			if ( $blank ) {
+				$meta['target'] = '_blank';
+				$meta['rel']    = 'noopener noreferrer';
+			}
+			$bar->add_node(
+				array(
+					'id'     => 'n4s-ab-' . (int) $it->ID,
+					'parent' => (int) $it->menu_item_parent ? 'n4s-ab-' . (int) $it->menu_item_parent : $top,
+					'title'  => esc_html( $it->title ),
+					'href'   => ( '' === (string) $it->url || '#' === $it->url ) ? false : $it->url,
+					'meta'   => $meta,
+				)
+			);
+		}
+	},
+	90
+);
+
 /* ------------------------------------------------------------------ Headermenü (über dem Header) und Footermenü (über dem Footer) */
 
 add_action(
@@ -253,6 +322,9 @@ add_action(
 		}
 		if ( n4s_theme_on( 'abovefooter' ) ) {
 			$l['n4s-above-footer'] = n4s_t( 'Footermenü (über dem Footer)', 'Footer menu (above the footer)' );
+		}
+		if ( n4s_theme_on( 'adminbar' ) ) {
+			$l['n4s-adminbar'] = n4s_t( 'Admin-Leiste (Dropdown oben)', 'Admin bar (dropdown at the top)' );
 		}
 		if ( $l ) {
 			register_nav_menus( $l );
@@ -1102,6 +1174,7 @@ N4SJS;
 			'menus'       => array( n4s_t( 'Menü je Anmeldestatus und Rolle', 'Menu by login status and role' ), n4s_t( 'Zeigt für Besucher, Angemeldete und einzelne Rollen unterschiedliche Menüs an derselben Menüposition.', 'Shows different menus at the same menu location for visitors, logged-in users and individual roles.' ) ),
 			'items'       => array( n4s_t( 'Sichtbarkeit je Menüpunkt', 'Visibility per menu item' ), n4s_t( 'Im Menü-Editor kann jeder Punkt für alle, Besucher, Angemeldete oder bestimmte Rollen gelten.', 'In the menu editor each item can apply to everyone, visitors, logged-in users or certain roles.' ) ),
 			'newtab'      => array( n4s_t( 'Neuer Tab je Menüpunkt', 'New tab per menu item' ), n4s_t( 'Im Menü-Editor und im Customizer kann jeder Menüpunkt in allen Menüs seinen Link in einem neuen Tab/Fenster öffnen.', 'In the menu editor and the Customizer each menu item in all menus can open its link in a new tab/window.' ) ),
+			'adminbar'    => array( n4s_t( 'Admin-Leiste oben pflegen', 'Manage the admin bar' ), n4s_t( 'Eigenes Menü „Admin-Leiste“ (Design → Menüs und Customizer) für das Dropdown oben, dazu Standard-Einträge ausblenden.', 'Own "Admin bar" menu (Appearance → Menus and Customizer) for the dropdown at the top, plus hiding default entries.' ) ),
 			'loginout'    => array( n4s_t( 'Anmelden / Abmelden als Menüpunkt', 'Log in / Log out as menu item' ), n4s_t( 'Im Menü-Editor eine Box zum Hinzufügen; der Punkt schaltet je nach Status um.', 'A box in the menu editor to add it; the item switches depending on the status.' ) ),
 			'above'       => array( n4s_t( 'Headermenü', 'Header menu' ), n4s_t( 'Zusätzliche Menüposition „Headermenü“ (Design → Menüs). Die Leiste steht ganz oben über der Kopfzeile, auch mit Menü je Besucher, Angemeldete und Rolle.', 'Additional menu location "Header menu" (Appearance → Menus). The bar sits at the very top above the header, also with a menu per visitor, logged-in user and role.' ) ),
 			'abovefooter' => array( n4s_t( 'Footermenü', 'Footer menu' ), n4s_t( 'Zusätzliche Menüposition „Footermenü“ (Design → Menüs). Die Leiste steht über dem Footer, auch mit Menü je Besucher, Angemeldete und Rolle.', 'Additional menu location "Footer menu" (Appearance → Menus). The bar sits above the footer, also with a menu per visitor, logged-in user and role.' ) ),
@@ -1129,7 +1202,7 @@ N4SJS;
 			}
 			echo '<details data-n4s-p="' . esc_attr( $key ) . '" style="background:#fff;border:1px solid #c3c4c7;margin:-1px 0 0;padding:8px 14px"><summary style="cursor:pointer"><strong>' . esc_html( $mods[ $key ][0] ) . '</strong></summary><div style="padding:10px 0 4px">';
 			$body();
-			if ( in_array( $key, array( 'menus', 'above', 'abovefooter', 'items', 'newtab', 'page', 'schemes' ), true ) ) { // Zurücksetzen: immer der letzte Punkt
+			if ( in_array( $key, array( 'menus', 'above', 'abovefooter', 'adminbar', 'items', 'newtab', 'page', 'schemes' ), true ) ) { // Zurücksetzen: immer der letzte Punkt
 				echo '<p style="margin:14px 0 2px;padding-top:10px;border-top:1px solid #dcdcde"><button type="submit" name="n4s_reset" value="' . esc_attr( $key ) . '" class="button" onclick="return confirm(' . esc_attr( wp_json_encode( n4s_t( 'Einstellungen dieser Funktion auf den Ausgangszustand zurücksetzen?', 'Reset the settings of this feature to their defaults?' ) ) ) . ')">' . esc_html( n4s_t( 'Zurücksetzen', 'Reset' ) ) . '</button> <span class="description">' . esc_html( $key === 'items' ? n4s_t( 'Entfernt alle Sichtbarkeits-Angaben der Menüpunkte.', 'Removes all visibility settings of the menu items.' ) : ( 'newtab' === $key ? n4s_t( 'Entfernt alle Neuer-Tab-Angaben der Menüpunkte.', 'Removes all new-tab settings of the menu items.' ) : ( 'page' === $key ? n4s_t( 'Entfernt alle Ausblende-Angaben der Seiten (Kopfzeile, Menüs, Fußzeile, Titel).', 'Removes all hide settings of the pages (header, menus, footer, title).' ) : n4s_t( 'Stellt die Standardwerte dieser Funktion wieder her.', 'Restores the default values of this feature.' ) ) ) ) . '</span></p>';
 			}
 			echo '</div></details>';
@@ -1188,6 +1261,19 @@ N4SJS;
 		} );
 		$panel( 'items', $help( n4s_t( 'Im Menü-Editor (Design → Menüs) hat jeder Menüpunkt das Feld „n4s – Sichtbar für“: alle Besucher, nur Besucher ohne Anmeldung, nur Angemeldete oder nur bestimmte Rollen.', 'In the menu editor (Appearance → Menus) each menu item has the field "n4s – Visible for": all visitors, logged-out visitors only, logged-in users only or only certain roles.' ) ) );
 		$panel( 'newtab', $help( n4s_t( 'Im Menü-Editor (Design → Menüs) und im Customizer hat jeder Menüpunkt das Feld „n4s – Link in neuem Tab/Fenster öffnen“. Es gilt in allen Menüs, auch im Headermenü und Footermenü.', 'In the menu editor (Appearance → Menus) and the Customizer each menu item has the field "n4s – Open link in a new tab/window". It applies in all menus, including the header and footer menu.' ) ) );
+		$panel(
+			'adminbar',
+			function () use ( $o ) {
+				$ab = $o['adminbar'];
+				echo '<input type="hidden" name="has[adminbar]" value="1"><p class="description" style="max-width:900px">' . esc_html( n4s_t( 'Die Einträge pflegst du wie ein normales Menü unter Design → Menüs oder im Customizer (Menüs → Position „Admin-Leiste“): hinzufügen, sortieren, einrücken (Untermenü), Sichtbarkeit je Rolle und neuer Tab, falls diese Funktionen aktiv sind.', 'You manage the entries like a normal menu under Appearance → Menus or in the Customizer (Menus → location "Admin bar"): add, sort, indent (sub-menu), visibility by role and new tab, if those features are active.' ) ) . '</p>';
+				echo '<p><label>' . esc_html( n4s_t( 'Einträge erscheinen', 'Entries appear' ) ) . ' <select name="adminbar[parent]"><option value="site-name"' . selected( $ab['parent'], 'site-name', false ) . '>' . esc_html( n4s_t( 'im Dropdown des Seitennamens', 'in the site name dropdown' ) ) . '</option><option value="top"' . selected( $ab['parent'], 'top', false ) . '>' . esc_html( n4s_t( 'als eigene Punkte in der Leiste', 'as separate items in the bar' ) ) . '</option></select></label></p>';
+				echo '<p><strong>' . esc_html( n4s_t( 'Standard-Einträge ausblenden', 'Hide default entries' ) ) . '</strong></p><p>';
+				foreach ( n4s_theme_adminbar_nodes() as $id => $l ) {
+					echo '<label style="display:block;margin:2px 0"><input type="checkbox" name="adminbar[hide][]" value="' . esc_attr( $id ) . '"' . checked( in_array( $id, (array) $ab['hide'], true ), true, false ) . '> ' . esc_html( $l ) . '</label>';
+				}
+				echo '</p><p class="description">' . esc_html( n4s_t( 'Die Menüposition wird gespeichert, sobald du hier speicherst; danach erscheint sie unter Design → Menüs.', 'The menu location becomes available once you save here; it then appears under Appearance → Menus.' ) ) . '</p>';
+			}
+		);
 		$panel( 'loginout', $help( n4s_t( 'Im Menü-Editor (Design → Menüs) gibt es die Box „n4s – Anmelden / Abmelden“. Der Menüpunkt „Anmelden|Abmelden“ zeigt links den Text für Besucher und rechts den für Angemeldete.', 'In the menu editor (Appearance → Menus) there is the box "n4s – Log in / Log out". The item "Log in|Log out" shows the text on the left for visitors and on the right for logged-in users.' ) ) );
 		$panel( 'page', $help( n4s_t( 'Im Editor jeder Seite gibt es die Box „n4s – Seitengestaltung“: Kopfzeile, Hauptmenü, Headermenü, Footermenü, Fußzeile und Seitentitel einzeln ausblenden.', 'In the editor of every page there is the box "n4s – Page design": hide header, main menu, header menu, footer menu, footer and page title individually.' ) ) );
 		$panel(
@@ -1331,7 +1417,7 @@ N4SJS;
 				$k = sanitize_key( wp_unslash( $_POST['n4s_reset'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
 				if ( 'menus' === $k ) {
 					$cur['menus'] = array();
-				} elseif ( 'above' === $k || 'abovefooter' === $k ) {
+				} elseif ( 'above' === $k || 'abovefooter' === $k || 'adminbar' === $k ) {
 					$cur[ $k ] = $d[ $k ];
 				} elseif ( 'schemes' === $k ) {
 					$cur['schemes'] = $d['schemes'];
@@ -1360,6 +1446,7 @@ N4SJS;
 				'schemes'     => $cur['schemes'],
 				'above'       => $cur['above'],
 				'abovefooter' => $cur['abovefooter'],
+				'adminbar'    => $cur['adminbar'],
 			);
 			foreach ( array_keys( $d['on'] ) as $k ) {
 				$in['on'][ $k ] = ! empty( $_POST['on'][ $k ] ) ? 1 : 0; // phpcs:ignore WordPress.Security.NonceVerification -- siehe n4s_apps_verify.
@@ -1406,6 +1493,20 @@ N4SJS;
 						'text'  => isset( $pa['text'] ) ? (string) sanitize_hex_color( trim( (string) $pa['text'] ) ) : '',
 					);
 				}
+			}
+			if ( ! empty( $has['adminbar'] ) ) {
+				$pa     = isset( $_POST['adminbar'] ) && is_array( $_POST['adminbar'] ) ? wp_unslash( $_POST['adminbar'] ) : array(); // phpcs:ignore WordPress.Security
+				$hide   = array();
+				$valid  = array_keys( n4s_theme_adminbar_nodes() );
+				foreach ( isset( $pa['hide'] ) && is_array( $pa['hide'] ) ? $pa['hide'] : array() as $h ) {
+					if ( is_string( $h ) && in_array( $h, $valid, true ) ) {
+						$hide[] = $h;
+					}
+				}
+				$in['adminbar'] = array(
+					'parent' => ( isset( $pa['parent'] ) && 'top' === $pa['parent'] ) ? 'top' : 'site-name',
+					'hide'   => $hide,
+				);
 			}
 			if ( ! empty( $has['schemes'] ) ) {
 				$dn            = isset( $_POST['default'] ) ? (int) $_POST['default'] : 0; // phpcs:ignore WordPress.Security.NonceVerification
