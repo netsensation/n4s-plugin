@@ -34,8 +34,8 @@ function n4s_theme_color_fields() {
 function n4s_theme_defaults() {
 	return array(
 		'on'          => array( 'menus' => 0, 'items' => 0, 'loginout' => 0, 'widget' => 0, 'above' => 0, 'abovefooter' => 0, 'page' => 0, 'schemes' => 0 ),
-		'above'       => array( 'align' => 'right', 'bg' => '', 'text' => '' ),
-		'abovefooter' => array( 'align' => 'right', 'bg' => '', 'text' => '' ),
+		'above'       => array( 'align' => 'right', 'bg' => '', 'text' => '', 'blank' => 0 ),
+		'abovefooter' => array( 'align' => 'right', 'bg' => '', 'text' => '', 'blank' => 0 ),
 		'menus'   => array(),
 		'default' => 0,
 		'schemes' => array(
@@ -243,6 +243,21 @@ add_action(
 /** HTML einer Menüleiste: which = above (Headermenü) oder abovefooter (Footermenü). Leer, wenn kein Menü gilt. */
 function n4s_theme_bar_html( $which ) {
 	$hdr  = 'above' === $which;
+	$blank = ! empty( n4s_theme_opt()[ $which ]['blank'] );
+	$blank_cb = function ( $atts ) {
+		$atts['target'] = '_blank';
+		$rel            = isset( $atts['rel'] ) ? (string) $atts['rel'] : '';
+		foreach ( array( 'noopener', 'noreferrer' ) as $r ) {
+			if ( false === strpos( $rel, $r ) ) {
+				$rel = trim( $rel . ' ' . $r );
+			}
+		}
+		$atts['rel'] = $rel;
+		return $atts;
+	};
+	if ( $blank ) {
+		add_filter( 'nav_menu_link_attributes', $blank_cb, 20 );
+	}
 	$menu = wp_nav_menu(
 		array(
 			'theme_location' => $hdr ? 'n4s-above' : 'n4s-above-footer',
@@ -254,6 +269,9 @@ function n4s_theme_bar_html( $which ) {
 			'echo'           => false,
 		)
 	);
+	if ( $blank ) {
+		remove_filter( 'nav_menu_link_attributes', $blank_cb, 20 );
+	}
 	if ( ! $menu || '' === trim( wp_strip_all_tags( $menu ) ) ) {
 		return '';
 	}
@@ -1094,7 +1112,7 @@ N4SJS;
 			foreach ( array( 'left' => n4s_t( 'Links', 'Left' ), 'center' => n4s_t( 'Mitte', 'Center' ), 'right' => n4s_t( 'Rechts', 'Right' ) ) as $k => $l ) {
 				echo '<option value="' . esc_attr( $k ) . '"' . selected( $o[ $key ]['align'], $k, false ) . '>' . esc_html( $l ) . '</option>';
 			}
-			echo '</select></label></p><p><label>' . esc_html( n4s_t( 'Hintergrund', 'Background' ) ) . '<br><input type="text" class="n4s-cp" name="' . esc_attr( $key ) . '[bg]" value="' . esc_attr( $o[ $key ]['bg'] ) . '"></label></p><p><label>' . esc_html( n4s_t( 'Text', 'Text' ) ) . '<br><input type="text" class="n4s-cp" name="' . esc_attr( $key ) . '[text]" value="' . esc_attr( $o[ $key ]['text'] ) . '"></label></p>';
+			echo '</select></label></p><p><label>' . esc_html( n4s_t( 'Hintergrund', 'Background' ) ) . '<br><input type="text" class="n4s-cp" name="' . esc_attr( $key ) . '[bg]" value="' . esc_attr( $o[ $key ]['bg'] ) . '"></label></p><p><label>' . esc_html( n4s_t( 'Text', 'Text' ) ) . '<br><input type="text" class="n4s-cp" name="' . esc_attr( $key ) . '[text]" value="' . esc_attr( $o[ $key ]['text'] ) . '"></label></p><p><label><input type="checkbox" name="' . esc_attr( $key ) . '[blank]" value="1"' . checked( ! empty( $o[ $key ]['blank'] ), true, false ) . '> ' . esc_html( n4s_t( 'Alle Links in neuem Tab/Fenster öffnen', 'Open all links in a new tab/window' ) ) . '</label></p>';
 		};
 		$help = function ( $text ) {
 			return function () use ( $text ) {
@@ -1352,6 +1370,7 @@ N4SJS;
 						'align' => in_array( $al, array( 'left', 'center', 'right' ), true ) ? $al : 'right',
 						'bg'    => isset( $pa['bg'] ) ? (string) sanitize_hex_color( trim( (string) $pa['bg'] ) ) : '',
 						'text'  => isset( $pa['text'] ) ? (string) sanitize_hex_color( trim( (string) $pa['text'] ) ) : '',
+						'blank' => empty( $pa['blank'] ) ? 0 : 1,
 					);
 				}
 			}
