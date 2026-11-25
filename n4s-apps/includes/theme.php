@@ -33,9 +33,9 @@ function n4s_theme_color_fields() {
 
 function n4s_theme_defaults() {
 	return array(
-		'on'          => array( 'menus' => 0, 'items' => 0, 'loginout' => 0, 'widget' => 0, 'above' => 0, 'abovefooter' => 0, 'page' => 0, 'schemes' => 0 ),
-		'above'       => array( 'align' => 'right', 'bg' => '', 'text' => '', 'blank' => 0 ),
-		'abovefooter' => array( 'align' => 'right', 'bg' => '', 'text' => '', 'blank' => 0 ),
+		'on'          => array( 'menus' => 0, 'items' => 0, 'loginout' => 0, 'newtab' => 0, 'widget' => 0, 'above' => 0, 'abovefooter' => 0, 'page' => 0, 'schemes' => 0 ),
+		'above'       => array( 'align' => 'right', 'bg' => '', 'text' => '' ),
+		'abovefooter' => array( 'align' => 'right', 'bg' => '', 'text' => '' ),
 		'menus'   => array(),
 		'default' => 0,
 		'schemes' => array(
@@ -221,6 +221,27 @@ add_filter(
 	5
 );
 
+/** Link eines Menüpunkts in neuem Tab/Fenster öffnen (Feld je Menüpunkt, gilt in allen Menüs). */
+add_filter(
+	'nav_menu_link_attributes',
+	function ( $atts, $item ) {
+		if ( ! n4s_theme_on( 'newtab' ) || ! is_object( $item ) || empty( $item->ID ) || ! get_post_meta( (int) $item->ID, '_n4s_newtab', true ) ) {
+			return $atts;
+		}
+		$atts['target'] = '_blank';
+		$rel            = isset( $atts['rel'] ) ? (string) $atts['rel'] : '';
+		foreach ( array( 'noopener', 'noreferrer' ) as $r ) {
+			if ( false === strpos( $rel, $r ) ) {
+				$rel = trim( $rel . ' ' . $r );
+			}
+		}
+		$atts['rel'] = $rel;
+		return $atts;
+	},
+	20,
+	2
+);
+
 /* ------------------------------------------------------------------ Headermenü (über dem Header) und Footermenü (über dem Footer) */
 
 add_action(
@@ -243,21 +264,6 @@ add_action(
 /** HTML einer Menüleiste: which = above (Headermenü) oder abovefooter (Footermenü). Leer, wenn kein Menü gilt. */
 function n4s_theme_bar_html( $which ) {
 	$hdr  = 'above' === $which;
-	$blank = ! empty( n4s_theme_opt()[ $which ]['blank'] );
-	$blank_cb = function ( $atts ) {
-		$atts['target'] = '_blank';
-		$rel            = isset( $atts['rel'] ) ? (string) $atts['rel'] : '';
-		foreach ( array( 'noopener', 'noreferrer' ) as $r ) {
-			if ( false === strpos( $rel, $r ) ) {
-				$rel = trim( $rel . ' ' . $r );
-			}
-		}
-		$atts['rel'] = $rel;
-		return $atts;
-	};
-	if ( $blank ) {
-		add_filter( 'nav_menu_link_attributes', $blank_cb, 20 );
-	}
 	$menu = wp_nav_menu(
 		array(
 			'theme_location' => $hdr ? 'n4s-above' : 'n4s-above-footer',
@@ -269,9 +275,6 @@ function n4s_theme_bar_html( $which ) {
 			'echo'           => false,
 		)
 	);
-	if ( $blank ) {
-		remove_filter( 'nav_menu_link_attributes', $blank_cb, 20 );
-	}
 	if ( ! $menu || '' === trim( wp_strip_all_tags( $menu ) ) ) {
 		return '';
 	}
@@ -877,6 +880,33 @@ if ( is_admin() ) {
 		}
 	);
 
+	/* Neuer Tab je Menüpunkt (Menü-Editor und Customizer) */
+	add_action(
+		'wp_nav_menu_item_custom_fields',
+		function ( $item_id ) {
+			if ( ! n4s_theme_on( 'newtab' ) ) {
+				return;
+			}
+			echo '<div class="description-wide" style="margin:6px 0;padding:6px 8px;background:#f6f7f7;border:1px solid #dcdcde"><input type="hidden" name="n4s-newtab-has[' . (int) $item_id . ']" value="1"><label><input type="checkbox" name="n4s-newtab[' . (int) $item_id . ']" value="1"' . checked( (bool) get_post_meta( (int) $item_id, '_n4s_newtab', true ), true, false ) . '> <strong>n4s</strong> – ' . esc_html( n4s_t( 'Link in neuem Tab/Fenster öffnen', 'Open link in a new tab/window' ) ) . '</label></div>';
+		}
+	);
+
+	add_action(
+		'wp_update_nav_menu_item',
+		function ( $menu_id, $item_id ) {
+			if ( ! isset( $_POST['n4s-newtab-has'][ $item_id ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification -- Nonce prüft WordPress beim Speichern der Menüs.
+				return;
+			}
+			if ( ! empty( $_POST['n4s-newtab'][ $item_id ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+				update_post_meta( $item_id, '_n4s_newtab', 1 );
+			} else {
+				delete_post_meta( $item_id, '_n4s_newtab' );
+			}
+		},
+		10,
+		2
+	);
+
 	add_action(
 		'wp_update_nav_menu_item',
 		function ( $menu_id, $item_id ) {
@@ -1071,6 +1101,7 @@ N4SJS;
 		$mods = array(
 			'menus'       => array( n4s_t( 'Menü je Anmeldestatus und Rolle', 'Menu by login status and role' ), n4s_t( 'Zeigt für Besucher, Angemeldete und einzelne Rollen unterschiedliche Menüs an derselben Menüposition.', 'Shows different menus at the same menu location for visitors, logged-in users and individual roles.' ) ),
 			'items'       => array( n4s_t( 'Sichtbarkeit je Menüpunkt', 'Visibility per menu item' ), n4s_t( 'Im Menü-Editor kann jeder Punkt für alle, Besucher, Angemeldete oder bestimmte Rollen gelten.', 'In the menu editor each item can apply to everyone, visitors, logged-in users or certain roles.' ) ),
+			'newtab'      => array( n4s_t( 'Neuer Tab je Menüpunkt', 'New tab per menu item' ), n4s_t( 'Im Menü-Editor und im Customizer kann jeder Menüpunkt in allen Menüs seinen Link in einem neuen Tab/Fenster öffnen.', 'In the menu editor and the Customizer each menu item in all menus can open its link in a new tab/window.' ) ),
 			'loginout'    => array( n4s_t( 'Anmelden / Abmelden als Menüpunkt', 'Log in / Log out as menu item' ), n4s_t( 'Im Menü-Editor eine Box zum Hinzufügen; der Punkt schaltet je nach Status um.', 'A box in the menu editor to add it; the item switches depending on the status.' ) ),
 			'above'       => array( n4s_t( 'Headermenü', 'Header menu' ), n4s_t( 'Zusätzliche Menüposition „Headermenü“ (Design → Menüs). Die Leiste steht ganz oben über der Kopfzeile, auch mit Menü je Besucher, Angemeldete und Rolle.', 'Additional menu location "Header menu" (Appearance → Menus). The bar sits at the very top above the header, also with a menu per visitor, logged-in user and role.' ) ),
 			'abovefooter' => array( n4s_t( 'Footermenü', 'Footer menu' ), n4s_t( 'Zusätzliche Menüposition „Footermenü“ (Design → Menüs). Die Leiste steht über dem Footer, auch mit Menü je Besucher, Angemeldete und Rolle.', 'Additional menu location "Footer menu" (Appearance → Menus). The bar sits above the footer, also with a menu per visitor, logged-in user and role.' ) ),
@@ -1098,8 +1129,8 @@ N4SJS;
 			}
 			echo '<details data-n4s-p="' . esc_attr( $key ) . '" style="background:#fff;border:1px solid #c3c4c7;margin:-1px 0 0;padding:8px 14px"><summary style="cursor:pointer"><strong>' . esc_html( $mods[ $key ][0] ) . '</strong></summary><div style="padding:10px 0 4px">';
 			$body();
-			if ( in_array( $key, array( 'menus', 'above', 'abovefooter', 'items', 'page', 'schemes' ), true ) ) { // Zurücksetzen: immer der letzte Punkt
-				echo '<p style="margin:14px 0 2px;padding-top:10px;border-top:1px solid #dcdcde"><button type="submit" name="n4s_reset" value="' . esc_attr( $key ) . '" class="button" onclick="return confirm(' . esc_attr( wp_json_encode( n4s_t( 'Einstellungen dieser Funktion auf den Ausgangszustand zurücksetzen?', 'Reset the settings of this feature to their defaults?' ) ) ) . ')">' . esc_html( n4s_t( 'Zurücksetzen', 'Reset' ) ) . '</button> <span class="description">' . esc_html( $key === 'items' ? n4s_t( 'Entfernt alle Sichtbarkeits-Angaben der Menüpunkte.', 'Removes all visibility settings of the menu items.' ) : ( 'page' === $key ? n4s_t( 'Entfernt alle Ausblende-Angaben der Seiten (Kopfzeile, Menüs, Fußzeile, Titel).', 'Removes all hide settings of the pages (header, menus, footer, title).' ) : n4s_t( 'Stellt die Standardwerte dieser Funktion wieder her.', 'Restores the default values of this feature.' ) ) ) . '</span></p>';
+			if ( in_array( $key, array( 'menus', 'above', 'abovefooter', 'items', 'newtab', 'page', 'schemes' ), true ) ) { // Zurücksetzen: immer der letzte Punkt
+				echo '<p style="margin:14px 0 2px;padding-top:10px;border-top:1px solid #dcdcde"><button type="submit" name="n4s_reset" value="' . esc_attr( $key ) . '" class="button" onclick="return confirm(' . esc_attr( wp_json_encode( n4s_t( 'Einstellungen dieser Funktion auf den Ausgangszustand zurücksetzen?', 'Reset the settings of this feature to their defaults?' ) ) ) . ')">' . esc_html( n4s_t( 'Zurücksetzen', 'Reset' ) ) . '</button> <span class="description">' . esc_html( $key === 'items' ? n4s_t( 'Entfernt alle Sichtbarkeits-Angaben der Menüpunkte.', 'Removes all visibility settings of the menu items.' ) : ( 'newtab' === $key ? n4s_t( 'Entfernt alle Neuer-Tab-Angaben der Menüpunkte.', 'Removes all new-tab settings of the menu items.' ) : ( 'page' === $key ? n4s_t( 'Entfernt alle Ausblende-Angaben der Seiten (Kopfzeile, Menüs, Fußzeile, Titel).', 'Removes all hide settings of the pages (header, menus, footer, title).' ) : n4s_t( 'Stellt die Standardwerte dieser Funktion wieder her.', 'Restores the default values of this feature.' ) ) ) ) . '</span></p>';
 			}
 			echo '</div></details>';
 		};
@@ -1112,7 +1143,7 @@ N4SJS;
 			foreach ( array( 'left' => n4s_t( 'Links', 'Left' ), 'center' => n4s_t( 'Mitte', 'Center' ), 'right' => n4s_t( 'Rechts', 'Right' ) ) as $k => $l ) {
 				echo '<option value="' . esc_attr( $k ) . '"' . selected( $o[ $key ]['align'], $k, false ) . '>' . esc_html( $l ) . '</option>';
 			}
-			echo '</select></label></p><p><label>' . esc_html( n4s_t( 'Hintergrund', 'Background' ) ) . '<br><input type="text" class="n4s-cp" name="' . esc_attr( $key ) . '[bg]" value="' . esc_attr( $o[ $key ]['bg'] ) . '"></label></p><p><label>' . esc_html( n4s_t( 'Text', 'Text' ) ) . '<br><input type="text" class="n4s-cp" name="' . esc_attr( $key ) . '[text]" value="' . esc_attr( $o[ $key ]['text'] ) . '"></label></p><p><label><input type="checkbox" name="' . esc_attr( $key ) . '[blank]" value="1"' . checked( ! empty( $o[ $key ]['blank'] ), true, false ) . '> ' . esc_html( n4s_t( 'Alle Links in neuem Tab/Fenster öffnen', 'Open all links in a new tab/window' ) ) . '</label></p>';
+			echo '</select></label></p><p><label>' . esc_html( n4s_t( 'Hintergrund', 'Background' ) ) . '<br><input type="text" class="n4s-cp" name="' . esc_attr( $key ) . '[bg]" value="' . esc_attr( $o[ $key ]['bg'] ) . '"></label></p><p><label>' . esc_html( n4s_t( 'Text', 'Text' ) ) . '<br><input type="text" class="n4s-cp" name="' . esc_attr( $key ) . '[text]" value="' . esc_attr( $o[ $key ]['text'] ) . '"></label></p>';
 		};
 		$help = function ( $text ) {
 			return function () use ( $text ) {
@@ -1156,6 +1187,7 @@ N4SJS;
 			n4s_theme_widget_panel();
 		} );
 		$panel( 'items', $help( n4s_t( 'Im Menü-Editor (Design → Menüs) hat jeder Menüpunkt das Feld „n4s – Sichtbar für“: alle Besucher, nur Besucher ohne Anmeldung, nur Angemeldete oder nur bestimmte Rollen.', 'In the menu editor (Appearance → Menus) each menu item has the field "n4s – Visible for": all visitors, logged-out visitors only, logged-in users only or only certain roles.' ) ) );
+		$panel( 'newtab', $help( n4s_t( 'Im Menü-Editor (Design → Menüs) und im Customizer hat jeder Menüpunkt das Feld „n4s – Link in neuem Tab/Fenster öffnen“. Es gilt in allen Menüs, auch im Headermenü und Footermenü.', 'In the menu editor (Appearance → Menus) and the Customizer each menu item has the field "n4s – Open link in a new tab/window". It applies in all menus, including the header and footer menu.' ) ) );
 		$panel( 'loginout', $help( n4s_t( 'Im Menü-Editor (Design → Menüs) gibt es die Box „n4s – Anmelden / Abmelden“. Der Menüpunkt „Anmelden|Abmelden“ zeigt links den Text für Besucher und rechts den für Angemeldete.', 'In the menu editor (Appearance → Menus) there is the box "n4s – Log in / Log out". The item "Log in|Log out" shows the text on the left for visitors and on the right for logged-in users.' ) ) );
 		$panel( 'page', $help( n4s_t( 'Im Editor jeder Seite gibt es die Box „n4s – Seitengestaltung“: Kopfzeile, Hauptmenü, Headermenü, Footermenü, Fußzeile und Seitentitel einzeln ausblenden.', 'In the editor of every page there is the box "n4s – Page design": hide header, main menu, header menu, footer menu, footer and page title individually.' ) ) );
 		$panel(
@@ -1306,6 +1338,8 @@ N4SJS;
 					$cur['default'] = 0;
 				} elseif ( 'items' === $k ) {
 					delete_post_meta_by_key( '_n4s_vis' );
+				} elseif ( 'newtab' === $k ) {
+					delete_post_meta_by_key( '_n4s_newtab' );
 				} elseif ( 'page' === $k ) {
 					foreach ( array( 'header', 'footer', 'title', 'mainmenu', 'hmenu', 'fmenu' ) as $w ) {
 						delete_post_meta_by_key( '_n4s_hide_' . $w );
@@ -1370,7 +1404,6 @@ N4SJS;
 						'align' => in_array( $al, array( 'left', 'center', 'right' ), true ) ? $al : 'right',
 						'bg'    => isset( $pa['bg'] ) ? (string) sanitize_hex_color( trim( (string) $pa['bg'] ) ) : '',
 						'text'  => isset( $pa['text'] ) ? (string) sanitize_hex_color( trim( (string) $pa['text'] ) ) : '',
-						'blank' => empty( $pa['blank'] ) ? 0 : 1,
 					);
 				}
 			}
