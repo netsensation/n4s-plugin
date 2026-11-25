@@ -445,6 +445,7 @@ add_action(
 				'login'        => empty( $_POST['login'] ) ? 0 : 1,
 				'theme'        => empty( $_POST['theme'] ) ? 0 : 1,
 				'mcp'          => empty( $_POST['mcp'] ) ? 0 : 1,
+				'barmenu'      => empty( $_POST['barmenu'] ) ? 0 : 1,
 			)
 		);
 		$names = array(
@@ -455,6 +456,7 @@ add_action(
 			'login'        => n4s_t( 'Eigenes Login-Design', 'Custom login design' ),
 			'theme'        => n4s_t( 'Theme-Engine', 'Theme engine' ),
 			'mcp'          => n4s_t( 'KI-Anbindung', 'AI connection' ),
+			'barmenu'      => n4s_t( 'n4s Admin-Dropdown', 'n4s admin dropdown' ),
 		);
 		$new_f = n4s_features();
 		foreach ( $names as $k => $label ) {
@@ -830,6 +832,10 @@ function n4s_apps_tab_features() {
 		'mediareplace' => array(
 			n4s_t( 'Mediendatei ersetzen', 'Replace media file' ),
 			n4s_t( 'Aktion „Datei ersetzen“ in der Mediathek: Datei tauschen und dabei Name und Adresse behalten, oder mit neuem Dateinamen ersetzen (Verweise in Seiteninhalten werden angepasst).', 'Action "Replace file" in the media library: swap the file and keep name and address, or replace it with a new filename (references in page content are updated).' ),
+		),
+		'barmenu'      => array(
+			n4s_t( 'n4s Admin-Dropdown', 'n4s admin dropdown' ),
+			n4s_t( 'Eintrag „n4s“ mit Untermenü (Übersicht, Funktionen, Apps, Sicherheit, Snippets, Theme) im Dropdown des Seitennamens in der Admin-Leiste oben, im Admin-Bereich und auf der Website. Ausgeschaltet: der Eintrag verschwindet; das Menü „Admin-Leiste“ der Theme-Engine bleibt davon unberührt.', 'Entry "n4s" with sub-menu (overview, features, apps, security, snippets, theme) in the site name dropdown of the admin bar at the top, in the admin area and on the website. Switched off: the entry disappears; the "Admin bar" menu of the theme engine is not affected.' ),
 		),
 		'theme'        => array(
 			n4s_t( 'Theme-Engine', 'Theme engine' ),
