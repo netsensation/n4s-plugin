@@ -2,7 +2,7 @@
 /**
  * Plugin Name: n4s Apps
  * Description: n4s: Rahmen für eigene PHP-Apps und Sicherheit (Anmeldeschutz, Härtung), Funktionen einzeln schaltbar / Framework for custom PHP apps and security (login protection, hardening), features switchable. Shortcode [n4s_app name="..."].
- * Version: 2.36.8
+ * Version: 2.36.9
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: n4s
@@ -13,7 +13,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'N4S_APPS_VERSION', '2.36.8' );
+define( 'N4S_APPS_VERSION', '2.36.9' );
 define( 'N4S_APPS_FILE', __FILE__ );
 define( 'N4S_APPS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'N4S_APPS_URL', plugin_dir_url( __FILE__ ) );
@@ -130,6 +130,94 @@ function n4s_apps_activity( $text, $by = null ) {
 	update_option( 'n4s_apps_activity', array_slice( $log, 0, 100 ), false );
 }
 
+/** Seiten des Untermenüs „n4s“ in der Admin-Leiste: im Admin-Bereich alle Tabs, auf der Website die festen Tabs (Admin-Seiten laden dort nicht). */
+function n4s_apps_bar_tabs() {
+	if ( function_exists( 'n4s_apps_tabs_list' ) ) {
+		return n4s_apps_tabs_list( current_user_can( 'manage_options' ), true );
+	}
+	$t = array(
+		'overview' => array( 'n4s', n4s_t( 'Übersicht', 'Overview' ), 'edit_pages' ),
+		'features' => array( 'n4s-features', n4s_t( 'Funktionen', 'Features' ), 'edit_pages' ),
+	);
+	if ( n4s_feature_on( 'apps' ) ) {
+		$t['apps'] = array( 'n4s-apps', 'Apps', 'edit_pages' );
+	}
+	if ( n4s_feature_on( 'security' ) ) {
+		$t['security'] = array( 'n4s-security', n4s_t( 'Sicherheit', 'Security' ), 'edit_pages' );
+	}
+	$t['snippets'] = array( 'n4s-snippets', 'Snippets', 'edit_pages' );
+	if ( n4s_feature_on( 'theme' ) ) {
+		$t['theme'] = array( 'n4s-theme', 'Theme', 'manage_options' );
+	}
+	return $t;
+}
+
+/** Admin-Leiste: Untermenü „n4s“ im Dropdown des Seitennamens (Admin-Bereich und Website). */
+add_action(
+	'admin_bar_menu',
+	function ( $bar ) {
+		if ( ! is_user_logged_in() || ! current_user_can( 'edit_pages' ) ) {
+			return;
+		}
+		$bar->add_node(
+			array(
+				'id'     => 'n4s-menu',
+				'parent' => 'site-name',
+				'title'  => 'n4s',
+				'href'   => admin_url( 'admin.php?page=n4s' ),
+			)
+		);
+		foreach ( n4s_apps_bar_tabs() as $k => $t ) {
+			if ( ! current_user_can( $t[2] ) ) {
+				continue;
+			}
+			$bar->add_node(
+				array(
+					'id'     => 'n4s-menu-' . sanitize_key( $k ),
+					'parent' => 'n4s-menu',
+					'title'  => esc_html( $t[1] ),
+					'href'   => admin_url( 'admin.php?page=' . $t[0] ),
+				)
+			);
+		}
+	},
+	80
+);
+
+/** Nach einem Update über WordPress: Link zur n4s-Übersicht (und Sprung dorthin, wenn das Update aus dem n4s-Menü kam). */
+add_filter(
+	'update_plugin_complete_actions',
+	function ( $actions, $plugin ) {
+		if ( plugin_basename( N4S_APPS_FILE ) !== $plugin || ! current_user_can( 'edit_pages' ) ) {
+			return $actions;
+		}
+		$url = admin_url( 'admin.php?page=n4s' );
+		$new = array( 'n4s_overview' => '<a href="' . esc_url( $url ) . '" target="_parent">' . esc_html( n4s_t( 'Zur n4s-Übersicht', 'Go to the n4s overview' ) ) . '</a>' );
+		if ( ! empty( $_GET['n4s_ret'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification -- reiner Sprung nach dem Update.
+			$new['n4s_jump'] = '<script>setTimeout(function(){window.location.href=' . wp_json_encode( $url ) . '},2500)</script>';
+		}
+		return $new + (array) $actions;
+	},
+	10,
+	2
+);
+
+/** Hinweis mit Link zur Übersicht nach einem Plugin-Update, solange die n4s-Seiten noch nicht geöffnet wurden. */
+add_action(
+	'admin_notices',
+	function () {
+		if ( ! get_option( 'n4s_apps_updated_notice' ) || ! current_user_can( 'edit_pages' ) ) {
+			return;
+		}
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		if ( 0 === strpos( $page, 'n4s' ) ) {
+			delete_option( 'n4s_apps_updated_notice' );
+			return;
+		}
+		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( n4s_t( 'n4s Apps wurde aktualisiert auf Version ' . N4S_APPS_VERSION . '. ', 'n4s Apps was updated to version ' . N4S_APPS_VERSION . '. ' ) ) . '<a href="' . esc_url( admin_url( 'admin.php?page=n4s' ) ) . '">' . esc_html( n4s_t( 'Zur n4s-Übersicht', 'Go to the n4s overview' ) ) . '</a></p></div>';
+	}
+);
+
 /** Plugin-Update erkennen (egal auf welchem Weg): Version mit der zuletzt gesehenen vergleichen. */
 add_action(
 	'init',
@@ -138,6 +226,7 @@ add_action(
 		if ( N4S_APPS_VERSION !== $seen ) {
 			update_option( 'n4s_apps_seen_version', N4S_APPS_VERSION, false );
 			if ( '' !== $seen ) {
+				update_option( 'n4s_apps_updated_notice', 1, false );
 				n4s_apps_activity( n4s_t( 'Plugin n4s Apps aktualisiert: ', 'Plugin n4s Apps updated: ' ) . $seen . ' → ' . N4S_APPS_VERSION, '' );
 			}
 		}
