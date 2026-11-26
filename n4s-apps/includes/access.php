@@ -207,13 +207,45 @@ add_action(
 			return;
 		}
 		$r = n4s_access_roles( $id );
+		echo '<span class="n4s-access-data" data-roles="' . esc_attr( implode( ',', $r ) ) . '">';
 		if ( ! $r ) {
-			echo '—';
+			echo '—</span>';
 			return;
 		}
 		$names = wp_roles()->get_names();
-		echo esc_html( implode( ', ', array_map( function ( $x ) use ( $names ) { return isset( $names[ $x ] ) ? translate_user_role( $names[ $x ] ) : $x; }, $r ) ) );
+		echo esc_html( implode( ', ', array_map( function ( $x ) use ( $names ) { return isset( $names[ $x ] ) ? translate_user_role( $names[ $x ] ) : $x; }, $r ) ) ) . '</span>';
 	},
 	10,
 	2
+);
+
+/** Schnellbearbeitung: Rollen direkt in der Seitenliste setzen (Speichern über save_post, siehe oben). */
+add_action(
+	'quick_edit_custom_box',
+	function ( $column, $post_type ) {
+		if ( 'n4s_access' !== $column || ! in_array( $post_type, n4s_access_types(), true ) || ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		wp_nonce_field( 'n4s_access_save', 'n4s_access_nonce', false );
+		echo '<fieldset class="inline-edit-col-left" style="clear:both"><div class="inline-edit-col"><span class="title">n4s – ' . esc_html( n4s_t( 'Zugriff', 'Access' ) ) . '</span><span class="description" style="display:block;margin:2px 0 6px">' . esc_html( n4s_t( 'Keine Rolle gewählt = für alle sichtbar. Administratoren haben immer Zugriff.', 'No role selected = visible to everyone. Administrators always have access.' ) ) . '</span>';
+		foreach ( wp_roles()->get_names() as $r => $label ) {
+			if ( 'administrator' === $r ) {
+				continue;
+			}
+			echo '<label style="display:inline-block;margin:0 14px 4px 0"><input type="checkbox" name="n4s_access_roles[]" value="' . esc_attr( $r ) . '"> ' . esc_html( translate_user_role( $label ) ) . '</label>';
+		}
+		echo '</div></fieldset>';
+	},
+	10,
+	2
+);
+
+add_action(
+	'admin_footer-edit.php',
+	function () {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		echo '<script>(function(){if(!window.inlineEditPost)return;var o=inlineEditPost.edit;inlineEditPost.edit=function(id){o.apply(this,arguments);var pid=typeof id==="object"?this.getId(id):id;var d=document.querySelector("#post-"+pid+" .n4s-access-data");var r=d?(d.getAttribute("data-roles")||"").split(","):[];document.querySelectorAll("#edit-"+pid+" input[name=\\"n4s_access_roles[]\\"]").forEach(function(c){c.checked=r.indexOf(c.value)>-1})}})();</script>';
+	}
 );
