@@ -158,11 +158,8 @@ add_action(
 function n4s_access_box( $post ) {
 	$sel = n4s_access_roles( $post->ID );
 	wp_nonce_field( 'n4s_access_save', 'n4s_access_nonce' );
-	echo '<p class="description">' . esc_html( n4s_t( 'Keine Rolle gewählt = die Seite ist für alle sichtbar. Sonst sehen, öffnen und bearbeiten nur die gewählten Rollen die Seite (Administratoren immer).', 'No role selected = the page is visible to everyone. Otherwise only the selected roles can see, open and edit the page (administrators always).' ) ) . '</p>';
+	echo '<p class="description">' . esc_html( n4s_t( 'Keine Rolle gewählt = die Seite ist für alle sichtbar. Sonst sehen, öffnen und bearbeiten nur die gewählten Rollen die Seite. Nur „Administrator“ gewählt = nur Administratoren (sie haben immer Zugriff).', 'No role selected = the page is visible to everyone. Otherwise only the selected roles can see, open and edit the page. Only "Administrator" selected = administrators only (they always have access).' ) ) . '</p>';
 	foreach ( wp_roles()->get_names() as $r => $label ) {
-		if ( 'administrator' === $r ) {
-			continue;
-		}
 		echo '<label style="display:block;margin:2px 0"><input type="checkbox" name="n4s_access_roles[]" value="' . esc_attr( $r ) . '"' . checked( in_array( $r, $sel, true ), true, false ) . '> ' . esc_html( translate_user_role( $label ) ) . '</label>';
 	}
 }
@@ -173,7 +170,7 @@ add_action(
 		if ( ! isset( $_POST['n4s_access_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['n4s_access_nonce'] ) ), 'n4s_access_save' ) || ! current_user_can( 'manage_options' ) || ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) ) {
 			return;
 		}
-		$valid = array_diff( array_keys( wp_roles()->get_names() ), array( 'administrator' ) );
+		$valid = array_keys( wp_roles()->get_names() );
 		$roles = array();
 		if ( isset( $_POST['n4s_access_roles'] ) && is_array( $_POST['n4s_access_roles'] ) ) {
 			foreach ( wp_unslash( $_POST['n4s_access_roles'] ) as $r ) { // phpcs:ignore WordPress.Security
@@ -227,11 +224,8 @@ add_action(
 			return;
 		}
 		wp_nonce_field( 'n4s_access_save', 'n4s_access_nonce', false );
-		echo '<fieldset class="inline-edit-col-left" style="clear:both"><div class="inline-edit-col"><span class="title">n4s – ' . esc_html( n4s_t( 'Zugriff', 'Access' ) ) . '</span><span class="description" style="display:block;margin:2px 0 6px">' . esc_html( n4s_t( 'Keine Rolle gewählt = für alle sichtbar. Administratoren haben immer Zugriff.', 'No role selected = visible to everyone. Administrators always have access.' ) ) . '</span>';
+		echo '<fieldset class="inline-edit-col-left" style="clear:both"><div class="inline-edit-col"><span class="title">n4s – ' . esc_html( n4s_t( 'Zugriff', 'Access' ) ) . '</span><span class="description" style="display:block;margin:2px 0 6px">' . esc_html( n4s_t( 'Keine Rolle gewählt = für alle sichtbar. Nur „Administrator“ = nur Administratoren. Administratoren haben immer Zugriff.', 'No role selected = visible to everyone. Only "Administrator" = administrators only. Administrators always have access.' ) ) . '</span>';
 		foreach ( wp_roles()->get_names() as $r => $label ) {
-			if ( 'administrator' === $r ) {
-				continue;
-			}
 			echo '<label style="display:inline-block;margin:0 14px 4px 0"><input type="checkbox" name="n4s_access_roles[]" value="' . esc_attr( $r ) . '"> ' . esc_html( translate_user_role( $label ) ) . '</label>';
 		}
 		echo '</div></fieldset>';
