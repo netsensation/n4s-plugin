@@ -5,7 +5,7 @@
  *
  * Alles läuft über WordPress-Hooks und braucht keine Änderung am Theme. Die Menü-Funktionen sind theme-unabhängig.
  * Die Farbschemen setzen die Farbvariablen von Neve (--nv-…); bei anderen Themes färben sie Hintergrund und Text der Seite.
- * Jedes Modul ist im Tab „Theme“ einzeln schaltbar (Standard: aus).
+ * Jedes Modul ist im Tab „Customize“ einzeln schaltbar (Standard: aus).
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -1038,15 +1038,6 @@ if ( is_admin() ) {
 		echo '<script>(function(){document.addEventListener("click",function(e){var b=e.target.closest(".n4s-add-lo");if(!b)return;e.preventDefault();if(!window.wpNavMenu||!wpNavMenu.addItemToMenu)return;var o={};o["-1"]={"menu-item-type":"custom","menu-item-url":b.getAttribute("data-url"),"menu-item-title":b.getAttribute("data-title")};wpNavMenu.addItemToMenu(o,wpNavMenu.addMenuItemToBottom,function(){})})})();</script>';
 	}
 
-	/* Tab „Theme“ */
-	add_filter(
-		'n4s_apps_tabs',
-		function ( $t ) {
-			$t['theme'] = array( 'page' => 'n4s-theme', 'label' => 'Theme', 'render' => 'n4s_theme_render' );
-			return $t;
-		}
-	);
-
 	add_action(
 		'admin_enqueue_scripts',
 		function ( $hook ) {
@@ -1168,7 +1159,7 @@ N4SJS;
 		$th     = wp_get_theme();
 		$parent = $th->parent() ? $th->parent() : $th;
 		$neve   = 'neve' === strtolower( $parent->get_template() );
-		echo '<h2>Theme</h2><p>' . esc_html( n4s_t( 'Aktives Theme: ', 'Active theme: ' ) ) . '<strong>' . esc_html( $th->get( 'Name' ) ) . '</strong>' . ( $neve ? ' – ' . esc_html( n4s_t( 'Neve erkannt: Farbschemen färben auch Kopf- und Fußzeile, die Seitenfelder von Neve werden mitgesteuert.', 'Neve detected: color schemes also color header and footer, and Neve\'s page fields are controlled too.' ) ) : ' – ' . esc_html( n4s_t( 'Farbschemen färben die Seite und, soweit das Theme es zulässt, Kopf- und Fußzeile; die Menü-Funktionen gelten für jedes Theme.', 'Color schemes color the page and, as far as the theme allows, header and footer; the menu features work with any theme.' ) ) ) . '</p>';
+		echo '<p>' . esc_html( n4s_t( 'Aktives Theme: ', 'Active theme: ' ) ) . '<strong>' . esc_html( $th->get( 'Name' ) ) . '</strong>' . ( $neve ? ' – ' . esc_html( n4s_t( 'Neve erkannt: Farbschemen färben auch Kopf- und Fußzeile, die Seitenfelder von Neve werden mitgesteuert.', 'Neve detected: color schemes also color header and footer, and Neve\'s page fields are controlled too.' ) ) : ' – ' . esc_html( n4s_t( 'Farbschemen färben die Seite und, soweit das Theme es zulässt, Kopf- und Fußzeile; die Menü-Funktionen gelten für jedes Theme.', 'Color schemes color the page and, as far as the theme allows, header and footer; the menu features work with any theme.' ) ) ) . '</p>';
 		n4s_apps_form_head( 'n4s_theme_save', false, 'display:block' );
 		$mods = array(
 			'menus'       => array( n4s_t( 'Menü je Anmeldestatus und Rolle', 'Menu by login status and role' ), n4s_t( 'Zeigt für Besucher, Angemeldete und einzelne Rollen unterschiedliche Menüs an derselben Menüposition.', 'Shows different menus at the same menu location for visitors, logged-in users and individual roles.' ) ),

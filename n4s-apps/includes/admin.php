@@ -139,8 +139,11 @@ function n4s_apps_tabs_list( $admin, $menu = false ) {
 	if ( n4s_feature_on( 'security' ) ) {
 		$t['security'] = array( 'n4s-security', n4s_t( 'Sicherheit', 'Security' ), 'edit_pages' );
 	}
-	$t['snippets'] = array( 'n4s-snippets', 'Snippets', 'edit_pages' );
+	if ( n4s_feature_on( 'snippets' ) ) {
+		$t['snippets'] = array( 'n4s-snippets', 'Snippets', 'edit_pages' );
+	}
 	if ( $admin || $menu ) {
+		$t['theme'] = array( 'n4s-theme', 'Customize', 'manage_options' );
 		foreach ( n4s_apps_extra_tabs() as $k => $x ) {
 			$t[ $k ] = array( $x['page'], $x['label'], 'manage_options' );
 		}
@@ -435,20 +438,14 @@ add_action(
 		}
 		n4s_apps_verify( 'n4s_features_save' );
 		$old_f = n4s_features();
-		update_option(
-			'n4s_features',
-			array(
-				'apps'     => empty( $_POST['apps'] ) ? 0 : 1,
-				'security' => empty( $_POST['security'] ) ? 0 : 1,
-				'dup'      => empty( $_POST['dup'] ) ? 0 : 1,
-				'mediareplace' => empty( $_POST['mediareplace'] ) ? 0 : 1,
-				'login'        => empty( $_POST['login'] ) ? 0 : 1,
-				'theme'        => empty( $_POST['theme'] ) ? 0 : 1,
-				'mcp'          => empty( $_POST['mcp'] ) ? 0 : 1,
-				'barmenu'      => empty( $_POST['barmenu'] ) ? 0 : 1,
-				'pageaccess'   => empty( $_POST['pageaccess'] ) ? 0 : 1,
-			)
-		);
+		$all   = array_keys( n4s_apps_feature_rows() );
+		$keys  = isset( $_POST['n4s_keys'] ) ? array_intersect( $all, array_map( 'sanitize_key', explode( ',', sanitize_text_field( wp_unslash( $_POST['n4s_keys'] ) ) ) ) ) : $all; // phpcs:ignore WordPress.Security.NonceVerification -- siehe n4s_apps_verify.
+		$cur   = $old_f;
+		foreach ( $keys as $k ) {
+			$cur[ $k ] = empty( $_POST[ $k ] ) ? 0 : 1; // phpcs:ignore WordPress.Security.NonceVerification
+		}
+		$cur['mcp'] = isset( $cur['mcp'] ) ? (int) $cur['mcp'] : 0;
+		update_option( 'n4s_features', $cur );
 		$names = array(
 			'apps'         => n4s_t( 'Apps', 'Apps' ),
 			'security'     => n4s_t( 'Anmeldeschutz', 'Login protection' ),
@@ -459,6 +456,7 @@ add_action(
 			'mcp'          => n4s_t( 'KI-Anbindung', 'AI connection' ),
 			'barmenu'      => n4s_t( 'n4s Admin-Dropdown', 'n4s admin dropdown' ),
 			'pageaccess'   => n4s_t( 'Seitenzugriff je Rolle', 'Page access by role' ),
+			'snippets'     => 'Snippets',
 		);
 		$new_f = n4s_features();
 		foreach ( $names as $k => $label ) {
@@ -467,7 +465,8 @@ add_action(
 			}
 		}
 		n4s_apps_notice( 'success', n4s_t( 'Funktionen gespeichert.', 'Features saved.' ), false );
-		n4s_apps_back( false, 'n4s-features' );
+		$back = isset( $_POST['n4s_back'] ) ? sanitize_key( wp_unslash( $_POST['n4s_back'] ) ) : 'n4s-features'; // phpcs:ignore WordPress.Security.NonceVerification
+		n4s_apps_back( false, in_array( $back, array( 'n4s-features', 'n4s-theme' ), true ) ? $back : 'n4s-features' );
 	}
 );
 
@@ -776,7 +775,7 @@ function n4s_apps_shell( $tab ) {
 			'apps'     => n4s_t( 'Mitgelieferte und eigene Apps', 'Bundled and custom apps' ),
 			'security' => n4s_t( 'Anmeldeschutz und Härtung', 'Login protection and hardening' ),
 			'snippets' => n4s_t( 'Shortcodes für Anmeldung, Links und Buttons', 'Shortcodes for login, links and buttons' ),
-			'theme'    => n4s_t( 'Menüs, Farbschemata und Seitengestaltung', 'Menus, color schemes and page design' ),
+			'theme'    => n4s_t( 'Weitere Funktionen, Menüs, Farbschemata und Seitengestaltung', 'More features, menus, color schemes and page design' ),
 			'ki'       => n4s_t( 'Anbindung an Royal MCP für KI-Assistenten', 'Connection to Royal MCP for AI assistants' ),
 			'admin'    => n4s_t( 'Katalog-Verwaltung', 'Catalog administration' ),
 		);
@@ -797,6 +796,8 @@ function n4s_apps_shell( $tab ) {
 			n4s_sec_render();
 		} elseif ( 'snippets' === $tab ) {
 			n4s_snippets_tab();
+		} elseif ( 'theme' === $tab ) {
+			n4s_apps_tab_customize();
 		} elseif ( isset( $extra[ $tab ] ) ) {
 			call_user_func( $extra[ $tab ]['render'] );
 		} else {
@@ -812,13 +813,13 @@ function n4s_apps_shell( $tab ) {
 	echo '</main></div></div>';
 }
 
-/** Tab Funktionen: Apps und Sicherheit einzeln ein-/ausschalten, Plugin-Update. */
-function n4s_apps_tab_features() {
-	$f = n4s_features();
-	echo '<h2>' . esc_html( n4s_t( 'Funktionen', 'Features' ) ) . '</h2>';
-	n4s_apps_form_head( 'n4s_features_save', false, 'display:block' );
-	echo '<div class="n4s-card">';
-	$rows = array(
+/** Alle Funktionen: Schlüssel => [ Titel, Beschreibung ]. */
+function n4s_apps_feature_rows() {
+	return array(
+		'snippets' => array(
+			'Snippets',
+			n4s_t( 'Tab „Snippets“ mit Shortcodes für Anmeldung, Link, Button und Menü, einzeln aktivierbar. Ausgeschaltet: Tab und Menüeintrag verschwinden und die Shortcodes bleiben leer.', 'Tab "Snippets" with shortcodes for login, link, button and menu, each can be activated individually. Switched off: the tab and menu entry disappear and the shortcodes stay empty.' ),
+		),
 		'apps'     => array(
 			'Apps',
 			n4s_t( 'Eigene PHP-Apps verwalten und per Shortcode [n4s_app] einbinden. Ausgeschaltet: Tab und Menü verschwinden, keine App wird geladen und die Shortcodes bleiben leer.', 'Manage custom PHP apps and embed them with the [n4s_app] shortcode. Switched off: tab and menu disappear, no app is loaded and the shortcodes stay empty.' ),
@@ -841,11 +842,11 @@ function n4s_apps_tab_features() {
 		),
 		'barmenu'      => array(
 			n4s_t( 'n4s Admin-Dropdown', 'n4s admin dropdown' ),
-			n4s_t( 'Eintrag „n4s“ mit Untermenü (Übersicht, Funktionen, Apps, Sicherheit, Snippets, Theme) im Dropdown des Seitennamens in der Admin-Leiste oben, im Admin-Bereich und auf der Website. Ausgeschaltet: der Eintrag verschwindet; das Menü „Admin-Leiste“ der Theme-Engine bleibt davon unberührt.', 'Entry "n4s" with sub-menu (overview, features, apps, security, snippets, theme) in the site name dropdown of the admin bar at the top, in the admin area and on the website. Switched off: the entry disappears; the "Admin bar" menu of the theme engine is not affected.' ),
+			n4s_t( 'Eintrag „n4s“ mit Untermenü (Übersicht, Funktionen, Apps, Sicherheit, Snippets, Customize) im Dropdown des Seitennamens in der Admin-Leiste oben, im Admin-Bereich und auf der Website. Ausgeschaltet: der Eintrag verschwindet; das Menü „Admin-Leiste“ der Theme-Engine bleibt davon unberührt.', 'Entry "n4s" with sub-menu (overview, features, apps, security, snippets, theme) in the site name dropdown of the admin bar at the top, in the admin area and on the website. Switched off: the entry disappears; the "Admin bar" menu of the theme engine is not affected.' ),
 		),
 		'theme'        => array(
 			n4s_t( 'Theme-Engine', 'Theme engine' ),
-			n4s_t( 'Neuer Tab „Theme“: Menü je Anmeldestatus und Rolle, Sichtbarkeit je Menüpunkt, Anmelden/Abmelden als Menüpunkt, Zusatzmenü-Widget und Shortcode, Seitengestaltung je Seite und bis zu drei Farbschemen. Ausgeschaltet: Tab und alle Theme-Funktionen sind inaktiv; Einstellungen bleiben gespeichert.', 'New tab "Theme": menu by login status and role, visibility per menu item, log in/out as menu item, additional menu widget and shortcode, page design per page and up to three color schemes. Switched off: the tab and all theme features are inactive; settings stay saved.' ),
+			n4s_t( 'Neuer Tab „Customize“: Menü je Anmeldestatus und Rolle, Sichtbarkeit je Menüpunkt, Anmelden/Abmelden als Menüpunkt, Zusatzmenü-Widget und Shortcode, Seitengestaltung je Seite und bis zu drei Farbschemen. Ausgeschaltet: Tab und alle Theme-Funktionen sind inaktiv; Einstellungen bleiben gespeichert.', 'New tab "Theme": menu by login status and role, visibility per menu item, log in/out as menu item, additional menu widget and shortcode, page design per page and up to three color schemes. Switched off: the tab and all theme features are inactive; settings stay saved.' ),
 		),
 		'mcp'          => array(
 			n4s_t( 'KI-Anbindung (Royal MCP)', 'AI connection (Royal MCP)' ),
@@ -856,12 +857,42 @@ function n4s_apps_tab_features() {
 			n4s_t( 'Ersetzt das Aussehen der WordPress-Anmeldung: Logo der Website statt WordPress-Logo, Farben des aktiven Themes (Hintergrund, Text, Buttons und Links), Logo verlinkt auf die Startseite. Anmeldung, Passwort vergessen und Anmeldeschutz funktionieren unverändert.', 'Replaces the look of the WordPress login: the website logo instead of the WordPress logo, colours of the active theme (background, text, buttons and links), logo links to the home page. Login, lost password and login protection work as before.' ),
 		),
 	);
-	foreach ( $rows as $k => $r ) {
-		n4s_apps_ui_toggle( $k, ! empty( $f[ $k ] ), $r[0], $r[1] );
+}
+
+/** Formular mit Schaltern für die genannten Funktionen; speichert nur diese und kehrt zur Seite $back zurück. */
+function n4s_apps_features_form( $keys, $back ) {
+	$f    = n4s_features();
+	$rows = n4s_apps_feature_rows();
+	n4s_apps_form_head( 'n4s_features_save', false, 'display:block' );
+	echo '<input type="hidden" name="n4s_keys" value="' . esc_attr( implode( ',', $keys ) ) . '"><input type="hidden" name="n4s_back" value="' . esc_attr( $back ) . '">';
+	echo '<div class="n4s-card">';
+	foreach ( $keys as $k ) {
+		if ( isset( $rows[ $k ] ) ) {
+			n4s_apps_ui_toggle( $k, ! empty( $f[ $k ] ), $rows[ $k ][0], $rows[ $k ][1] );
+		}
 	}
 	echo '</div>';
 	submit_button( n4s_t( 'Speichern', 'Save' ), 'primary', 'submit', true );
 	echo '</form>';
+}
+
+/** Tab Funktionen: Apps, Sicherheit, Snippets, Theme-Engine und KI-Anbindung ein-/ausschalten, Plugin-Update. */
+function n4s_apps_tab_features() {
+	echo '<h2>' . esc_html( n4s_t( 'Funktionen', 'Features' ) ) . '</h2>';
+	n4s_apps_features_form( array( 'apps', 'security', 'snippets', 'theme', 'mcp' ), 'n4s-features' );
+}
+
+/** Tab Customize: weitere Funktionen und die Theme-Engine. */
+function n4s_apps_tab_customize() {
+	echo '<h2>Customize</h2>';
+	echo '<h3>' . esc_html( n4s_t( 'Weitere Funktionen', 'More features' ) ) . '</h3>';
+	n4s_apps_features_form( array( 'dup', 'mediareplace', 'login', 'barmenu', 'pageaccess' ), 'n4s-theme' );
+	echo '<h3 style="margin-top:28px">' . esc_html( n4s_t( 'Theme-Engine', 'Theme engine' ) ) . '</h3>';
+	if ( n4s_feature_on( 'theme' ) && function_exists( 'n4s_theme_render' ) ) {
+		n4s_theme_render();
+	} else {
+		echo '<p class="description">' . esc_html( n4s_t( 'Die Theme-Engine ist ausgeschaltet (Tab Funktionen). Eingeschaltet erscheinen hier Menüs, Farbschemen und Seitengestaltung.', 'The theme engine is switched off (Features tab). When switched on, menus, color schemes and page design appear here.' ) ) . '</p>';
+	}
 }
 
 /** Plugin-Update (WordPress/GitHub und manuell per ZIP), im Tab Funktionen. */
