@@ -26,7 +26,7 @@ function n4s_mcp_opt() {
 
 function n4s_mcp_groups() {
 	return array(
-		'theme'    => n4s_t( 'Theme-Engine (Module, Farbschemata, Menüzuordnung)', 'Theme engine (modules, color schemes, menu assignment)' ),
+		'theme'    => n4s_t( 'WP-Customize (Module, Farbschemata, Menüzuordnung)', 'WP-Customize (modules, color schemes, menu assignment)' ),
 		'snippets' => n4s_t( 'Snippets ein-/ausschalten', 'Switch snippets on/off' ),
 		'security' => n4s_t( 'Sicherheit (Schutzeinstellungen, ohne Mail und Sperrliste)', 'Security (protection settings, without e-mail and blocklist)' ),
 		'features' => n4s_t( 'Funktionen ein-/ausschalten', 'Switch features on/off' ),

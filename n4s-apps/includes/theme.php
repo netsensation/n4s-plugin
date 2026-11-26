@@ -1151,17 +1151,9 @@ N4SJS;
 		return $h . '</select>';
 	}
 
-	function n4s_theme_render() {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return;
-		}
-		$o      = n4s_theme_opt();
-		$th     = wp_get_theme();
-		$parent = $th->parent() ? $th->parent() : $th;
-		$neve   = 'neve' === strtolower( $parent->get_template() );
-		echo '<p>' . esc_html( n4s_t( 'Aktives Theme: ', 'Active theme: ' ) ) . '<strong>' . esc_html( $th->get( 'Name' ) ) . '</strong>' . ( $neve ? ' – ' . esc_html( n4s_t( 'Neve erkannt: Farbschemen färben auch Kopf- und Fußzeile, die Seitenfelder von Neve werden mitgesteuert.', 'Neve detected: color schemes also color header and footer, and Neve\'s page fields are controlled too.' ) ) : ' – ' . esc_html( n4s_t( 'Farbschemen färben die Seite und, soweit das Theme es zulässt, Kopf- und Fußzeile; die Menü-Funktionen gelten für jedes Theme.', 'Color schemes color the page and, as far as the theme allows, header and footer; the menu features work with any theme.' ) ) ) . '</p>';
-		n4s_apps_form_head( 'n4s_theme_save', false, 'display:block' );
-		$mods = array(
+	/** Module der Theme-Engine: Schlüssel => [ Titel, Beschreibung ]. */
+	function n4s_theme_mods() {
+		return array(
 			'menus'       => array( n4s_t( 'Menü je Anmeldestatus und Rolle', 'Menu by login status and role' ), n4s_t( 'Zeigt für Besucher, Angemeldete und einzelne Rollen unterschiedliche Menüs an derselben Menüposition.', 'Shows different menus at the same menu location for visitors, logged-in users and individual roles.' ) ),
 			'items'       => array( n4s_t( 'Sichtbarkeit je Menüpunkt', 'Visibility per menu item' ), n4s_t( 'Im Menü-Editor kann jeder Punkt für alle, Besucher, Angemeldete oder bestimmte Rollen gelten.', 'In the menu editor each item can apply to everyone, visitors, logged-in users or certain roles.' ) ),
 			'newtab'      => array( n4s_t( 'Neuer Tab je Menüpunkt', 'New tab per menu item' ), n4s_t( 'Im Menü-Editor und im Customizer kann jeder Menüpunkt in allen Menüs seinen Link in einem neuen Tab/Fenster öffnen.', 'In the menu editor and the Customizer each menu item in all menus can open its link in a new tab/window.' ) ),
@@ -1173,9 +1165,30 @@ N4SJS;
 			'page'        => array( n4s_t( 'Seitengestaltung je Seite', 'Page design per page' ), n4s_t( 'Kopfzeile, Hauptmenü, Headermenü, Footermenü, Fußzeile und Seitentitel je Seite ausblenden (Feld im Seiteneditor).', 'Hide header, main menu, header menu, footer menu, footer and page title per page (field in the page editor).' ) ),
 			'schemes'     => array( n4s_t( 'Farbschemen (bis zu 3)', 'Color schemes (up to 3)' ), n4s_t( 'Drei Farbschemen definieren und je Seite wählen oder als Standard setzen.', 'Define three color schemes and choose per page or set as default.' ) ),
 		);
+	}
+
+	/** Module ohne eigene Einstellungen: erscheinen oben unter „Funktionen“. */
+	function n4s_theme_simple_mods() {
+		return array( 'items', 'loginout', 'newtab', 'page' );
+	}
+
+	function n4s_theme_render() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		$o      = n4s_theme_opt();
+		$th     = wp_get_theme();
+		$parent = $th->parent() ? $th->parent() : $th;
+		$neve   = 'neve' === strtolower( $parent->get_template() );
+		echo '<p>' . esc_html( n4s_t( 'Aktives Theme: ', 'Active theme: ' ) ) . '<strong>' . esc_html( $th->get( 'Name' ) ) . '</strong>' . ( $neve ? ' – ' . esc_html( n4s_t( 'Neve erkannt: Farbschemen färben auch Kopf- und Fußzeile, die Seitenfelder von Neve werden mitgesteuert.', 'Neve detected: color schemes also color header and footer, and Neve\'s page fields are controlled too.' ) ) : ' – ' . esc_html( n4s_t( 'Farbschemen färben die Seite und, soweit das Theme es zulässt, Kopf- und Fußzeile; die Menü-Funktionen gelten für jedes Theme.', 'Color schemes color the page and, as far as the theme allows, header and footer; the menu features work with any theme.' ) ) ) . '</p>';
+		n4s_apps_form_head( 'n4s_theme_save', false, 'display:block' );
+		$mods = n4s_theme_mods();
 		// Funktionsübersicht: ein-/ausschalten. Darunter ein zweiter Speichern-Button (speichert wie der am Ende).
-		echo '<table class="widefat n4s-swtable" style="width:100%"><thead><tr><th style="width:90px">' . esc_html( n4s_t( 'Aktiv', 'Active' ) ) . '</th><th>' . esc_html( n4s_t( 'Funktion', 'Feature' ) ) . '</th></tr></thead><tbody>';
+		echo '<input type="hidden" name="on_keys" value="' . esc_attr( implode( ',', array_diff( array_keys( $mods ), n4s_theme_simple_mods() ) ) ) . '"><table class="widefat n4s-swtable" style="width:100%"><thead><tr><th style="width:90px">' . esc_html( n4s_t( 'Aktiv', 'Active' ) ) . '</th><th>' . esc_html( n4s_t( 'Funktion', 'Feature' ) ) . '</th></tr></thead><tbody>';
 		foreach ( $mods as $k => $m ) {
+			if ( in_array( $k, n4s_theme_simple_mods(), true ) ) {
+				continue; // oben unter „Funktionen“
+			}
 			echo '<tr><td><label><input type="checkbox" name="on[' . esc_attr( $k ) . ']" value="1"' . checked( ! empty( $o['on'][ $k ] ), true, false ) . '> ' . esc_html( ! empty( $o['on'][ $k ] ) ? n4s_t( 'an', 'on' ) : n4s_t( 'aus', 'off' ) ) . '</label></td><td><strong>' . esc_html( $m[0] ) . '</strong><br><span class="description">' . esc_html( $m[1] ) . '</span></td></tr>';
 		}
 		echo '</tbody></table>';
@@ -1439,7 +1452,12 @@ N4SJS;
 				'abovefooter' => $cur['abovefooter'],
 				'adminbar'    => $cur['adminbar'],
 			);
+			$shown = isset( $_POST['on_keys'] ) ? array_map( 'sanitize_key', explode( ',', sanitize_text_field( wp_unslash( $_POST['on_keys'] ) ) ) ) : array_keys( $d['on'] ); // phpcs:ignore WordPress.Security.NonceVerification
 			foreach ( array_keys( $d['on'] ) as $k ) {
+				if ( ! in_array( $k, $shown, true ) ) {
+					$in['on'][ $k ] = empty( $cur['on'][ $k ] ) ? 0 : 1; // nicht im Formular: unverändert
+					continue;
+				}
 				$in['on'][ $k ] = ! empty( $_POST['on'][ $k ] ) ? 1 : 0; // phpcs:ignore WordPress.Security.NonceVerification -- siehe n4s_apps_verify.
 			}
 			// Einstellungen nur übernehmen, wenn ihr Feld im Formular war (ausgeschaltete Funktionen bleiben unverändert gespeichert).

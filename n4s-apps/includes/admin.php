@@ -444,6 +444,21 @@ add_action(
 		foreach ( $keys as $k ) {
 			$cur[ $k ] = empty( $_POST[ $k ] ) ? 0 : 1; // phpcs:ignore WordPress.Security.NonceVerification
 		}
+		// Module der WP-Customize-Funktion ohne eigene Einstellungen (Schlüssel mod_<modul>).
+		if ( isset( $_POST['n4s_keys'] ) && function_exists( 'n4s_theme_opt' ) && function_exists( 'n4s_theme_simple_mods' ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$posted = array_map( 'sanitize_key', explode( ',', sanitize_text_field( wp_unslash( $_POST['n4s_keys'] ) ) ) ); // phpcs:ignore WordPress.Security.NonceVerification
+			$raw    = get_option( 'n4s_theme', array() );
+			$raw    = is_array( $raw ) ? $raw : array();
+			$on     = n4s_theme_opt()['on'];
+			foreach ( n4s_theme_simple_mods() as $m ) {
+				if ( in_array( 'mod_' . $m, $posted, true ) ) {
+					$on[ $m ] = empty( $_POST[ 'mod_' . $m ] ) ? 0 : 1; // phpcs:ignore WordPress.Security.NonceVerification
+				}
+			}
+			$raw['on'] = $on;
+			update_option( 'n4s_theme', $raw, false );
+			n4s_theme_opt( true );
+		}
 		$cur['mcp'] = isset( $cur['mcp'] ) ? (int) $cur['mcp'] : 0;
 		update_option( 'n4s_features', $cur );
 		$names = array(
@@ -452,7 +467,7 @@ add_action(
 			'dup'          => n4s_t( 'Seite duplizieren', 'Duplicate page' ),
 			'mediareplace' => n4s_t( 'Mediendatei ersetzen', 'Replace media file' ),
 			'login'        => n4s_t( 'Eigenes Login-Design', 'Custom login design' ),
-			'theme'        => n4s_t( 'Theme-Engine', 'Theme engine' ),
+			'theme'        => 'WP-Customize',
 			'mcp'          => n4s_t( 'KI-Anbindung', 'AI connection' ),
 			'barmenu'      => n4s_t( 'n4s Admin-Dropdown', 'n4s admin dropdown' ),
 			'pageaccess'   => n4s_t( 'Seitenzugriff je Rolle', 'Page access by role' ),
@@ -842,11 +857,11 @@ function n4s_apps_feature_rows() {
 		),
 		'barmenu'      => array(
 			n4s_t( 'n4s Admin-Dropdown', 'n4s admin dropdown' ),
-			n4s_t( 'Eintrag „n4s“ mit Untermenü (Übersicht, Funktionen, Apps, Sicherheit, Snippets, Customize) im Dropdown des Seitennamens in der Admin-Leiste oben, im Admin-Bereich und auf der Website. Ausgeschaltet: der Eintrag verschwindet; das Menü „Admin-Leiste“ der Theme-Engine bleibt davon unberührt.', 'Entry "n4s" with sub-menu (overview, features, apps, security, snippets, theme) in the site name dropdown of the admin bar at the top, in the admin area and on the website. Switched off: the entry disappears; the "Admin bar" menu of the theme engine is not affected.' ),
+			n4s_t( 'Eintrag „n4s“ mit Untermenü (Übersicht, Funktionen, Apps, Sicherheit, Snippets, Customize) im Dropdown des Seitennamens in der Admin-Leiste oben, im Admin-Bereich und auf der Website. Ausgeschaltet: der Eintrag verschwindet; das Menü „Admin-Leiste“ der WP-Customize bleibt davon unberührt.', 'Entry "n4s" with sub-menu (overview, features, apps, security, snippets, theme) in the site name dropdown of the admin bar at the top, in the admin area and on the website. Switched off: the entry disappears; the "Admin bar" menu of the WP-Customize is not affected.' ),
 		),
 		'theme'        => array(
-			n4s_t( 'Theme-Engine', 'Theme engine' ),
-			n4s_t( 'Neuer Tab „Customize“: Menü je Anmeldestatus und Rolle, Sichtbarkeit je Menüpunkt, Anmelden/Abmelden als Menüpunkt, Zusatzmenü-Widget und Shortcode, Seitengestaltung je Seite und bis zu drei Farbschemen. Ausgeschaltet: Tab und alle Theme-Funktionen sind inaktiv; Einstellungen bleiben gespeichert.', 'New tab "Theme": menu by login status and role, visibility per menu item, log in/out as menu item, additional menu widget and shortcode, page design per page and up to three color schemes. Switched off: the tab and all theme features are inactive; settings stay saved.' ),
+			'WP-Customize',
+			n4s_t( 'Tab „Customize“: Menü je Anmeldestatus und Rolle, Headermenü und Footermenü, Admin-Leiste, Zusatzmenü-Widget und Shortcode sowie bis zu drei Farbschemen; dazu Sichtbarkeit je Menüpunkt, Anmelden/Abmelden als Menüpunkt, Neuer Tab je Menüpunkt und Seitengestaltung je Seite. Ausgeschaltet: alle diese Funktionen sind inaktiv; Einstellungen bleiben gespeichert.', 'Tab "Customize": menu by login status and role, header and footer menu, admin bar, additional menu widget and shortcode and up to three color schemes; plus visibility per menu item, log in/out as menu item, new tab per menu item and page design per page. Switched off: all these features are inactive; settings stay saved.' ),
 		),
 		'mcp'          => array(
 			n4s_t( 'KI-Anbindung (Royal MCP)', 'AI connection (Royal MCP)' ),
@@ -867,7 +882,13 @@ function n4s_apps_features_form( $keys, $back ) {
 	echo '<input type="hidden" name="n4s_keys" value="' . esc_attr( implode( ',', $keys ) ) . '"><input type="hidden" name="n4s_back" value="' . esc_attr( $back ) . '">';
 	echo '<div class="n4s-card">';
 	foreach ( $keys as $k ) {
-		if ( isset( $rows[ $k ] ) ) {
+		if ( 0 === strpos( $k, 'mod_' ) && function_exists( 'n4s_theme_mods' ) ) { // Modul der WP-Customize-Funktion
+			$m = n4s_theme_mods();
+			$m = isset( $m[ substr( $k, 4 ) ] ) ? $m[ substr( $k, 4 ) ] : null;
+			if ( $m ) {
+				n4s_apps_ui_toggle( $k, ! empty( n4s_theme_opt()['on'][ substr( $k, 4 ) ] ), $m[0], $m[1] );
+			}
+		} elseif ( isset( $rows[ $k ] ) ) {
 			n4s_apps_ui_toggle( $k, ! empty( $f[ $k ] ), $rows[ $k ][0], $rows[ $k ][1] );
 		}
 	}
@@ -876,22 +897,28 @@ function n4s_apps_features_form( $keys, $back ) {
 	echo '</form>';
 }
 
-/** Tab Funktionen: Apps, Sicherheit, Snippets, Theme-Engine und KI-Anbindung ein-/ausschalten, Plugin-Update. */
+/** Tab Funktionen: Apps, Sicherheit, Snippets, WP-Customize und KI-Anbindung ein-/ausschalten, Plugin-Update. */
 function n4s_apps_tab_features() {
 	echo '<h2>' . esc_html( n4s_t( 'Funktionen', 'Features' ) ) . '</h2>';
 	n4s_apps_features_form( array( 'apps', 'security', 'snippets', 'theme', 'mcp' ), 'n4s-features' );
 }
 
-/** Tab Customize: weitere Funktionen und die Theme-Engine. */
+/** Tab Customize: oben „Funktionen“ (ohne eigene Einstellungen), darunter WP-Customize mit Einstellungen. */
 function n4s_apps_tab_customize() {
 	echo '<h2>Customize</h2>';
-	echo '<h3>' . esc_html( n4s_t( 'Weitere Funktionen', 'More features' ) ) . '</h3>';
-	n4s_apps_features_form( array( 'dup', 'mediareplace', 'login', 'barmenu', 'pageaccess' ), 'n4s-theme' );
-	echo '<h3 style="margin-top:28px">' . esc_html( n4s_t( 'Theme-Engine', 'Theme engine' ) ) . '</h3>';
+	echo '<h3>' . esc_html( n4s_t( 'Funktionen', 'Features' ) ) . '</h3>';
+	$keys = array( 'dup', 'mediareplace', 'login', 'barmenu', 'pageaccess' );
+	if ( n4s_feature_on( 'theme' ) && function_exists( 'n4s_theme_simple_mods' ) ) {
+		foreach ( n4s_theme_simple_mods() as $m ) {
+			$keys[] = 'mod_' . $m;
+		}
+	}
+	n4s_apps_features_form( $keys, 'n4s-theme' );
+	echo '<h3 style="margin-top:28px">WP-Customize</h3>';
 	if ( n4s_feature_on( 'theme' ) && function_exists( 'n4s_theme_render' ) ) {
 		n4s_theme_render();
 	} else {
-		echo '<p class="description">' . esc_html( n4s_t( 'Die Theme-Engine ist ausgeschaltet (Tab Funktionen). Eingeschaltet erscheinen hier Menüs, Farbschemen und Seitengestaltung.', 'The theme engine is switched off (Features tab). When switched on, menus, color schemes and page design appear here.' ) ) . '</p>';
+		echo '<p class="description">' . esc_html( n4s_t( 'WP-Customize ist ausgeschaltet (Tab Funktionen). Eingeschaltet erscheinen hier Menüs, Farbschemen und Seitengestaltung.', 'WP-Customize is switched off (Features tab). When switched on, menus, color schemes and page design appear here.' ) ) . '</p>';
 	}
 }
 

@@ -119,9 +119,9 @@ function n4s_apps_tab_overview() {
 	echo n4s_apps_ui_status( ! empty( $f['security'] ), n4s_t( 'Anmeldeschutz', 'Login protection' ), ! empty( $f['security'] ) ? sprintf( n4s_t( '%d Fehlversuche in 24 Stunden', '%d failed attempts in 24 hours' ), $fails ) : n4s_t( 'Funktion ausgeschaltet', 'Feature switched off' ), 'n4s-security' ); // phpcs:ignore WordPress.Security.EscapeOutput
 	if ( ! empty( $f['theme'] ) && function_exists( 'n4s_theme_opt' ) ) {
 		$on = array_sum( array_map( 'intval', n4s_theme_opt()['on'] ) );
-		echo n4s_apps_ui_status( true, n4s_t( 'Theme-Engine', 'Theme engine' ), sprintf( n4s_t( '%d Module an', '%d modules on' ), $on ), 'n4s-theme' ); // phpcs:ignore WordPress.Security.EscapeOutput
+		echo n4s_apps_ui_status( true, 'WP-Customize', sprintf( n4s_t( '%d Module an', '%d modules on' ), $on ), 'n4s-theme' ); // phpcs:ignore WordPress.Security.EscapeOutput
 	} else {
-		echo n4s_apps_ui_status( false, n4s_t( 'Theme-Engine', 'Theme engine' ), n4s_t( 'Funktion ausgeschaltet', 'Feature switched off' ), 'n4s-features' ); // phpcs:ignore WordPress.Security.EscapeOutput
+		echo n4s_apps_ui_status( false, 'WP-Customize', n4s_t( 'Funktion ausgeschaltet', 'Feature switched off' ), 'n4s-features' ); // phpcs:ignore WordPress.Security.EscapeOutput
 	}
 	echo n4s_apps_ui_status( ! empty( $f['login'] ), n4s_t( 'Eigenes Login-Design', 'Custom login design' ), n4s_t( 'Logo und Farben des Themes', 'Logo and colors of the theme' ), 'n4s-features' ); // phpcs:ignore WordPress.Security.EscapeOutput
 	echo n4s_apps_ui_status( ! empty( $f['mcp'] ), n4s_t( 'KI-Anbindung', 'AI connection' ), ! empty( $f['mcp'] ) ? ( ! empty( $mcp['on'] ) ? n4s_t( 'Schreibzugriff erlaubt', 'Write access allowed' ) : n4s_t( 'Schreibzugriff aus', 'Write access off' ) ) : n4s_t( 'Funktion ausgeschaltet', 'Feature switched off' ), ! empty( $f['mcp'] ) ? 'n4s-ki' : 'n4s-features' ); // phpcs:ignore WordPress.Security.EscapeOutput
