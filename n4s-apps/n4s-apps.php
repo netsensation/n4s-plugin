@@ -2,7 +2,7 @@
 /**
  * Plugin Name: n4s Apps
  * Description: n4s: Rahmen für eigene PHP-Apps und Sicherheit (Anmeldeschutz, Härtung), Funktionen einzeln schaltbar / Framework for custom PHP apps and security (login protection, hardening), features switchable. Shortcode [n4s_app name="..."].
- * Version: 2.36.10
+ * Version: 2.37.0
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: n4s
@@ -13,7 +13,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'N4S_APPS_VERSION', '2.36.10' );
+define( 'N4S_APPS_VERSION', '2.37.0' );
 define( 'N4S_APPS_FILE', __FILE__ );
 define( 'N4S_APPS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'N4S_APPS_URL', plugin_dir_url( __FILE__ ) );
@@ -48,7 +48,7 @@ function n4s_features() {
 			$theme_old = 1;
 		}
 	}
-	return wp_parse_args( $v, array( 'apps' => 1, 'security' => 0, 'dup' => 0, 'mediareplace' => 0, 'login' => 0, 'theme' => $theme_old, 'mcp' => 0, 'barmenu' => 1 ) );
+	return wp_parse_args( $v, array( 'apps' => 1, 'security' => 0, 'dup' => 0, 'mediareplace' => 0, 'login' => 0, 'theme' => $theme_old, 'mcp' => 0, 'barmenu' => 1, 'pageaccess' => 0 ) );
 }
 
 function n4s_feature_on( $key ) {
@@ -385,6 +385,10 @@ require_once N4S_APPS_DIR . 'includes/snippets.php';
 require_once N4S_APPS_DIR . 'includes/themecolors.php';
 if ( n4s_feature_on( 'theme' ) ) {
 	require_once N4S_APPS_DIR . 'includes/theme.php';
+}
+/** Seitenzugriff je Rolle: nur, wenn eingeschaltet. */
+if ( n4s_feature_on( 'pageaccess' ) ) {
+	require_once N4S_APPS_DIR . 'includes/access.php';
 }
 /** KI-Anbindung (Werkzeuge für Royal MCP): nur, wenn eingeschaltet. */
 if ( n4s_feature_on( 'mcp' ) ) {

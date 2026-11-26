@@ -446,6 +446,7 @@ add_action(
 				'theme'        => empty( $_POST['theme'] ) ? 0 : 1,
 				'mcp'          => empty( $_POST['mcp'] ) ? 0 : 1,
 				'barmenu'      => empty( $_POST['barmenu'] ) ? 0 : 1,
+				'pageaccess'   => empty( $_POST['pageaccess'] ) ? 0 : 1,
 			)
 		);
 		$names = array(
@@ -457,6 +458,7 @@ add_action(
 			'theme'        => n4s_t( 'Theme-Engine', 'Theme engine' ),
 			'mcp'          => n4s_t( 'KI-Anbindung', 'AI connection' ),
 			'barmenu'      => n4s_t( 'n4s Admin-Dropdown', 'n4s admin dropdown' ),
+			'pageaccess'   => n4s_t( 'Seitenzugriff je Rolle', 'Page access by role' ),
 		);
 		$new_f = n4s_features();
 		foreach ( $names as $k => $label ) {
@@ -832,6 +834,10 @@ function n4s_apps_tab_features() {
 		'mediareplace' => array(
 			n4s_t( 'Mediendatei ersetzen', 'Replace media file' ),
 			n4s_t( 'Aktion „Datei ersetzen“ in der Mediathek: Datei tauschen und dabei Name und Adresse behalten, oder mit neuem Dateinamen ersetzen (Verweise in Seiteninhalten werden angepasst).', 'Action "Replace file" in the media library: swap the file and keep name and address, or replace it with a new filename (references in page content are updated).' ),
+		),
+		'pageaccess'   => array(
+			n4s_t( 'Seitenzugriff je Rolle', 'Page access by role' ),
+			n4s_t( 'Feld „n4s – Zugriff“ im Seiteneditor und Spalte in der Seitenliste: eine Seite auf bestimmte Rollen beschränken. Andere Benutzer und Besucher können sie nicht aufrufen (Besucher gehen zur Anmeldung, Angemeldete sehen 404), sie fehlt in Menüs, Listen und Suche und lässt sich nicht bearbeiten. Administratoren haben immer Zugriff. Ausgeschaltet: alle Beschränkungen sind aufgehoben (die Angaben bleiben gespeichert).', 'Field "n4s – Access" in the page editor and a column in the page list: restrict a page to certain roles. Other users and visitors cannot open it (visitors are sent to the login, logged-in users see 404), it is missing from menus, lists and search and cannot be edited. Administrators always have access. Switched off: all restrictions are lifted (the settings stay saved).' ),
 		),
 		'barmenu'      => array(
 			n4s_t( 'n4s Admin-Dropdown', 'n4s admin dropdown' ),
