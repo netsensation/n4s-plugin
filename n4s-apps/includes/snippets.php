@@ -326,6 +326,12 @@ function n4s_snippets_sc_menu( $atts ) {
 add_action(
 	'init',
 	function () {
+		if ( ! n4s_feature_on( 'snippets' ) ) { // Funktion aus: Shortcodes bleiben leer.
+			foreach ( array( 'n4s_login', 'n4s_logout', 'n4s_link', 'n4s_button', 'n4s_menue' ) as $sc ) {
+				add_shortcode( $sc, '__return_empty_string' );
+			}
+			return;
+		}
 		add_shortcode( 'n4s_login', 'n4s_snippets_sc_login' );
 		add_shortcode( 'n4s_logout', 'n4s_snippets_sc_logout' );
 		add_shortcode( 'n4s_link', 'n4s_snippets_sc_link' );

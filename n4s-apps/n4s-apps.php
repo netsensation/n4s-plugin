@@ -2,7 +2,7 @@
 /**
  * Plugin Name: n4s Apps
  * Description: n4s: Rahmen für eigene PHP-Apps und Sicherheit (Anmeldeschutz, Härtung), Funktionen einzeln schaltbar / Framework for custom PHP apps and security (login protection, hardening), features switchable. Shortcode [n4s_app name="..."].
- * Version: 2.37.1
+ * Version: 2.38.0
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: n4s
@@ -13,7 +13,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'N4S_APPS_VERSION', '2.37.1' );
+define( 'N4S_APPS_VERSION', '2.38.0' );
 define( 'N4S_APPS_FILE', __FILE__ );
 define( 'N4S_APPS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'N4S_APPS_URL', plugin_dir_url( __FILE__ ) );
@@ -48,7 +48,7 @@ function n4s_features() {
 			$theme_old = 1;
 		}
 	}
-	return wp_parse_args( $v, array( 'apps' => 1, 'security' => 0, 'dup' => 0, 'mediareplace' => 0, 'login' => 0, 'theme' => $theme_old, 'mcp' => 0, 'barmenu' => 1, 'pageaccess' => 0 ) );
+	return wp_parse_args( $v, array( 'apps' => 1, 'security' => 0, 'dup' => 0, 'mediareplace' => 0, 'login' => 0, 'theme' => $theme_old, 'mcp' => 0, 'barmenu' => 1, 'pageaccess' => 0, 'snippets' => 1 ) );
 }
 
 function n4s_feature_on( $key ) {
@@ -145,10 +145,10 @@ function n4s_apps_bar_tabs() {
 	if ( n4s_feature_on( 'security' ) ) {
 		$t['security'] = array( 'n4s-security', n4s_t( 'Sicherheit', 'Security' ), 'edit_pages' );
 	}
-	$t['snippets'] = array( 'n4s-snippets', 'Snippets', 'edit_pages' );
-	if ( n4s_feature_on( 'theme' ) ) {
-		$t['theme'] = array( 'n4s-theme', 'Theme', 'manage_options' );
+	if ( n4s_feature_on( 'snippets' ) ) {
+		$t['snippets'] = array( 'n4s-snippets', 'Snippets', 'edit_pages' );
 	}
+	$t['theme'] = array( 'n4s-theme', 'Customize', 'manage_options' );
 	return $t;
 }
 
