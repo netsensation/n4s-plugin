@@ -472,6 +472,7 @@ add_action(
 			'barmenu'      => n4s_t( 'n4s Admin-Dropdown', 'n4s admin dropdown' ),
 			'pageaccess'   => n4s_t( 'Seitenzugriff je Rolle', 'Page access by role' ),
 			'snippets'     => 'Snippets',
+			'maintenance'  => n4s_t( 'Wartungsmodus', 'Maintenance mode' ),
 		);
 		$new_f = n4s_features();
 		foreach ( $names as $k => $label ) {
@@ -790,6 +791,7 @@ function n4s_apps_shell( $tab ) {
 			'apps'     => n4s_t( 'Mitgelieferte und eigene Apps', 'Bundled and custom apps' ),
 			'security' => n4s_t( 'Anmeldeschutz und Härtung', 'Login protection and hardening' ),
 			'snippets' => n4s_t( 'Shortcodes für Anmeldung, Links und Buttons', 'Shortcodes for login, links and buttons' ),
+			'maintenance' => n4s_t( 'Wartungsmodus mit Wartungsseiten, Zeitplan und Freigabelinks', 'Maintenance mode with maintenance pages, schedule and access links' ),
 			'theme'    => n4s_t( 'Weitere Funktionen, Menüs, Farbschemata und Seitengestaltung', 'More features, menus, color schemes and page design' ),
 			'ki'       => n4s_t( 'Anbindung an Royal MCP für KI-Assistenten', 'Connection to Royal MCP for AI assistants' ),
 			'admin'    => n4s_t( 'Katalog-Verwaltung', 'Catalog administration' ),
@@ -831,6 +833,10 @@ function n4s_apps_shell( $tab ) {
 /** Alle Funktionen: Schlüssel => [ Titel, Beschreibung ]. */
 function n4s_apps_feature_rows() {
 	return array(
+		'maintenance' => array(
+			n4s_t( 'Wartungsmodus', 'Maintenance mode' ),
+			n4s_t( 'Neuer Tab „Wartung“: Schalter in der Admin-Leiste, eigene Wartungsseiten (Wartung, Update läuft, Bald verfügbar) im Seitenbaukasten, Zeitplan ab/bis mit Höchstdauer, Vorankündigung und Countdown, Ausnahmen (Rollen, IP, URL, App-Schnittstellen), Freigabelinks für Kunden sowie Mail und Eintrag in den Aktivitäten bei Start, Ende und Auto-Ende. Ausgeschaltet: keine Wirkung; Einstellungen bleiben gespeichert.', 'New tab "Maintenance": switch in the admin bar, own maintenance pages (maintenance, update in progress, coming soon) in the page builder, schedule from/until with maximum duration, advance notice and countdown, exceptions (roles, IP, URL, app interfaces), access links for customers, plus e-mail and activity entry on start, end and automatic end. Switched off: no effect; settings stay saved.' ),
+		),
 		'snippets' => array(
 			'Snippets',
 			n4s_t( 'Tab „Snippets“ mit Shortcodes für Anmeldung, Link, Button und Menü, einzeln aktivierbar. Ausgeschaltet: Tab und Menüeintrag verschwinden und die Shortcodes bleiben leer.', 'Tab "Snippets" with shortcodes for login, link, button and menu, each can be activated individually. Switched off: the tab and menu entry disappear and the shortcodes stay empty.' ),
@@ -900,7 +906,7 @@ function n4s_apps_features_form( $keys, $back ) {
 /** Tab Funktionen: Apps, Sicherheit, Snippets, WP-Customize und KI-Anbindung ein-/ausschalten, Plugin-Update. */
 function n4s_apps_tab_features() {
 	echo '<h2>' . esc_html( n4s_t( 'Funktionen', 'Features' ) ) . '</h2>';
-	n4s_apps_features_form( array( 'apps', 'security', 'snippets', 'theme', 'mcp' ), 'n4s-features' );
+	n4s_apps_features_form( array( 'apps', 'security', 'snippets', 'maintenance', 'theme', 'mcp' ), 'n4s-features' );
 }
 
 /** Tab Customize: oben „Funktionen“ (ohne eigene Einstellungen), darunter WP-Customize mit Einstellungen. */
