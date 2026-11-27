@@ -2,7 +2,7 @@
 /**
  * Plugin Name: n4s Apps
  * Description: n4s: Rahmen für eigene PHP-Apps und Sicherheit (Anmeldeschutz, Härtung), Funktionen einzeln schaltbar / Framework for custom PHP apps and security (login protection, hardening), features switchable. Shortcode [n4s_app name="..."].
- * Version: 2.39.2
+ * Version: 2.40.0
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: n4s
@@ -13,7 +13,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'N4S_APPS_VERSION', '2.39.2' );
+define( 'N4S_APPS_VERSION', '2.40.0' );
 define( 'N4S_APPS_FILE', __FILE__ );
 define( 'N4S_APPS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'N4S_APPS_URL', plugin_dir_url( __FILE__ ) );
@@ -48,7 +48,7 @@ function n4s_features() {
 			$theme_old = 1;
 		}
 	}
-	return wp_parse_args( $v, array( 'apps' => 1, 'security' => 0, 'dup' => 0, 'mediareplace' => 0, 'login' => 0, 'theme' => $theme_old, 'mcp' => 0, 'barmenu' => 1, 'pageaccess' => 0, 'snippets' => 1 ) );
+	return wp_parse_args( $v, array( 'apps' => 1, 'security' => 0, 'dup' => 0, 'mediareplace' => 0, 'login' => 0, 'theme' => $theme_old, 'mcp' => 0, 'barmenu' => 1, 'pageaccess' => 0, 'snippets' => 1, 'maintenance' => 0 ) );
 }
 
 function n4s_feature_on( $key ) {
@@ -148,6 +148,9 @@ function n4s_apps_bar_tabs() {
 	if ( n4s_feature_on( 'snippets' ) ) {
 		$t['snippets'] = array( 'n4s-snippets', 'Snippets', 'edit_pages' );
 	}
+	if ( n4s_feature_on( 'maintenance' ) ) {
+		$t['maintenance'] = array( 'n4s-maintenance', n4s_t( 'Wartung', 'Maintenance' ), 'manage_options' );
+	}
 	$t['theme'] = array( 'n4s-theme', 'Customize', 'manage_options' );
 	return $t;
 }
@@ -218,7 +221,7 @@ add_action(
 	}
 );
 
-/** Die frühere Funktion „Neuer Tab je Menüpunkt“ (bis 2.39.2) entfällt, WordPress bietet das selbst: Angaben einmalig in das Link-Ziel des Menüpunkts übernehmen. */
+/** Die frühere Funktion „Neuer Tab je Menüpunkt“ (bis 2.40.0) entfällt, WordPress bietet das selbst: Angaben einmalig in das Link-Ziel des Menüpunkts übernehmen. */
 add_action(
 	'init',
 	function () {
@@ -406,6 +409,10 @@ if ( n4s_feature_on( 'theme' ) ) {
 /** Seitenzugriff je Rolle: nur, wenn eingeschaltet. */
 if ( n4s_feature_on( 'pageaccess' ) ) {
 	require_once N4S_APPS_DIR . 'includes/access.php';
+}
+/** Wartungsmodus: nur, wenn eingeschaltet. */
+if ( n4s_feature_on( 'maintenance' ) ) {
+	require_once N4S_APPS_DIR . 'includes/maintenance.php';
 }
 /** KI-Anbindung (Werkzeuge für Royal MCP): nur, wenn eingeschaltet. */
 if ( n4s_feature_on( 'mcp' ) ) {

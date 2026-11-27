@@ -1,6 +1,6 @@
 # n4s Apps: Wartungsmodus (Konzept)
 
-Stand: 27.11.2026. Nur Konzept, nichts gebaut. Anlehnung: WP Maintenance (wpmaintenancemode.com). Gelesen wurden dessen Startseite und die Doku zu Zugriff und erweiterten Einstellungen; Zeitplan, HTTP-Status und Countdown standen dort nicht, das Konzept dazu ist eigene Planung.
+Stand: 27.11.2026. Gebaut in n4s Apps 2.40.0 (siehe Abschnitt 10); Abschnitte 1 bis 9 sind das ursprüngliche Konzept. Anlehnung: WP Maintenance (wpmaintenancemode.com). Gelesen wurden dessen Startseite und die Doku zu Zugriff und erweiterten Einstellungen; Zeitplan, HTTP-Status und Countdown standen dort nicht, das Konzept dazu ist eigene Planung.
 
 ## 1. Ziel
 
@@ -91,3 +91,11 @@ Bewusst nicht vorgesehen: Marketing- und CRM-Anbindungen, Bildersuche, White-Lab
 3. Zeitplan schon in der ersten Version (dann ist Stufe A etwas größer)?
 4. Eine Wartungsseite genügt zunächst, oder gleich mehrere zur Auswahl?
 5. Voreinstellung für Kopfzeile und Fußzeile auf der Wartungsseite: ausblenden oder anzeigen?
+
+## 10. Umsetzung in 2.40.0
+
+Entscheidungen vom 27.11.2026: Schalter nur für Administratoren; öffentliche App-Schnittstellen bleiben erreichbar (einstellbar); Zeitplan mit ab/bis, Vorankündigung und Countdown von Anfang an; drei Wartungsseiten (Wartung, Update läuft, Bald verfügbar); Kopf- und Fußbereiche der Wartungsseite einstellbar (auch die Leisten von WP-Customize); als eigene Funktion „Wartungsmodus“ (Tab Funktionen, eigener Tab „Wartung“), nicht unter Customize.
+
+Gebaut (Datei `includes/maintenance.php`, Option `n4s_maint`): Schalter in der Admin-Leiste (an, aus, geplant, Verlängern, Vorschau), drei Wartungsseiten als Entwurfsseiten mit Titelzusatz „– Wartungsseite“, Ausspielen mit Status 503 und `Retry-After` (Bald verfügbar: 200), `noindex`, kein Cache, Ausnahmen (Rollen, IP und Bereiche, URL, Freigabelink, App-Schnittstellen, Notausgang), Zeitplan (ab, bis, Höchstdauer), Vorankündigung als Banner, Countdown (Shortcode und automatisch), Freigabelinks für Kunden (Cookie, widerrufbar, nur als Hash gespeichert), Mail und Eintrag in den Aktivitäten bei Start, Ende und Auto-Ende, KI-Werkzeuge `n4s_get_maintenance` und `n4s_set_maintenance` (Gruppe „Wartungsmodus“).
+
+Nicht gebaut: wiederkehrende Wartungsfenster, eigene Seite für WordPress-Updates (Drop-in), Abonnenten-Sammlung, Mehrsprachigkeit je Sprache, automatisches Fenster bei Updates oder Backups.

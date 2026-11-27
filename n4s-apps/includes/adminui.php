@@ -69,7 +69,7 @@ function n4s_apps_ui_status( $on, $title, $desc, $page ) {
 function n4s_apps_tab_overview() {
 	n4s_apps_refresh_updates();
 	$f      = n4s_features();
-	$keys   = array( 'apps', 'security', 'snippets', 'theme', 'mcp' ); // wie im Tab Funktionen (die weiteren Funktionen stehen im Tab Customize)
+	$keys   = array( 'apps', 'security', 'snippets', 'maintenance', 'theme', 'mcp' ); // wie im Tab Funktionen (die weiteren Funktionen stehen im Tab Customize)
 	$active = 0;
 	foreach ( $keys as $k ) {
 		$active += empty( $f[ $k ] ) ? 0 : 1;

@@ -30,6 +30,7 @@ function n4s_mcp_groups() {
 		'snippets' => n4s_t( 'Snippets ein-/ausschalten', 'Switch snippets on/off' ),
 		'security' => n4s_t( 'Sicherheit (Schutzeinstellungen, ohne Mail und Sperrliste)', 'Security (protection settings, without e-mail and blocklist)' ),
 		'features' => n4s_t( 'Funktionen ein-/ausschalten', 'Switch features on/off' ),
+		'maintenance' => n4s_t( 'Wartungsmodus ein-/ausschalten und planen', 'Switch maintenance mode on/off and schedule' ),
 		'apps'     => n4s_t( 'Apps aktivieren/deaktivieren', 'Activate/deactivate apps' ),
 	);
 }
@@ -55,10 +56,12 @@ function n4s_mcp_defs() {
 		'n4s_get_security_settings' => array( 'Schutzeinstellungen (Anmeldeschutz, Härtung). Mailadresse und Sperrliste werden nicht ausgegeben (Sperrliste nur als Anzahl).', array( 'type' => 'object', 'properties' => $none ), '', 'n4s_mcp_t_get_security' ),
 		'n4s_list_snippets'         => array( 'Snippets (Shortcodes) mit Titel, Shortcode und Status an/aus.', array( 'type' => 'object', 'properties' => $none ), '', 'n4s_mcp_t_list_snippets' ),
 		'n4s_suggest_colors'        => array( 'Farbvorschläge für ein Farbschema (Hell, Dunkel, Komplementär, nur Berechnung, es wird nichts gespeichert). Ohne Angabe aus dem aktiven Theme gelesen, mit accent aus einer Hauptfarbe.', array( 'type' => 'object', 'properties' => array( 'accent' => array( 'type' => 'string', 'description' => 'Hauptfarbe als #rrggbb (optional).' ) ) ), '', 'n4s_mcp_t_suggest' ),
-		'n4s_set_features'          => array( 'Funktionen von n4s Apps ein-/ausschalten (apps, security, dup, mediareplace, login, theme, barmenu, pageaccess, snippets). Nur die genannten ändern sich.', array( 'type' => 'object', 'properties' => array( 'apps' => $bool, 'security' => $bool, 'dup' => $bool, 'mediareplace' => $bool, 'login' => $bool, 'theme' => $bool, 'barmenu' => $bool, 'pageaccess' => $bool, 'snippets' => $bool ) ), 'features', 'n4s_mcp_t_set_features' ),
+		'n4s_set_features'          => array( 'Funktionen von n4s Apps ein-/ausschalten (apps, security, dup, mediareplace, login, theme, barmenu, pageaccess, snippets, maintenance). Nur die genannten ändern sich.', array( 'type' => 'object', 'properties' => array( 'apps' => $bool, 'security' => $bool, 'dup' => $bool, 'mediareplace' => $bool, 'login' => $bool, 'theme' => $bool, 'barmenu' => $bool, 'pageaccess' => $bool, 'snippets' => $bool, 'maintenance' => $bool ) ), 'features', 'n4s_mcp_t_set_features' ),
 		'n4s_set_theme_modules'     => array( 'Module der Theme-Engine ein-/ausschalten (menus, items, loginout, adminbar, widget, above, abovefooter, page, schemes). Nur die genannten ändern sich.', array( 'type' => 'object', 'properties' => array( 'menus' => $bool, 'items' => $bool, 'loginout' => $bool, 'adminbar' => $bool, 'widget' => $bool, 'above' => $bool, 'abovefooter' => $bool, 'page' => $bool, 'schemes' => $bool ) ), 'theme', 'n4s_mcp_t_set_modules' ),
 		'n4s_set_color_scheme'      => array( 'Farbschema 1 bis 3 ändern: Name und Farben (bg, text, accent, hover, light, dark, darktext, btntext, heading und weitere aus n4s_get_theme_settings, jeweils #rrggbb, leer = Theme-Wert). Optional als Standard setzen (default 1-3, 0 = keins).', array( 'type' => 'object', 'properties' => array( 'scheme' => array( 'type' => 'integer', 'minimum' => 1, 'maximum' => 3 ), 'name' => array( 'type' => 'string' ), 'colors' => array( 'type' => 'object' ), 'default' => array( 'type' => 'integer', 'minimum' => 0, 'maximum' => 3 ) ), 'required' => array( 'scheme' ) ), 'theme', 'n4s_mcp_t_set_scheme' ),
 		'n4s_set_menu_assignment'   => array( 'Menü einer Theme-Stelle je Anmeldestatus und Rolle zuordnen. location = Stelle, gast / user = Menü-ID (-1 = kein Menü, 0 = Theme-Standard), roles = Objekt Rolle => Menü-ID.', array( 'type' => 'object', 'properties' => array( 'location' => array( 'type' => 'string' ), 'gast' => array( 'type' => 'integer' ), 'user' => array( 'type' => 'integer' ), 'roles' => array( 'type' => 'object' ) ), 'required' => array( 'location' ) ), 'theme', 'n4s_mcp_t_set_menu' ),
+		'n4s_get_maintenance'       => array( 'Wartungsmodus: Zustand (aus, geplant, an), Anlass, Zeitplan (ab, bis, Höchstdauer, Vorankündigung), Ausnahmen (Rollen, Anzahl IPs und URLs), Zahl der Freigabelinks. Nur lesen.', array( 'type' => 'object', 'properties' => $none ), '', 'n4s_mcp_t_get_maintenance' ),
+		'n4s_set_maintenance'       => array( 'Wartungsmodus schalten und planen. aktiv = jetzt ein/aus; modus = wartung, update oder bald (bald antwortet mit Status 200); von und bis = Zeit der Website als "JJJJ-MM-TT HH:MM" (leer = löschen); hoechstdauer in Stunden (0 = unbegrenzt); vorankuendigung in Minuten (0 = aus). Nur die genannten Werte ändern sich. Die Wartungsseiten pflegt man im Seitenbaukasten.', array( 'type' => 'object', 'properties' => array( 'aktiv' => $bool, 'modus' => array( 'type' => 'string', 'enum' => array( 'wartung', 'update', 'bald' ) ), 'von' => array( 'type' => 'string' ), 'bis' => array( 'type' => 'string' ), 'hoechstdauer' => array( 'type' => 'integer', 'minimum' => 0, 'maximum' => 720 ), 'vorankuendigung' => array( 'type' => 'integer', 'minimum' => 0, 'maximum' => 1440 ) ) ), 'maintenance', 'n4s_mcp_t_set_maintenance' ),
 		'n4s_set_snippets'          => array( 'Snippets ein-/ausschalten (Namen aus n4s_list_snippets). Nur die genannten ändern sich.', array( 'type' => 'object', 'properties' => array( 'login' => $bool, 'link' => $bool, 'button' => $bool, 'menu' => $bool ) ), 'snippets', 'n4s_mcp_t_set_snippets' ),
 		'n4s_set_security'          => array( 'Schutzeinstellungen ändern (Zahlen und Schalter aus n4s_get_security_settings; Mailadresse, Sperrliste und IP-Quelle sind ausgenommen). Nur die genannten ändern sich.', array( 'type' => 'object', 'properties' => new stdClass() ), 'security', 'n4s_mcp_t_set_security' ),
 		'n4s_toggle_app'            => array( 'App aktivieren oder deaktivieren (app aus n4s_list_apps). Löschen, Hochladen und Ändern von Code sind nicht möglich.', array( 'type' => 'object', 'properties' => array( 'app' => array( 'type' => 'string' ), 'active' => $bool ), 'required' => array( 'app', 'active' ) ), 'apps', 'n4s_mcp_t_toggle_app' ),
@@ -224,7 +227,7 @@ function n4s_mcp_done( $before, $after ) {
 function n4s_mcp_t_set_features( $a ) {
 	$cur    = n4s_features();
 	$before = $cur;
-	foreach ( array( 'apps', 'security', 'dup', 'mediareplace', 'login', 'theme', 'barmenu', 'pageaccess', 'snippets' ) as $k ) {
+	foreach ( array( 'apps', 'security', 'dup', 'mediareplace', 'login', 'theme', 'barmenu', 'pageaccess', 'snippets', 'maintenance' ) as $k ) {
 		if ( isset( $a[ $k ] ) ) {
 			$cur[ $k ] = filter_var( $a[ $k ], FILTER_VALIDATE_BOOLEAN ) ? 1 : 0;
 		}
@@ -333,6 +336,70 @@ function n4s_mcp_t_set_menu( $a ) {
 	update_option( 'n4s_theme', $cur, false );
 	n4s_theme_opt( true );
 	return n4s_mcp_done( $before, isset( $cur['menus'][ $loc ] ) ? $cur['menus'][ $loc ] : array() );
+}
+
+/** Wartungsmodus als Zahlen und Text (für Lesen und für das Ergebnis des Schreibens). */
+function n4s_mcp_maint_view() {
+	$o = n4s_maint_opt( true );
+	$c = n4s_maint_compute( $o, time() );
+	return array(
+		'zustand'         => $c['off'] ? 'notausgang' : ( $c['active'] ? 'an' : ( $c['scheduled'] ? 'geplant' : 'aus' ) ),
+		'modus'           => $o['mode'],
+		'von'             => $o['from'] ? wp_date( 'Y-m-d H:i', $o['from'] ) : '',
+		'bis'             => $o['until'] ? wp_date( 'Y-m-d H:i', $o['until'] ) : '',
+		'ende_voraus'     => $c['ends'] ? wp_date( 'Y-m-d H:i', $c['ends'] ) : '',
+		'hoechstdauer'    => $o['maxh'],
+		'vorankuendigung' => $o['notice'],
+		'rollen'          => array_merge( array( 'administrator' ), $o['roles'] ),
+		'ips'             => count( array_filter( preg_split( '/\r\n|\r|\n/', (string) $o['ips'] ) ) ),
+		'urls'            => count( array_filter( preg_split( '/\r\n|\r|\n/', (string) $o['urls'] ) ) ),
+		'app_schnittstellen' => (bool) $o['rest_apps'],
+		'freigabelinks'   => count( array_filter( $o['links'], function ( $l ) { return (int) $l['exp'] > time(); } ) ),
+	);
+}
+
+function n4s_mcp_t_get_maintenance( $a ) {
+	if ( ! function_exists( 'n4s_maint_opt' ) ) {
+		return new WP_Error( 'n4s_off', 'Maintenance mode is switched off (feature "maintenance").' );
+	}
+	return n4s_mcp_maint_view();
+}
+
+function n4s_mcp_t_set_maintenance( $a ) {
+	if ( ! function_exists( 'n4s_maint_opt' ) ) {
+		return new WP_Error( 'n4s_off', 'Maintenance mode is switched off (feature "maintenance").' );
+	}
+	$before = n4s_mcp_maint_view();
+	$o      = n4s_maint_opt( true );
+	if ( isset( $a['modus'] ) ) {
+		$m = sanitize_key( (string) $a['modus'] );
+		if ( ! isset( n4s_maint_modes()[ $m ] ) ) {
+			return new WP_Error( 'n4s_bad', 'modus must be wartung, update or bald.' );
+		}
+		$o['mode'] = $m;
+	}
+	foreach ( array( 'von' => 'from', 'bis' => 'until' ) as $in => $key ) {
+		if ( array_key_exists( $in, $a ) ) {
+			$o[ $key ] = n4s_maint_parse_local( (string) $a[ $in ] );
+		}
+	}
+	if ( $o['from'] && $o['until'] && $o['until'] <= $o['from'] ) {
+		return new WP_Error( 'n4s_bad', 'bis must be after von.' );
+	}
+	if ( isset( $a['hoechstdauer'] ) ) {
+		$o['maxh'] = max( 0, min( 720, (int) $a['hoechstdauer'] ) );
+	}
+	if ( isset( $a['vorankuendigung'] ) ) {
+		$o['notice'] = max( 0, min( 1440, (int) $a['vorankuendigung'] ) );
+	}
+	n4s_maint_save( $o );
+	n4s_maint_reschedule( $o );
+	if ( isset( $a['aktiv'] ) ) {
+		n4s_maint_set_active( filter_var( $a['aktiv'], FILTER_VALIDATE_BOOLEAN ), 'KI' );
+	} else {
+		n4s_maint_tick();
+	}
+	return n4s_mcp_done( $before, n4s_mcp_maint_view() );
 }
 
 function n4s_mcp_t_set_snippets( $a ) {

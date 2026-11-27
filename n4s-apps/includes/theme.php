@@ -663,7 +663,8 @@ function n4s_theme_scheme_now() {
 
 /** Wahl für die aktuelle Seite: 'header', 'footer' oder 'title' ausblenden? */
 function n4s_theme_hidden( $what ) {
-	return n4s_theme_on( 'page' ) && is_singular() && '1' === (string) get_post_meta( get_queried_object_id(), '_n4s_hide_' . $what, true );
+	$h = n4s_theme_on( 'page' ) && is_singular() && '1' === (string) get_post_meta( get_queried_object_id(), '_n4s_hide_' . $what, true );
+	return (bool) apply_filters( 'n4s_theme_hidden', $h, $what ); // zum Beispiel der Wartungsmodus
 }
 
 add_filter(
