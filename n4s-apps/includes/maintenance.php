@@ -664,6 +664,16 @@ add_filter(
 
 /* ------------------------------------------------------------------ Countdown und Vorankündigung */
 
+/** Texte des Countdowns je Anlass: [ vor Beginn, während der Wartung, Ziel erreicht ]. */
+function n4s_maint_cd_texts( $mode ) {
+	$t = array(
+		'wartung' => array( n4s_t( 'Wartung beginnt in', 'Maintenance starts in' ), n4s_t( 'Wir sind voraussichtlich zurück in', 'We expect to be back in' ), n4s_t( 'Gleich wieder da …', 'Back in a moment …' ) ),
+		'update'  => array( n4s_t( 'Das Update startet in', 'The update starts in' ), n4s_t( 'Das Update ist voraussichtlich fertig in', 'The update should be finished in' ), n4s_t( 'Gleich fertig …', 'Almost done …' ) ),
+		'bald'    => array( n4s_t( 'Die Seite ist vorübergehend nicht erreichbar in', 'The site becomes unavailable in' ), n4s_t( 'Wir starten in', 'We launch in' ), n4s_t( 'Es geht gleich los …', 'Starting any moment …' ) ),
+	);
+	return isset( $t[ $mode ] ) ? $t[ $mode ] : $t['wartung'];
+}
+
 /** Countdown: [n4s_wartung_countdown ziel="auto|bis|ab"]. Ohne Ziel bleibt die Ausgabe leer. */
 function n4s_maint_countdown_html( $ziel = 'auto' ) {
 	$o   = n4s_maint_opt();
@@ -671,19 +681,20 @@ function n4s_maint_countdown_html( $ziel = 'auto' ) {
 	$c   = n4s_maint_compute( $o, $now );
 	$ts  = 0;
 	$lab = '';
+	$txt = n4s_maint_cd_texts( ! empty( $GLOBALS['n4s_maint_serving']['mode'] ) ? $GLOBALS['n4s_maint_serving']['mode'] : $o['mode'] );
 	if ( 'ab' === $ziel || ( 'auto' === $ziel && $c['scheduled'] ) ) {
 		$ts  = $o['from'] > $now ? $o['from'] : 0;
-		$lab = n4s_t( 'Wartung beginnt in', 'Maintenance starts in' );
+		$lab = $txt[0];
 	}
 	if ( ! $ts && ( 'bis' === $ziel || 'auto' === $ziel ) && $c['active'] && $c['ends'] > $now ) {
 		$ts  = $c['ends'];
-		$lab = n4s_t( 'Wir sind zurück in', 'We will be back in' );
+		$lab = $txt[1];
 	}
 	if ( ! $ts ) {
 		return '';
 	}
 	static $js = false;
-	$out = '<div class="n4s-maint-cd" style="text-align:center;margin:24px 0" data-ts="' . (int) $ts . '" data-now="' . (int) $now . '" data-d="' . esc_attr( n4s_t( 'Tage', 'days' ) ) . '" data-done="' . esc_attr( n4s_t( 'Gleich geschafft …', 'Almost there …' ) ) . '"><div style="font-size:.95rem;opacity:.8">' . esc_html( $lab ) . '</div><div class="n4s-maint-cd-v" style="font-size:2.2rem;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.02em">–</div></div>';
+	$out = '<div class="n4s-maint-cd" style="text-align:center;margin:24px 0" data-ts="' . (int) $ts . '" data-now="' . (int) $now . '" data-d="' . esc_attr( n4s_t( 'Tage', 'days' ) ) . '" data-done="' . esc_attr( $txt[2] ) . '"><div style="font-size:.95rem;opacity:.8">' . esc_html( $lab ) . '</div><div class="n4s-maint-cd-v" style="font-size:2.2rem;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.02em">–</div></div>';
 	if ( ! $js ) {
 		$js   = true;
 		$out .= '<script>(function(){var off=0;function p(n){return(n<10?"0":"")+n}function t(){document.querySelectorAll(".n4s-maint-cd").forEach(function(e){var l=Number(e.dataset.ts)-(Date.now()/1000+off);var v=e.querySelector(".n4s-maint-cd-v");if(l<=0){v.textContent=e.dataset.done;return}var d=Math.floor(l/86400),h=Math.floor(l%86400/3600),m=Math.floor(l%3600/60),s=Math.floor(l%60);v.textContent=(d?d+" "+e.dataset.d+" ":"")+p(h)+":"+p(m)+":"+p(s)})}var f=document.querySelector(".n4s-maint-cd");if(f)off=Number(f.dataset.now)-Date.now()/1000;t();setInterval(t,1000)})();</script>';
