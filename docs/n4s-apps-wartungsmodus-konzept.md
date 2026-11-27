@@ -38,7 +38,7 @@ Ja, sinnvoll und für Wartungsfenster nahezu Pflicht.
 - **Ohne Cron:** Der Status wird bei jedem Aufruf aus den Zeiten berechnet, damit der Start genau stimmt. WP-Cron dient nur für Mails.
 - **Sicherheitsnetz:** Höchstdauer (zum Beispiel 24 h). Danach schaltet sich der Modus aus und es geht eine Mail an den Administrator. Verhindert vergessene Wartung.
 - **Vorankündigung:** Optionales Banner „Wartung ab 22:00 Uhr“ für Besucher und ein Hinweis in der Admin-Leiste.
-- **Countdown:** Shortcode und Block für die Wartungsseite (zählt bis „bis“).
+- **Countdown:** Shortcode und Block für die Wartungsseite (zählt bis „bis“). Darstellung seit 2.40.3: „21 Tagen und 3 Stunden“, ab einem Tag „1 Tag und 2:48 Stunden“, danach „5:12 Stunden“, Sekunden erst am Tag des Ziels; wählbar auch als Datum und Uhrzeit.
 
 ## 5. HTTP, Suchmaschinen, Cache
 

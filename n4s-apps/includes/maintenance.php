@@ -53,6 +53,7 @@ function n4s_maint_defaults() {
 		'rest_apps' => 1,            // öffentliche App-Schnittstellen (n4s-apps/v1) bleiben erreichbar
 		'hide'      => array( 'header', 'mainmenu', 'hmenu', 'fmenu', 'footer' ),
 		'countdown' => 1,            // Countdown unter dem Inhalt der Wartungsseite
+		'cd_format' => 'auto',       // Darstellung: auto, datum, beides
 		'mail'      => 1,
 		'mails'     => '',
 		'links'     => array(),      // Freigabelinks: id, label, hash, exp, created, by
@@ -72,6 +73,7 @@ function n4s_maint_opt( $reset = false ) {
 			$o[ $k ] = (int) $o[ $k ];
 		}
 		$o['mode']  = isset( n4s_maint_modes()[ $o['mode'] ] ) ? $o['mode'] : 'wartung';
+		$o['cd_format'] = isset( n4s_maint_cd_formats()[ $o['cd_format'] ] ) ? $o['cd_format'] : 'auto';
 		$o['pages'] = array_merge( $d['pages'], is_array( $o['pages'] ) ? array_map( 'intval', $o['pages'] ) : array() );
 		foreach ( array( 'roles', 'hide', 'links' ) as $k ) {
 			$o[ $k ] = is_array( $o[ $k ] ) ? array_values( $o[ $k ] ) : $d[ $k ];
@@ -664,27 +666,60 @@ add_filter(
 
 /* ------------------------------------------------------------------ Countdown und Vorankündigung */
 
-/** Texte des Countdowns je Anlass: [ vor Beginn, während der Wartung, Ziel erreicht ]. */
+/**
+ * Texte des Countdowns je Anlass: [ vor Beginn, während der Wartung ] jeweils [ „in“ (laufender Zähler), „am“ (Datum) ],
+ * dazu der Text bei erreichtem Ziel.
+ */
 function n4s_maint_cd_texts( $mode ) {
 	$t = array(
-		'wartung' => array( n4s_t( 'Wartung beginnt in', 'Maintenance starts in' ), n4s_t( 'Wir sind voraussichtlich zurück in', 'We expect to be back in' ), n4s_t( 'Gleich wieder da …', 'Back in a moment …' ) ),
-		'update'  => array( n4s_t( 'Das Update startet in', 'The update starts in' ), n4s_t( 'Das Update ist voraussichtlich fertig in', 'The update should be finished in' ), n4s_t( 'Gleich fertig …', 'Almost done …' ) ),
-		'bald'    => array( n4s_t( 'Die Seite ist vorübergehend nicht erreichbar in', 'The site becomes unavailable in' ), n4s_t( 'Wir starten in', 'We launch in' ), n4s_t( 'Es geht gleich los …', 'Starting any moment …' ) ),
+		'wartung' => array(
+			array( n4s_t( 'Wartung beginnt in', 'Maintenance starts in' ), n4s_t( 'Wartung beginnt am', 'Maintenance starts on' ) ),
+			array( n4s_t( 'Wir sind voraussichtlich zurück in', 'We expect to be back in' ), n4s_t( 'Wir sind voraussichtlich zurück am', 'We expect to be back on' ) ),
+			n4s_t( 'Gleich wieder da …', 'Back in a moment …' ),
+		),
+		'update'  => array(
+			array( n4s_t( 'Das Update startet in', 'The update starts in' ), n4s_t( 'Das Update startet am', 'The update starts on' ) ),
+			array( n4s_t( 'Das Update ist voraussichtlich fertig in', 'The update should be finished in' ), n4s_t( 'Das Update ist voraussichtlich fertig am', 'The update should be finished on' ) ),
+			n4s_t( 'Gleich fertig …', 'Almost done …' ),
+		),
+		'bald'    => array(
+			array( n4s_t( 'Die Seite ist vorübergehend nicht erreichbar in', 'The site becomes unavailable in' ), n4s_t( 'Die Seite ist vorübergehend nicht erreichbar ab', 'The site becomes unavailable from' ) ),
+			array( n4s_t( 'Wir starten in', 'We launch in' ), n4s_t( 'Wir starten am', 'We launch on' ) ),
+			n4s_t( 'Es geht gleich los …', 'Starting any moment …' ),
+		),
 	);
 	return isset( $t[ $mode ] ) ? $t[ $mode ] : $t['wartung'];
 }
 
-/** Countdown: [n4s_wartung_countdown ziel="auto|bis|ab"]. Ohne Ziel bleibt die Ausgabe leer. */
-function n4s_maint_countdown_html( $ziel = 'auto' ) {
+/** Darstellungen des Countdowns: auto = laufender Zähler, datum = Datum und Uhrzeit, beides = beides. */
+function n4s_maint_cd_formats() {
+	return array(
+		'auto'   => n4s_t( 'Laufender Zähler (zum Beispiel in 21 Tagen und 3 Stunden)', 'Running counter (for example in 21 days and 3 hours)' ),
+		'datum'  => n4s_t( 'Datum und Uhrzeit (zum Beispiel am 18.12.2026 um 17:00 Uhr)', 'Date and time (for example on 18.12.2026 at 5:00 pm)' ),
+		'beides' => n4s_t( 'Zähler und Datum', 'Counter and date' ),
+	);
+}
+
+/** Datum und Uhrzeit des Ziels, zum Beispiel „18.12.2026 um 17:00 Uhr“. */
+function n4s_maint_cd_date( $ts ) {
+	return wp_date( n4s_t( 'd.m.Y', 'F j, Y' ), (int) $ts ) . ' ' . n4s_t( 'um', 'at' ) . ' ' . wp_date( n4s_t( 'H:i', 'g:i a' ), (int) $ts ) . n4s_t( ' Uhr', '' );
+}
+
+/**
+ * Countdown: [n4s_wartung_countdown ziel="auto|bis|ab" anzeige="auto|datum|beides"]. Ohne Ziel bleibt die Ausgabe leer.
+ * Der Zähler zeigt „21 Tagen und 3 Stunden“, ab einem Tag „1 Tag und 2:48 Stunden“, danach „5:12 Stunden“ und Sekunden erst am Tag des Ziels.
+ */
+function n4s_maint_countdown_html( $ziel = 'auto', $anzeige = '' ) {
 	$o   = n4s_maint_opt();
 	$now = time();
 	$c   = n4s_maint_compute( $o, $now );
+	$fmt = isset( n4s_maint_cd_formats()[ $anzeige ] ) ? $anzeige : $o['cd_format'];
 	$ts  = 0;
-	$lab = '';
+	$lab = array( '', '' );
 	$txt = n4s_maint_cd_texts( ! empty( $GLOBALS['n4s_maint_serving']['mode'] ) ? $GLOBALS['n4s_maint_serving']['mode'] : $o['mode'] );
 	if ( 'ab' === $ziel || ( 'auto' === $ziel && $c['scheduled'] ) ) {
 		$ts  = $o['from'] > $now ? $o['from'] : 0;
-		$lab = $txt[0];
+		$lab = $txt[0][0] ? $txt[0] : array( '', '' );
 	}
 	if ( ! $ts && ( 'bis' === $ziel || 'auto' === $ziel ) && $c['active'] && $c['ends'] > $now ) {
 		$ts  = $c['ends'];
@@ -693,19 +728,42 @@ function n4s_maint_countdown_html( $ziel = 'auto' ) {
 	if ( ! $ts ) {
 		return '';
 	}
+	$mid = ( new DateTimeImmutable( '@' . (int) $ts ) )->setTimezone( wp_timezone() )->setTime( 0, 0 )->getTimestamp(); // Beginn des Zieltags in der Zeitzone der Website
+	$box = 'text-align:center;margin:24px 0';
+	$date = esc_html( n4s_maint_cd_date( $ts ) );
+	if ( 'datum' === $fmt ) {
+		return '<div class="n4s-maint-cd-static" style="' . $box . '"><div style="font-size:1.25rem;font-weight:600;line-height:1.4">' . esc_html( $lab[1] ) . ' ' . $date . '</div></div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Datum escaped.
+	}
+	$words = array(
+		'd1'   => n4s_t( 'Tag', 'day' ), 'dn' => n4s_t( 'Tagen', 'days' ),
+		'h1'   => n4s_t( 'Stunde', 'hour' ), 'hn' => n4s_t( 'Stunden', 'hours' ),
+		'mn'   => n4s_t( 'Minuten', 'minutes' ), 'sn' => n4s_t( 'Sekunden', 'seconds' ),
+		'and'  => n4s_t( 'und', 'and' ), 'done' => $txt[2],
+	);
 	static $js = false;
-	$out = '<div class="n4s-maint-cd" style="text-align:center;margin:24px 0" data-ts="' . (int) $ts . '" data-now="' . (int) $now . '" data-d="' . esc_attr( n4s_t( 'Tage', 'days' ) ) . '" data-done="' . esc_attr( $txt[2] ) . '"><div style="font-size:.95rem;opacity:.8">' . esc_html( $lab ) . '</div><div class="n4s-maint-cd-v" style="font-size:2.2rem;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.02em">–</div></div>';
+	$out = '<div class="n4s-maint-cd" style="' . $box . '" data-ts="' . (int) $ts . '" data-now="' . (int) $now . '" data-mid="' . (int) $mid . '" data-w="' . esc_attr( wp_json_encode( $words ) ) . '"><div style="font-size:1rem;opacity:.85;margin-bottom:4px">' . esc_html( $lab[0] ) . '</div><div class="n4s-maint-cd-v" style="font-size:1.6rem;font-weight:600;line-height:1.3">…</div>';
+	if ( 'beides' === $fmt ) {
+		$out .= '<div style="font-size:.9rem;opacity:.75;margin-top:6px">' . esc_html( $lab[1] ) . ' ' . $date . '</div>';
+	}
+	$out .= '</div>';
 	if ( ! $js ) {
 		$js   = true;
-		$out .= '<script>(function(){var off=0;function p(n){return(n<10?"0":"")+n}function t(){document.querySelectorAll(".n4s-maint-cd").forEach(function(e){var l=Number(e.dataset.ts)-(Date.now()/1000+off);var v=e.querySelector(".n4s-maint-cd-v");if(l<=0){v.textContent=e.dataset.done;return}var d=Math.floor(l/86400),h=Math.floor(l%86400/3600),m=Math.floor(l%3600/60),s=Math.floor(l%60);v.textContent=(d?d+" "+e.dataset.d+" ":"")+p(h)+":"+p(m)+":"+p(s)})}var f=document.querySelector(".n4s-maint-cd");if(f)off=Number(f.dataset.now)-Date.now()/1000;t();setInterval(t,1000)})();</script>';
+		$out .= '<script>(function(){var off=0;function p(n){return(n<10?"0":"")+n}function w(n,a,b){return n+" "+(n===1?a:b)}'
+			. 'function f(e,l,same){var W=JSON.parse(e.dataset.w),d=Math.floor(l/86400),h=Math.floor(l%86400/3600),m=Math.floor(l%3600/60),s=Math.floor(l%60);'
+			. 'if(d>=2)return w(d,W.d1,W.dn)+(h>0?" "+W.and+" "+w(h,W.h1,W.hn):"");'
+			. 'if(d===1)return w(1,W.d1,W.dn)+" "+W.and+" "+h+":"+p(m)+" "+W.hn;'
+			. 'if(same){if(h>0)return h+":"+p(m)+":"+p(s)+" "+W.hn;if(m>0)return m+":"+p(s)+" "+W.mn;return s+" "+W.sn}'
+			. 'if(h>0)return h+":"+p(m)+" "+W.hn;if(m>0)return m+" "+W.mn;return s+" "+W.sn}'
+			. 'function t(){document.querySelectorAll(".n4s-maint-cd").forEach(function(e){var n=Date.now()/1000+off,l=Number(e.dataset.ts)-n;var v=e.querySelector(".n4s-maint-cd-v");if(l<=0){v.textContent=JSON.parse(e.dataset.w).done;return}v.textContent=f(e,l,n>=Number(e.dataset.mid))})}'
+			. 'var q=document.querySelector(".n4s-maint-cd");if(q)off=Number(q.dataset.now)-Date.now()/1000;t();setInterval(t,1000)})();</script>';
 	}
 	return $out;
 }
 add_shortcode(
 	'n4s_wartung_countdown',
 	function ( $a ) {
-		$a = shortcode_atts( array( 'ziel' => 'auto' ), $a, 'n4s_wartung_countdown' );
-		return n4s_maint_countdown_html( in_array( $a['ziel'], array( 'bis', 'ab' ), true ) ? $a['ziel'] : 'auto' );
+		$a = shortcode_atts( array( 'ziel' => 'auto', 'anzeige' => '' ), $a, 'n4s_wartung_countdown' );
+		return n4s_maint_countdown_html( in_array( $a['ziel'], array( 'bis', 'ab' ), true ) ? $a['ziel'] : 'auto', (string) $a['anzeige'] );
 	}
 );
 
@@ -933,6 +991,8 @@ if ( is_admin() ) {
 			$o['urls']      = $clean( 'urls' );
 			$o['rest_apps'] = empty( $_POST['rest_apps'] ) ? 0 : 1; // phpcs:ignore WordPress.Security.NonceVerification
 			$o['countdown'] = empty( $_POST['countdown'] ) ? 0 : 1; // phpcs:ignore WordPress.Security.NonceVerification
+			$cf             = isset( $_POST['cd_format'] ) ? sanitize_key( wp_unslash( $_POST['cd_format'] ) ) : 'auto'; // phpcs:ignore WordPress.Security.NonceVerification
+			$o['cd_format'] = isset( n4s_maint_cd_formats()[ $cf ] ) ? $cf : 'auto';
 			$o['mail']      = empty( $_POST['mail'] ) ? 0 : 1; // phpcs:ignore WordPress.Security.NonceVerification
 			$mails          = array();
 			foreach ( preg_split( '/[\s,;]+/', isset( $_POST['mails'] ) ? (string) wp_unslash( $_POST['mails'] ) : '' ) as $m ) { // phpcs:ignore WordPress.Security
@@ -1063,6 +1123,11 @@ if ( is_admin() ) {
 		n4s_apps_ui_row( n4s_t( 'Höchstdauer', 'Maximum duration' ), n4s_t( 'Stunden. Danach endet die Wartung automatisch und es geht eine Mail an den Administrator. 0 = unbegrenzt.', 'Hours. Maintenance then ends automatically and an e-mail is sent. 0 = unlimited.' ), '<input type="number" min="0" max="720" name="maxh" value="' . (int) $o['maxh'] . '" style="width:90px">' );
 		n4s_apps_ui_row( n4s_t( 'Vorankündigung', 'Advance notice' ), n4s_t( 'Minuten vor „Wartung ab“ zeigt die Website ein Banner. 0 = kein Banner.', 'Minutes before "maintenance from" the website shows a banner. 0 = no banner.' ), '<input type="number" min="0" max="1440" name="notice" value="' . (int) $o['notice'] . '" style="width:90px">' );
 		n4s_apps_ui_toggle( 'countdown', ! empty( $o['countdown'] ), n4s_t( 'Countdown unter dem Inhalt der Wartungsseite', 'Countdown below the maintenance page content' ), n4s_t( 'Zeigt, wann es weitergeht (wenn ein Ende bekannt ist). Alternativ der Shortcode [n4s_wartung_countdown] an beliebiger Stelle.', 'Shows when it continues (if an end is known). Alternatively use the shortcode [n4s_wartung_countdown] anywhere.' ) );
+		$cfctl = '<select name="cd_format" style="max-width:360px">';
+		foreach ( n4s_maint_cd_formats() as $k => $l ) {
+			$cfctl .= '<option value="' . esc_attr( $k ) . '"' . selected( $o['cd_format'], $k, false ) . '>' . esc_html( $l ) . '</option>';
+		}
+		n4s_apps_ui_row( n4s_t( 'Darstellung des Countdowns', 'Countdown display' ), n4s_t( 'Der Zähler zeigt „21 Tagen und 3 Stunden“, ab einem Tag „1 Tag und 2:48 Stunden“, danach „5:12 Stunden“; Sekunden erst am Tag des Ziels. Im Shortcode überschreibt anzeige="auto|datum|beides" die Einstellung.', 'The counter shows "21 days and 3 hours", from one day on "1 day and 2:48 hours", then "5:12 hours"; seconds only on the day of the target. In the shortcode anzeige="auto|datum|beides" overrides the setting.' ), $cfctl . '</select>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Bausteine escaped.
 		echo '</div>';
 
 		// Anzeige
