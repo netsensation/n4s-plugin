@@ -2,7 +2,7 @@
 /**
  * Plugin Name: n4s Apps
  * Description: n4s: Rahmen für eigene PHP-Apps und Sicherheit (Anmeldeschutz, Härtung), Funktionen einzeln schaltbar / Framework for custom PHP apps and security (login protection, hardening), features switchable. Shortcode [n4s_app name="..."].
- * Version: 2.39.1
+ * Version: 2.39.2
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: n4s
@@ -13,7 +13,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'N4S_APPS_VERSION', '2.39.1' );
+define( 'N4S_APPS_VERSION', '2.39.2' );
 define( 'N4S_APPS_FILE', __FILE__ );
 define( 'N4S_APPS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'N4S_APPS_URL', plugin_dir_url( __FILE__ ) );
@@ -218,7 +218,7 @@ add_action(
 	}
 );
 
-/** Die frühere Funktion „Neuer Tab je Menüpunkt“ (bis 2.39.1) entfällt, WordPress bietet das selbst: Angaben einmalig in das Link-Ziel des Menüpunkts übernehmen. */
+/** Die frühere Funktion „Neuer Tab je Menüpunkt“ (bis 2.39.2) entfällt, WordPress bietet das selbst: Angaben einmalig in das Link-Ziel des Menüpunkts übernehmen. */
 add_action(
 	'init',
 	function () {

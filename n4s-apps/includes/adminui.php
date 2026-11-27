@@ -74,6 +74,20 @@ function n4s_apps_tab_overview() {
 	foreach ( $keys as $k ) {
 		$active += empty( $f[ $k ] ) ? 0 : 1;
 	}
+	// Customize-Funktionen: die Funktionen ohne eigene Einstellungen (Tab Customize) und die Module der WP-Customize-Funktion.
+	$ckeys   = array( 'dup', 'mediareplace', 'login', 'barmenu', 'pageaccess' );
+	$cmods   = array( 'menus', 'items', 'loginout', 'adminbar', 'widget', 'above', 'abovefooter', 'page', 'schemes' );
+	$cactive = 0;
+	foreach ( $ckeys as $k ) {
+		$cactive += empty( $f[ $k ] ) ? 0 : 1;
+	}
+	if ( ! empty( $f['theme'] ) && function_exists( 'n4s_theme_opt' ) ) {
+		$con = n4s_theme_opt()['on'];
+		foreach ( $cmods as $k ) {
+			$cactive += empty( $con[ $k ] ) ? 0 : 1;
+		}
+	}
+	$ctotal   = count( $ckeys ) + count( $cmods );
 	$disabled = (array) get_option( 'n4s_apps_disabled', array() );
 	$apps     = 0;
 	$apps_on  = 0;
@@ -109,6 +123,7 @@ function n4s_apps_tab_overview() {
 	echo '<div class="n4s-stats">';
 	echo n4s_apps_ui_stat( N4S_APPS_VERSION, $newer ? sprintf( n4s_t( 'Version (%s verfügbar)', 'Version (%s available)' ), $newer ) : n4s_t( 'Version', 'Version' ), $newer ? 'warn' : '', $pg( 'n4s' ) . '#n4s-update' ); // phpcs:ignore WordPress.Security.EscapeOutput -- in n4s_apps_ui_stat escaped.
 	echo n4s_apps_ui_stat( $active . ' / ' . count( $keys ), n4s_t( 'Funktionen aktiv', 'Features active' ), 'ok', $pg( 'n4s-features' ) ); // phpcs:ignore WordPress.Security.EscapeOutput
+	echo n4s_apps_ui_stat( $cactive . ' / ' . $ctotal, n4s_t( 'Customize-Funktionen aktiv', 'Customize features active' ), 'ok', $pg( 'n4s-theme' ) ); // phpcs:ignore WordPress.Security.EscapeOutput
 	echo n4s_apps_ui_stat( $apps_on . ' / ' . $apps, n4s_t( 'Apps aktiv', 'Apps active' ), '', $pg( 'n4s-apps' ) ); // phpcs:ignore WordPress.Security.EscapeOutput
 	echo n4s_apps_ui_stat( (string) $upd, n4s_t( 'App-Updates', 'App updates' ), $upd ? 'warn' : '', $pg( 'n4s-apps' ) ); // phpcs:ignore WordPress.Security.EscapeOutput
 	echo n4s_apps_ui_stat( ! empty( $f['security'] ) ? (string) $locks : '–', n4s_t( 'Aktive Sperren', 'Active locks' ), $locks ? 'warn' : '', $pg( ! empty( $f['security'] ) ? 'n4s-security' : 'n4s-features' ) ); // phpcs:ignore WordPress.Security.EscapeOutput
