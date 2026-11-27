@@ -7,7 +7,7 @@ Beschreibt, wie das Plugin n4s Apps (ab 2.8.0, `includes/catalog.php`) Apps von 
 - **Nur https** (Ausnahme Entwicklung: Filter `n4s_apps_allow_http`). Download-Adressen müssen denselben Host wie die Quelle haben, Weiterleitungen werden nicht verfolgt.
 - **Zugangsschlüssel** für private Apps: Header `Authorization: Bearer <Schlüssel>` und zusätzlich `X-N4S-Key: <Schlüssel>` (Fallback, falls ein Server den Authorization-Header entfernt), gesendet nur an den Host der eingestellten Quelle (Option `n4s_apps_catalog` oder Konstanten `N4S_APPS_CATALOG_SOURCE` / `N4S_APPS_CATALOG_KEY`).
 - **Signatur Pflicht:** Eine Datei wird nur installiert, wenn SHA-256 und Ed25519-Signatur stimmen. Ohne hinterlegten Schlüssel (`includes/trust.php`, Konstante `N4S_APPS_TRUSTED_KEYS`, Filter `n4s_apps_trusted_keys`) sind Katalog-Installationen aus.
-- Anschließend dieselbe statische Prüfung wie beim manuellen Upload (Größe bis 1024 KB, `<?php`, `n4s_register_app` mit festem Slug, `ABSPATH`-Schutz, Syntax), Slug und Version der Datei müssen zum Eintrag passen, die Version muss höher sein, die vorherige Datei bleibt als `.bak`.
+- Anschließend dieselbe statische Prüfung wie beim manuellen Upload (Größe bis 2048 KB, `<?php`, `n4s_register_app` mit festem Slug, `ABSPATH`-Schutz, Syntax), Slug und Version der Datei müssen zum Eintrag passen, die Version muss höher sein, die vorherige Datei bleibt als `.bak`.
 
 ## Schnittstelle
 REST-Namespace `n4s-admin/v1`. Der Client ruft `<Quelle>/?rest_route=/n4s-admin/v1/<Pfad>` auf (funktioniert auch ohne schöne Permalinks). Antworten JSON, UTF-8.

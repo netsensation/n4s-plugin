@@ -401,8 +401,8 @@ function n4s_apps_catalog_fetch( $e ) {
 		return $r;
 	}
 	$code = $r['body'];
-	if ( strlen( $code ) > 1048576 ) {
-		return new WP_Error( 'n4s_catalog', n4s_t( 'Die Datei ist größer als 1024 KB.', 'The file is larger than 1024 KB.' ) );
+	if ( strlen( $code ) > 2097152 ) {
+		return new WP_Error( 'n4s_catalog', n4s_t( 'Die Datei ist größer als 2048 KB.', 'The file is larger than 2048 KB.' ) );
 	}
 	if ( ! hash_equals( $e['sha256'], hash( 'sha256', $code ) ) ) {
 		return new WP_Error( 'n4s_catalog', n4s_t( 'Die Prüfsumme der Datei stimmt nicht (SHA-256). Die Datei wurde nicht installiert.', 'The file checksum does not match (SHA-256). The file was not installed.' ) );

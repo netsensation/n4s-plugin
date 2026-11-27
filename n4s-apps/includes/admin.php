@@ -182,7 +182,7 @@ add_action(
 		n4s_apps_verify( 'n4s_app_save' );
 
 		$mode = ( isset( $_POST['mode'] ) && 'update' === $_POST['mode'] ) ? 'update' : 'new';
-		$f    = n4s_apps_read_upload( 'n4s_app_file', 1048576 );
+		$f    = n4s_apps_read_upload( 'n4s_app_file', 2097152 );
 		if ( ! is_array( $f ) ) {
 			n4s_apps_notice( 'error', $f );
 			n4s_apps_back();

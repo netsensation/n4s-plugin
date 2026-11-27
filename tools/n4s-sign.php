@@ -22,8 +22,8 @@ if ( '' === $file || ! is_readable( $file ) || false === $key || 64 !== strlen( 
 	exit( 1 );
 }
 $code = (string) file_get_contents( $file );
-if ( strlen( $code ) > 1048576 ) {
-	fwrite( STDERR, "Datei größer als 1024 KB.\n" );
+if ( strlen( $code ) > 2097152 ) {
+	fwrite( STDERR, "Datei größer als 2048 KB.\n" );
 	exit( 1 );
 }
 $head = substr( $code, 0, 8192 );
