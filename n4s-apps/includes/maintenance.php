@@ -667,24 +667,24 @@ add_filter(
 /* ------------------------------------------------------------------ Countdown und Vorankündigung */
 
 /**
- * Texte des Countdowns je Anlass: [ vor Beginn, während der Wartung ] jeweils [ „in“ (laufender Zähler), „am“ (Datum) ],
- * dazu der Text bei erreichtem Ziel.
+ * Texte des Countdowns je Anlass: [ vor Beginn, während der Wartung ], jeweils [ Satzanfang mit „in“ (laufender Zähler),
+ * Satzanfang für das Datum, Verhältniswort vor einem Datum („am“, leer bei „heute“ und „morgen“) ], dazu der Text bei erreichtem Ziel.
  */
 function n4s_maint_cd_texts( $mode ) {
 	$t = array(
 		'wartung' => array(
-			array( n4s_t( 'Wartung beginnt in', 'Maintenance starts in' ), n4s_t( 'Wartung beginnt am', 'Maintenance starts on' ) ),
-			array( n4s_t( 'Wir sind voraussichtlich zurück in', 'We expect to be back in' ), n4s_t( 'Wir sind voraussichtlich zurück am', 'We expect to be back on' ) ),
+			array( n4s_t( 'Wartung beginnt in', 'Maintenance starts in' ), n4s_t( 'Wartung beginnt', 'Maintenance starts' ), n4s_t( 'am', 'on' ) ),
+			array( n4s_t( 'Wir sind voraussichtlich zurück in', 'We expect to be back in' ), n4s_t( 'Wir sind voraussichtlich zurück', 'We expect to be back' ), n4s_t( 'am', 'on' ) ),
 			n4s_t( 'Gleich wieder da …', 'Back in a moment …' ),
 		),
 		'update'  => array(
-			array( n4s_t( 'Das Update startet in', 'The update starts in' ), n4s_t( 'Das Update startet am', 'The update starts on' ) ),
-			array( n4s_t( 'Das Update ist voraussichtlich fertig in', 'The update should be finished in' ), n4s_t( 'Das Update ist voraussichtlich fertig am', 'The update should be finished on' ) ),
+			array( n4s_t( 'Das Update startet in', 'The update starts in' ), n4s_t( 'Das Update startet', 'The update starts' ), n4s_t( 'am', 'on' ) ),
+			array( n4s_t( 'Das Update ist voraussichtlich fertig in', 'The update should be finished in' ), n4s_t( 'Das Update ist voraussichtlich fertig', 'The update should be finished' ), n4s_t( 'am', 'on' ) ),
 			n4s_t( 'Gleich fertig …', 'Almost done …' ),
 		),
 		'bald'    => array(
-			array( n4s_t( 'Die Seite ist vorübergehend nicht erreichbar in', 'The site becomes unavailable in' ), n4s_t( 'Die Seite ist vorübergehend nicht erreichbar ab', 'The site becomes unavailable from' ) ),
-			array( n4s_t( 'Wir starten in', 'We launch in' ), n4s_t( 'Wir starten am', 'We launch on' ) ),
+			array( n4s_t( 'Die Seite ist vorübergehend nicht erreichbar in', 'The site becomes unavailable in' ), n4s_t( 'Die Seite ist vorübergehend nicht erreichbar', 'The site becomes unavailable' ), n4s_t( 'ab', 'from' ) ),
+			array( n4s_t( 'Wir starten in', 'We launch in' ), n4s_t( 'Wir starten', 'We launch' ), n4s_t( 'am', 'on' ) ),
 			n4s_t( 'Es geht gleich los …', 'Starting any moment …' ),
 		),
 	);
@@ -700,9 +700,20 @@ function n4s_maint_cd_formats() {
 	);
 }
 
-/** Datum und Uhrzeit des Ziels, zum Beispiel „18.12.2026 um 17:00 Uhr“. */
-function n4s_maint_cd_date( $ts ) {
-	return wp_date( n4s_t( 'd.m.Y', 'F j, Y' ), (int) $ts ) . ' ' . n4s_t( 'um', 'at' ) . ' ' . wp_date( n4s_t( 'H:i', 'g:i a' ), (int) $ts ) . n4s_t( ' Uhr', '' );
+/** Ziel als Zeitangabe: „heute um 17:00 Uhr“, „morgen um 17:00 Uhr“, sonst „am 18.12.2026 um 17:00 Uhr“ ($prep = Verhältniswort vor dem Datum, „am“ oder „ab“). */
+function n4s_maint_cd_when( $ts, $prep = '' ) {
+	$tz    = wp_timezone();
+	$day   = ( new DateTimeImmutable( '@' . (int) $ts ) )->setTimezone( $tz )->format( 'Ymd' );
+	$today = ( new DateTimeImmutable( 'now', $tz ) )->format( 'Ymd' );
+	$tomor = ( new DateTimeImmutable( 'tomorrow', $tz ) )->format( 'Ymd' );
+	if ( $day === $today ) {
+		$d = n4s_t( 'heute', 'today' );
+	} elseif ( $day === $tomor ) {
+		$d = n4s_t( 'morgen', 'tomorrow' );
+	} else {
+		$d = trim( $prep . ' ' . wp_date( n4s_t( 'd.m.Y', 'F j, Y' ), (int) $ts ) );
+	}
+	return $d . ' ' . n4s_t( 'um', 'at' ) . ' ' . wp_date( n4s_t( 'H:i', 'g:i a' ), (int) $ts ) . n4s_t( ' Uhr', '' );
 }
 
 /**
@@ -715,11 +726,11 @@ function n4s_maint_countdown_html( $ziel = 'auto', $anzeige = '' ) {
 	$c   = n4s_maint_compute( $o, $now );
 	$fmt = isset( n4s_maint_cd_formats()[ $anzeige ] ) ? $anzeige : $o['cd_format'];
 	$ts  = 0;
-	$lab = array( '', '' );
+	$lab = array( '', '', '' );
 	$txt = n4s_maint_cd_texts( ! empty( $GLOBALS['n4s_maint_serving']['mode'] ) ? $GLOBALS['n4s_maint_serving']['mode'] : $o['mode'] );
 	if ( 'ab' === $ziel || ( 'auto' === $ziel && $c['scheduled'] ) ) {
 		$ts  = $o['from'] > $now ? $o['from'] : 0;
-		$lab = $txt[0][0] ? $txt[0] : array( '', '' );
+		$lab = $txt[0];
 	}
 	if ( ! $ts && ( 'bis' === $ziel || 'auto' === $ziel ) && $c['active'] && $c['ends'] > $now ) {
 		$ts  = $c['ends'];
@@ -730,7 +741,7 @@ function n4s_maint_countdown_html( $ziel = 'auto', $anzeige = '' ) {
 	}
 	$mid = ( new DateTimeImmutable( '@' . (int) $ts ) )->setTimezone( wp_timezone() )->setTime( 0, 0 )->getTimestamp(); // Beginn des Zieltags in der Zeitzone der Website
 	$box = 'text-align:center;margin:24px 0';
-	$date = esc_html( n4s_maint_cd_date( $ts ) );
+	$date = esc_html( n4s_maint_cd_when( $ts, $lab[2] ) );
 	if ( 'datum' === $fmt ) {
 		return '<div class="n4s-maint-cd-static" style="' . $box . '"><div style="font-size:1.25rem;font-weight:600;line-height:1.4">' . esc_html( $lab[1] ) . ' ' . $date . '</div></div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Datum escaped.
 	}
