@@ -30,8 +30,8 @@ function n4s_apps_prepare_dir() {
 
 /** Prüft den Code einer App, ohne ihn auszuführen. Gibt true oder eine Fehlermeldung zurück. */
 function n4s_apps_validate_code( $code ) {
-	if ( strlen( $code ) > 1048576 ) {
-		return n4s_t( 'Die Datei ist größer als 1024 KB.', 'The file is larger than 1024 KB.' );
+	if ( strlen( $code ) > 2097152 ) {
+		return n4s_t( 'Die Datei ist größer als 2048 KB.', 'The file is larger than 2048 KB.' );
 	}
 	if ( false === strpos( $code, '<?php' ) ) {
 		return n4s_t( 'Das ist keine PHP-Datei (<?php fehlt).', 'This is not a PHP file (<?php missing).' );

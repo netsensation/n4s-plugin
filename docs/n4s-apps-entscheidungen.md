@@ -4,7 +4,7 @@ Stand: 09.11.2026 · Plugin-Version 2.8.3. Ergänzt die Arbeitsanweisung um das 
 
 ## Entscheidungen
 - **Eigene Apps außerhalb des Plugin-Ordners** (`wp-content/n4s-apps-data/apps/`), damit Plugin-Updates sie nicht überschreiben. Ordner mit `.htaccess` und `index.php` geschützt; auf Nginx schützt nur der `ABSPATH`-Guard in den App-Dateien.
-- **Upload nur statisch geprüft** (Größe bis 1024 KB, `<?php`, `n4s_register_app` mit festem Slug, `ABSPATH`-Schutz, `token_get_all( $code, TOKEN_PARSE )`), nie ausgeführt.
+- **Upload nur statisch geprüft** (Größe bis 2048 KB, `<?php`, `n4s_register_app` mit festem Slug, `ABSPATH`-Schutz, `token_get_all( $code, TOKEN_PARSE )`), nie ausgeführt.
 - **Fehlerhafte Apps** werden beim Laden automatisch deaktiviert (Shutdown-Handler, Option `n4s_apps_disabled`, Schlüssel `bundled:datei.php` / `user:datei.php`), damit die Seite erreichbar bleibt.
 - **Löschen nur nach Deaktivierung**, serverseitig erzwungen (Button ausgegraut + Browser-Bestätigung). Mitgelieferte Apps kommen nach einem Plugin-Update deaktiviert zurück.
 - **App-Update mit Abgleich und Bestätigung:** Der Slug (aus `n4s_register_app`) muss gleich sein, sonst Abbruch. Warnung mit Häkchen bei abweichendem Anzeigenamen, gleicher oder älterer Version, fehlender Version im Update. Ältere Apps ohne Version: nur Hinweis. Neue Apps mit schon vergebenem Slug werden abgelehnt. Das Update liegt bis zur Bestätigung in einem Transient (15 Minuten), vor dem Schreiben wird neu validiert und geprüft, ob die installierte Datei unverändert ist. Vorherige Version bleibt als `.bak`.

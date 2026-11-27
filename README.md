@@ -8,7 +8,7 @@
 - Verwaltung im Admin-Menü „Apps": Upload, Update mit Versionsabgleich und Bestätigung, (De)aktivieren, Löschen
 - Eigene Apps liegen in `wp-content/n4s-apps-data/apps/` und überstehen Plugin-Updates
 - Fehlerhafte Apps werden automatisch deaktiviert
-- Statische Prüfung von Uploads (Syntax, ABSPATH-Schutz, Größe bis 1024 KB)
+- Statische Prüfung von Uploads (Syntax, ABSPATH-Schutz, Größe bis 2048 KB)
 - Plugin-Update über den normalen WordPress-Update-Prozess, Quelle GitHub-Releases (kein Token nötig; Update-Button im Tab Funktionen)
 - App-Katalog: Apps mit `Update URI` werden gegen einen Katalog (z. B. n4s.one) geprüft und per Button oder automatisch aktualisiert, neue Apps lassen sich aus dem Katalog installieren; Dateien werden signiert (Ed25519) und vor dem Schreiben geprüft ([Protokoll](docs/n4s-katalog-protokoll.md))
 - Plugin-Selbstupdate per ZIP weiterhin möglich (nur höhere Version)
