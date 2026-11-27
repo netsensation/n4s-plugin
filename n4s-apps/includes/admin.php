@@ -861,7 +861,7 @@ function n4s_apps_feature_rows() {
 		),
 		'theme'        => array(
 			'WP-Customize',
-			n4s_t( 'Tab „Customize“: Menü je Anmeldestatus und Rolle, Headermenü und Footermenü, Admin-Leiste, Zusatzmenü-Widget und Shortcode sowie bis zu drei Farbschemen; dazu Sichtbarkeit je Menüpunkt, Anmelden/Abmelden als Menüpunkt, Neuer Tab je Menüpunkt und Seitengestaltung je Seite. Ausgeschaltet: alle diese Funktionen sind inaktiv; Einstellungen bleiben gespeichert.', 'Tab "Customize": menu by login status and role, header and footer menu, admin bar, additional menu widget and shortcode and up to three color schemes; plus visibility per menu item, log in/out as menu item, new tab per menu item and page design per page. Switched off: all these features are inactive; settings stay saved.' ),
+			n4s_t( 'Tab „Customize“: Menü je Anmeldestatus und Rolle, Headermenü und Footermenü, Admin-Leiste, Zusatzmenü-Widget und Shortcode sowie bis zu drei Farbschemen; dazu Sichtbarkeit je Menüpunkt, Anmelden/Abmelden als Menüpunkt und Seitengestaltung je Seite. Ausgeschaltet: alle diese Funktionen sind inaktiv; Einstellungen bleiben gespeichert.', 'Tab "Customize": menu by login status and role, header and footer menu, admin bar, additional menu widget and shortcode and up to three color schemes; plus visibility per menu item, log in/out as menu item and page design per page. Switched off: all these features are inactive; settings stay saved.' ),
 		),
 		'mcp'          => array(
 			n4s_t( 'KI-Anbindung (Royal MCP)', 'AI connection (Royal MCP)' ),
