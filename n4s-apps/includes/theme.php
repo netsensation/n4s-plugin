@@ -33,7 +33,7 @@ function n4s_theme_color_fields() {
 
 function n4s_theme_defaults() {
 	return array(
-		'on'          => array( 'menus' => 0, 'items' => 0, 'loginout' => 0, 'adminbar' => 0, 'widget' => 0, 'above' => 0, 'abovefooter' => 0, 'page' => 0, 'schemes' => 0 ),
+		'on'          => array( 'menus' => 0, 'items' => 0, 'loginout' => 0, 'newtab' => 0, 'adminbar' => 0, 'widget' => 0, 'above' => 0, 'abovefooter' => 0, 'page' => 0, 'schemes' => 0 ),
 		'above'       => array( 'align' => 'right', 'bg' => '', 'text' => '' ),
 		'abovefooter' => array( 'align' => 'right', 'bg' => '', 'text' => '' ),
 		'adminbar'    => array( 'parent' => 'site-name', 'hide' => array() ),
@@ -68,7 +68,6 @@ function n4s_theme_opt( $reset = false ) {
 				$o[ $k ] = is_array( $d[ $k ] ) ? array_merge( $d[ $k ], (array) $s[ $k ] ) : $s[ $k ];
 			}
 		}
-		unset( $o['on']['newtab'] ); // frühere Funktion „Neuer Tab je Menüpunkt“ (entfallen)
 		for ( $n = 1; $n <= 3; $n++ ) {
 			if ( isset( $s['schemes'][ $n ] ) && is_array( $s['schemes'][ $n ] ) ) {
 				$o['schemes'][ $n ]['name']   = isset( $s['schemes'][ $n ]['name'] ) ? (string) $s['schemes'][ $n ]['name'] : $d['schemes'][ $n ]['name'];
@@ -223,6 +222,27 @@ add_filter(
 	5
 );
 
+/** Link eines Menüpunkts in neuem Tab/Fenster öffnen (Feld je Menüpunkt, gilt in allen Menüs). */
+add_filter(
+	'nav_menu_link_attributes',
+	function ( $atts, $item ) {
+		if ( ! n4s_theme_on( 'newtab' ) || ! is_object( $item ) || empty( $item->ID ) || ! get_post_meta( (int) $item->ID, '_n4s_newtab', true ) ) {
+			return $atts;
+		}
+		$atts['target'] = '_blank';
+		$rel            = isset( $atts['rel'] ) ? (string) $atts['rel'] : '';
+		foreach ( array( 'noopener', 'noreferrer' ) as $r ) {
+			if ( false === strpos( $rel, $r ) ) {
+				$rel = trim( $rel . ' ' . $r );
+			}
+		}
+		$atts['rel'] = $rel;
+		return $atts;
+	},
+	20,
+	2
+);
+
 /* ------------------------------------------------------------------ Admin-Leiste oben (Dropdown pflegen) */
 
 /** Standard-Einträge der Admin-Leiste, die sich ausblenden lassen: Knoten-ID => Beschriftung. */
@@ -263,6 +283,7 @@ add_action(
 		}
 		$top    = ( 'top' === $o['parent'] ) ? '' : ( $bar->get_node( 'site-name' ) ? 'site-name' : '' );
 		$vis    = n4s_theme_on( 'items' );
+		$newtab = n4s_theme_on( 'newtab' );
 		$drop   = array();
 		foreach ( $items as $it ) {
 			$hidden = isset( $drop[ (int) $it->menu_item_parent ] ) || ( $vis && ! n4s_theme_vis_ok( n4s_theme_item_vis( $it->ID ) ) ) || 0 === strpos( (string) $it->url, '#n4s-' );
@@ -270,7 +291,7 @@ add_action(
 				$drop[ (int) $it->ID ] = true;
 				continue;
 			}
-			$blank = '_blank' === $it->target; // Link-Ziel von WordPress (Menü-Editor: „Link in neuem Tab öffnen“)
+			$blank = ( $newtab && get_post_meta( (int) $it->ID, '_n4s_newtab', true ) ) || '_blank' === $it->target;
 			$meta  = array( 'class' => implode( ' ', array_filter( (array) $it->classes ) ) );
 			if ( $blank ) {
 				$meta['target'] = '_blank';
@@ -932,6 +953,36 @@ if ( is_admin() ) {
 		}
 	);
 
+	/* Neuer Tab je Menüpunkt (Menü-Editor und Customizer) */
+	add_action(
+		'wp_nav_menu_item_custom_fields',
+		function ( $item_id ) {
+			if ( ! n4s_theme_on( 'newtab' ) ) {
+				return;
+			}
+			echo '<div class="description-wide" style="margin:6px 0;padding:6px 8px;background:#f6f7f7;border:1px solid #dcdcde"><input type="hidden" name="n4s-newtab-has[' . (int) $item_id . ']" value="1"><label><input type="checkbox" name="n4s-newtab[' . (int) $item_id . ']" value="1"' . checked( (bool) get_post_meta( (int) $item_id, '_n4s_newtab', true ) || '_blank' === get_post_meta( (int) $item_id, '_menu_item_target', true ), true, false ) . '> <strong>n4s</strong> – ' . esc_html( n4s_t( 'Link in neuem Tab/Fenster öffnen', 'Open link in a new tab/window' ) ) . '</label></div>';
+		}
+	);
+
+	add_action(
+		'wp_update_nav_menu_item',
+		function ( $menu_id, $item_id ) {
+			if ( ! isset( $_POST['n4s-newtab-has'][ $item_id ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification -- Nonce prüft WordPress beim Speichern der Menüs.
+				return;
+			}
+			if ( ! empty( $_POST['n4s-newtab'][ $item_id ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+				update_post_meta( $item_id, '_n4s_newtab', 1 );
+			} else {
+				delete_post_meta( $item_id, '_n4s_newtab' );
+				if ( '_blank' === get_post_meta( $item_id, '_menu_item_target', true ) ) {
+					update_post_meta( $item_id, '_menu_item_target', '' ); // sonst bliebe der Link trotz fehlendem Haken im neuen Tab
+				}
+			}
+		},
+		10,
+		2
+	);
+
 	add_action(
 		'wp_update_nav_menu_item',
 		function ( $menu_id, $item_id ) {
@@ -1109,6 +1160,7 @@ N4SJS;
 		return array(
 			'menus'       => array( n4s_t( 'Menü je Anmeldestatus und Rolle', 'Menu by login status and role' ), n4s_t( 'Zeigt für Besucher, Angemeldete und einzelne Rollen unterschiedliche Menüs an derselben Menüposition.', 'Shows different menus at the same menu location for visitors, logged-in users and individual roles.' ) ),
 			'items'       => array( n4s_t( 'Sichtbarkeit je Menüpunkt', 'Visibility per menu item' ), n4s_t( 'Im Menü-Editor kann jeder Punkt für alle, Besucher, Angemeldete oder bestimmte Rollen gelten.', 'In the menu editor each item can apply to everyone, visitors, logged-in users or certain roles.' ) ),
+			'newtab'      => array( n4s_t( 'Neuer Tab je Menüpunkt', 'New tab per menu item' ), n4s_t( 'Im Menü-Editor und im Customizer kann jeder Menüpunkt in allen Menüs seinen Link in einem neuen Tab/Fenster öffnen. Hinweis: WordPress bringt diese Option nicht mit, sie kommt sonst vom Theme Neve; mit n4s steht sie bei jedem Theme zur Verfügung.', 'In the menu editor and the Customizer each menu item in all menus can open its link in a new tab/window. Note: WordPress does not offer this option itself, it otherwise comes from the Neve theme; with n4s it is available with any theme.' ) ),
 			'adminbar'    => array( n4s_t( 'Admin-Leiste oben pflegen', 'Manage the admin bar' ), n4s_t( 'Eigenes Menü „Admin-Leiste“ (Design → Menüs und Customizer) für das Dropdown oben, dazu Standard-Einträge ausblenden.', 'Own "Admin bar" menu (Appearance → Menus and Customizer) for the dropdown at the top, plus hiding default entries.' ) ),
 			'loginout'    => array( n4s_t( 'Anmelden / Abmelden als Menüpunkt', 'Log in / Log out as menu item' ), n4s_t( 'Im Menü-Editor eine Box zum Hinzufügen; der Punkt schaltet je nach Status um.', 'A box in the menu editor to add it; the item switches depending on the status.' ) ),
 			'above'       => array( n4s_t( 'Headermenü', 'Header menu' ), n4s_t( 'Zusätzliche Menüposition „Headermenü“ (Design → Menüs). Die Leiste steht ganz oben über der Kopfzeile, auch mit Menü je Besucher, Angemeldete und Rolle.', 'Additional menu location "Header menu" (Appearance → Menus). The bar sits at the very top above the header, also with a menu per visitor, logged-in user and role.' ) ),
@@ -1121,7 +1173,7 @@ N4SJS;
 
 	/** Module ohne eigene Einstellungen: erscheinen oben unter „Funktionen“. */
 	function n4s_theme_simple_mods() {
-		return array( 'items', 'loginout', 'page' );
+		return array( 'items', 'loginout', 'newtab', 'page' );
 	}
 
 	function n4s_theme_render() {
@@ -1158,8 +1210,8 @@ N4SJS;
 			}
 			echo '<details data-n4s-p="' . esc_attr( $key ) . '" style="background:#fff;border:1px solid #c3c4c7;margin:-1px 0 0;padding:8px 14px"><summary style="cursor:pointer"><strong>' . esc_html( $mods[ $key ][0] ) . '</strong></summary><div style="padding:10px 0 4px">';
 			$body();
-			if ( in_array( $key, array( 'menus', 'above', 'abovefooter', 'adminbar', 'items', 'page', 'schemes' ), true ) ) { // Zurücksetzen: immer der letzte Punkt
-				echo '<p style="margin:14px 0 2px;padding-top:10px;border-top:1px solid #dcdcde"><button type="submit" name="n4s_reset" value="' . esc_attr( $key ) . '" class="button" onclick="return confirm(' . esc_attr( wp_json_encode( n4s_t( 'Einstellungen dieser Funktion auf den Ausgangszustand zurücksetzen?', 'Reset the settings of this feature to their defaults?' ) ) ) . ')">' . esc_html( n4s_t( 'Zurücksetzen', 'Reset' ) ) . '</button> <span class="description">' . esc_html( $key === 'items' ? n4s_t( 'Entfernt alle Sichtbarkeits-Angaben der Menüpunkte.', 'Removes all visibility settings of the menu items.' ) : ( 'page' === $key ? n4s_t( 'Entfernt alle Ausblende-Angaben der Seiten (Kopfzeile, Menüs, Fußzeile, Titel).', 'Removes all hide settings of the pages (header, menus, footer, title).' ) : n4s_t( 'Stellt die Standardwerte dieser Funktion wieder her.', 'Restores the default values of this feature.' ) ) ) . '</span></p>';
+			if ( in_array( $key, array( 'menus', 'above', 'abovefooter', 'adminbar', 'items', 'newtab', 'page', 'schemes' ), true ) ) { // Zurücksetzen: immer der letzte Punkt
+				echo '<p style="margin:14px 0 2px;padding-top:10px;border-top:1px solid #dcdcde"><button type="submit" name="n4s_reset" value="' . esc_attr( $key ) . '" class="button" onclick="return confirm(' . esc_attr( wp_json_encode( n4s_t( 'Einstellungen dieser Funktion auf den Ausgangszustand zurücksetzen?', 'Reset the settings of this feature to their defaults?' ) ) ) . ')">' . esc_html( n4s_t( 'Zurücksetzen', 'Reset' ) ) . '</button> <span class="description">' . esc_html( $key === 'items' ? n4s_t( 'Entfernt alle Sichtbarkeits-Angaben der Menüpunkte.', 'Removes all visibility settings of the menu items.' ) : ( 'newtab' === $key ? n4s_t( 'Entfernt alle Neuer-Tab-Angaben der Menüpunkte.', 'Removes all new-tab settings of the menu items.' ) : ( 'page' === $key ? n4s_t( 'Entfernt alle Ausblende-Angaben der Seiten (Kopfzeile, Menüs, Fußzeile, Titel).', 'Removes all hide settings of the pages (header, menus, footer, title).' ) : n4s_t( 'Stellt die Standardwerte dieser Funktion wieder her.', 'Restores the default values of this feature.' ) ) ) ) . '</span></p>';
 			}
 			echo '</div></details>';
 		};
@@ -1216,6 +1268,7 @@ N4SJS;
 			n4s_theme_widget_panel();
 		} );
 		$panel( 'items', $help( n4s_t( 'Im Menü-Editor (Design → Menüs) hat jeder Menüpunkt das Feld „n4s – Sichtbar für“: alle Besucher, nur Besucher ohne Anmeldung, nur Angemeldete oder nur bestimmte Rollen.', 'In the menu editor (Appearance → Menus) each menu item has the field "n4s – Visible for": all visitors, logged-out visitors only, logged-in users only or only certain roles.' ) ) );
+		$panel( 'newtab', $help( n4s_t( 'Im Menü-Editor (Design → Menüs) und im Customizer hat jeder Menüpunkt das Feld „n4s – Link in neuem Tab/Fenster öffnen“. Es gilt in allen Menüs, auch im Headermenü und Footermenü. Hinweis: Diese Option stammt ursprünglich vom Theme Neve (WordPress selbst bietet sie nicht); die n4s-Funktion wirkt bei jedem Theme.', 'In the menu editor (Appearance → Menus) and the Customizer each menu item has the field "n4s – Open link in a new tab/window". It applies in all menus, including the header and footer menu. Note: this option originally comes from the Neve theme (WordPress itself does not offer it); the n4s feature works with any theme.' ) ) );
 		$panel(
 			'adminbar',
 			function () use ( $o ) {
@@ -1379,6 +1432,8 @@ N4SJS;
 					$cur['default'] = 0;
 				} elseif ( 'items' === $k ) {
 					delete_post_meta_by_key( '_n4s_vis' );
+				} elseif ( 'newtab' === $k ) {
+					delete_post_meta_by_key( '_n4s_newtab' );
 				} elseif ( 'page' === $k ) {
 					foreach ( array( 'header', 'footer', 'title', 'mainmenu', 'hmenu', 'fmenu' ) as $w ) {
 						delete_post_meta_by_key( '_n4s_hide_' . $w );

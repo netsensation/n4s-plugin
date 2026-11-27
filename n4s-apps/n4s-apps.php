@@ -2,7 +2,7 @@
 /**
  * Plugin Name: n4s Apps
  * Description: n4s: Rahmen für eigene PHP-Apps und Sicherheit (Anmeldeschutz, Härtung), Funktionen einzeln schaltbar / Framework for custom PHP apps and security (login protection, hardening), features switchable. Shortcode [n4s_app name="..."].
- * Version: 2.40.0
+ * Version: 2.40.1
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: n4s
@@ -13,7 +13,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'N4S_APPS_VERSION', '2.40.0' );
+define( 'N4S_APPS_VERSION', '2.40.1' );
 define( 'N4S_APPS_FILE', __FILE__ );
 define( 'N4S_APPS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'N4S_APPS_URL', plugin_dir_url( __FILE__ ) );
@@ -219,23 +219,6 @@ add_action(
 		}
 		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( n4s_t( 'n4s Apps wurde aktualisiert auf Version ' . N4S_APPS_VERSION . '. ', 'n4s Apps was updated to version ' . N4S_APPS_VERSION . '. ' ) ) . '<a href="' . esc_url( admin_url( 'admin.php?page=n4s' ) ) . '">' . esc_html( n4s_t( 'Zur n4s-Übersicht', 'Go to the n4s overview' ) ) . '</a></p></div>';
 	}
-);
-
-/** Die frühere Funktion „Neuer Tab je Menüpunkt“ (bis 2.40.0) entfällt, WordPress bietet das selbst: Angaben einmalig in das Link-Ziel des Menüpunkts übernehmen. */
-add_action(
-	'init',
-	function () {
-		if ( ! is_admin() || get_option( 'n4s_newtab_migrated' ) ) {
-			return;
-		}
-		global $wpdb;
-		foreach ( (array) $wpdb->get_col( "SELECT DISTINCT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_n4s_newtab'" ) as $id ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			update_post_meta( (int) $id, '_menu_item_target', '_blank' );
-		}
-		delete_post_meta_by_key( '_n4s_newtab' );
-		update_option( 'n4s_newtab_migrated', 1, false );
-	},
-	6
 );
 
 /** Plugin-Update erkennen (egal auf welchem Weg): Version mit der zuletzt gesehenen vergleichen. */
