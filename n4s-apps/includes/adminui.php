@@ -60,6 +60,35 @@ function n4s_apps_ui_stat( $value, $label, $cls = '', $url = '' ) {
 	return '<' . $tag . ' class="n4s-stat ' . esc_attr( $cls ) . '"><b>' . esc_html( $value ) . '</b><span>' . esc_html( $label ) . '</span></' . ( '' !== $url ? 'a' : 'div' ) . '>';
 }
 
+/** Diagramm „Fehlversuche“ des Anmeldeschutzes: Säulen je Tag der letzten 30 Tage mit Kennzahlen (24 Stunden, 30 Tage). */
+function n4s_apps_ui_failchart( array $s, $fails24 ) {
+	$now  = time();
+	$days = array();
+	$sum  = 0;
+	for ( $i = 29; $i >= 0; $i-- ) {
+		$k          = wp_date( 'Y-m-d', $now - $i * DAY_IN_SECONDS );
+		$days[ $k ] = isset( $s['days'][ $k ] ) ? (int) $s['days'][ $k ] : 0;
+		$sum       += $days[ $k ];
+	}
+	$max = max( 1, max( $days ) );
+	$bw  = 600 / 30;
+	$out = '<div class="n4s-failchart" style="margin:0 0 14px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px"><b>' . esc_html( n4s_t( 'Fehlversuche', 'Failed attempts' ) ) . '</b><span style="font-size:12px;color:#6b7385">' . esc_html( sprintf( n4s_t( '24 Stunden: %1$d · 30 Tage: %2$d', '24 hours: %1$d · 30 days: %2$d' ), (int) $fails24, $sum ) ) . '</span></div>';
+	$out .= '<svg viewBox="0 0 600 110" width="100%" style="display:block;max-width:100%" role="img" aria-label="' . esc_attr( n4s_t( 'Fehlversuche pro Tag, letzte 30 Tage', 'Failed attempts per day, last 30 days' ) ) . '">';
+	$out .= '<line x1="0" x2="600" y1="84.5" y2="84.5" stroke="#e3e6ee"/>';
+	$i    = 0;
+	foreach ( $days as $k => $v ) {
+		$bh   = $v ? max( 2, $v / $max * 76 ) : 1.5;
+		$lb   = wp_date( n4s_t( 'd.m.', 'm/d' ), strtotime( $k . ' 12:00:00' ) );
+		$out .= '<rect x="' . esc_attr( round( $i * $bw + 2, 1 ) ) . '" y="' . esc_attr( round( 84 - $bh, 1 ) ) . '" width="' . esc_attr( round( $bw - 4, 1 ) ) . '" height="' . esc_attr( round( $bh, 1 ) ) . '" rx="2" fill="' . ( $v ? '#5b4bdb' : '#e3e6ee' ) . '"><title>' . esc_html( $lb . ': ' . $v ) . '</title></rect>';
+		if ( 0 === $i || 14 === $i || 29 === $i ) {
+			$out .= '<text x="' . esc_attr( round( $i * $bw + $bw / 2, 1 ) ) . '" y="102" font-size="10" text-anchor="' . ( 0 === $i ? 'start' : ( 29 === $i ? 'end' : 'middle' ) ) . '" fill="#6b7385">' . esc_html( $lb ) . '</text>';
+		}
+		++$i;
+	}
+	$out .= '<text x="0" y="10" font-size="10" fill="#6b7385">' . esc_html( sprintf( n4s_t( 'max. %d pro Tag', 'max. %d per day' ), $max ) ) . '</text></svg></div>';
+	return $out;
+}
+
 /** Status-Zeile (nur Anzeige) mit Link zum Tab. */
 function n4s_apps_ui_status( $on, $title, $desc, $page ) {
 	return '<a class="n4s-set n4s-linkrow" href="' . esc_url( admin_url( 'admin.php?page=' . $page ) ) . '"><div><b>' . esc_html( $title ) . '</b><small>' . esc_html( $desc ) . '</small></div><span class="n4s-pill ' . ( $on ? 'g' : 'x' ) . '">' . esc_html( $on ? n4s_t( 'an', 'on' ) : n4s_t( 'aus', 'off' ) ) . '</span></a>';
@@ -130,16 +159,43 @@ function n4s_apps_tab_overview() {
 	echo '</div>';
 
 	$mcp = function_exists( 'n4s_mcp_opt' ) ? n4s_mcp_opt() : array( 'on' => 0 );
+	$off = n4s_t( 'Funktion ausgeschaltet', 'Feature switched off' );
 	echo '<div class="n4s-grid2"><section class="n4s-card"><h3>' . esc_html( n4s_t( 'Status', 'Status' ) ) . '</h3>';
-	echo n4s_apps_ui_status( ! empty( $f['security'] ), n4s_t( 'Anmeldeschutz', 'Login protection' ), ! empty( $f['security'] ) ? sprintf( n4s_t( '%d Fehlversuche in 24 Stunden', '%d failed attempts in 24 hours' ), $fails ) : n4s_t( 'Funktion ausgeschaltet', 'Feature switched off' ), 'n4s-security' ); // phpcs:ignore WordPress.Security.EscapeOutput
-	if ( ! empty( $f['theme'] ) && function_exists( 'n4s_theme_opt' ) ) {
-		$on = array_sum( array_map( 'intval', n4s_theme_opt()['on'] ) );
-		echo n4s_apps_ui_status( true, 'WP-Customize', sprintf( n4s_t( '%d Module an', '%d modules on' ), $on ), 'n4s-theme' ); // phpcs:ignore WordPress.Security.EscapeOutput
-	} else {
-		echo n4s_apps_ui_status( false, 'WP-Customize', n4s_t( 'Funktion ausgeschaltet', 'Feature switched off' ), 'n4s-features' ); // phpcs:ignore WordPress.Security.EscapeOutput
+	// Diagramm der Fehlversuche (Anmeldeschutz), zuerst
+	if ( ! empty( $f['security'] ) && function_exists( 'n4s_sec_state' ) ) {
+		echo n4s_apps_ui_failchart( n4s_sec_state(), $fails ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped.
 	}
-	echo n4s_apps_ui_status( ! empty( $f['login'] ), n4s_t( 'Eigenes Login-Design', 'Custom login design' ), n4s_t( 'Logo und Farben des Themes', 'Logo and colors of the theme' ), 'n4s-features' ); // phpcs:ignore WordPress.Security.EscapeOutput
-	echo n4s_apps_ui_status( ! empty( $f['mcp'] ), n4s_t( 'KI-Anbindung', 'AI connection' ), ! empty( $f['mcp'] ) ? ( ! empty( $mcp['on'] ) ? n4s_t( 'Schreibzugriff erlaubt', 'Write access allowed' ) : n4s_t( 'Schreibzugriff aus', 'Write access off' ) ) : n4s_t( 'Funktion ausgeschaltet', 'Feature switched off' ), ! empty( $f['mcp'] ) ? 'n4s-ki' : 'n4s-features' ); // phpcs:ignore WordPress.Security.EscapeOutput
+	// Eine Zeile je Funktion des Tabs Funktionen (so viele wie in der Kachel „Funktionen aktiv“), danach die weiteren Customize-Funktionen.
+	echo n4s_apps_ui_status( ! empty( $f['apps'] ), 'Apps', ! empty( $f['apps'] ) ? sprintf( n4s_t( '%1$d von %2$d Apps aktiv', '%1$d of %2$d apps active' ), $apps_on, $apps ) : $off, ! empty( $f['apps'] ) ? 'n4s-apps' : 'n4s-features' ); // phpcs:ignore WordPress.Security.EscapeOutput
+	echo n4s_apps_ui_status( ! empty( $f['security'] ), n4s_t( 'Anmeldeschutz', 'Login protection' ), ! empty( $f['security'] ) ? sprintf( n4s_t( '%d Fehlversuche in 24 Stunden', '%d failed attempts in 24 hours' ), $fails ) : $off, ! empty( $f['security'] ) ? 'n4s-security' : 'n4s-features' ); // phpcs:ignore WordPress.Security.EscapeOutput
+	$sn_on  = 0;
+	$sn_all = 0;
+	if ( function_exists( 'n4s_snippets_defs' ) && function_exists( 'n4s_snippet_on' ) ) {
+		foreach ( array_keys( n4s_snippets_defs() ) as $k ) {
+			++$sn_all;
+			$sn_on += n4s_snippet_on( $k ) ? 1 : 0;
+		}
+	}
+	echo n4s_apps_ui_status( ! empty( $f['snippets'] ), 'Snippets', ! empty( $f['snippets'] ) ? sprintf( n4s_t( '%1$d von %2$d Snippets aktiv', '%1$d of %2$d snippets active' ), $sn_on, $sn_all ) : $off, ! empty( $f['snippets'] ) ? 'n4s-snippets' : 'n4s-features' ); // phpcs:ignore WordPress.Security.EscapeOutput
+	if ( ! empty( $f['maintenance'] ) && function_exists( 'n4s_maint_state' ) ) {
+		$ms   = n4s_maint_state();
+		$mtxt = $ms['active'] ? n4s_t( 'Wartung läuft', 'Maintenance is on' ) : ( $ms['scheduled'] ? n4s_t( 'Wartung geplant', 'Maintenance scheduled' ) : n4s_t( 'Wartung aus', 'Maintenance is off' ) );
+		echo n4s_apps_ui_status( true, n4s_t( 'Wartungsmodus', 'Maintenance mode' ), $mtxt, 'n4s-maintenance' ); // phpcs:ignore WordPress.Security.EscapeOutput
+	} else {
+		echo n4s_apps_ui_status( false, n4s_t( 'Wartungsmodus', 'Maintenance mode' ), $off, 'n4s-features' ); // phpcs:ignore WordPress.Security.EscapeOutput
+	}
+	$con = ( ! empty( $f['theme'] ) && function_exists( 'n4s_theme_opt' ) ) ? n4s_theme_opt()['on'] : array();
+	$mon = 0;
+	foreach ( $cmods as $k ) {
+		$mon += empty( $con[ $k ] ) ? 0 : 1;
+	}
+	echo n4s_apps_ui_status( ! empty( $f['theme'] ), 'WP-Customize', ! empty( $f['theme'] ) ? sprintf( n4s_t( '%1$d von %2$d Modulen an', '%1$d of %2$d modules on' ), $mon, count( $cmods ) ) : $off, ! empty( $f['theme'] ) ? 'n4s-theme' : 'n4s-features' ); // phpcs:ignore WordPress.Security.EscapeOutput
+	echo n4s_apps_ui_status( ! empty( $f['mcp'] ), n4s_t( 'KI-Anbindung', 'AI connection' ), ! empty( $f['mcp'] ) ? ( ! empty( $mcp['on'] ) ? n4s_t( 'Schreibzugriff erlaubt', 'Write access allowed' ) : n4s_t( 'Schreibzugriff aus', 'Write access off' ) ) : $off, ! empty( $f['mcp'] ) ? 'n4s-ki' : 'n4s-features' ); // phpcs:ignore WordPress.Security.EscapeOutput
+	$cf_on = 0;
+	foreach ( $ckeys as $k ) {
+		$cf_on += empty( $f[ $k ] ) ? 0 : 1;
+	}
+	echo n4s_apps_ui_status( $cf_on > 0, n4s_t( 'Weitere Customize-Funktionen', 'More Customize features' ), sprintf( n4s_t( '%1$d von %2$d an (Seite duplizieren, Mediendatei ersetzen, Login-Design, Admin-Dropdown, Seitenzugriff)', '%1$d of %2$d on (duplicate page, replace media file, login design, admin dropdown, page access)' ), $cf_on, count( $ckeys ) ), 'n4s-theme' ); // phpcs:ignore WordPress.Security.EscapeOutput
 	echo '</section><section class="n4s-card"><h3>' . esc_html( n4s_t( 'Sicherheit', 'Security' ) ) . '</h3>';
 	if ( $log && function_exists( 'n4s_sec_dt' ) ) {
 		echo '<table class="n4s-tbl"><tr><th>' . esc_html( n4s_t( 'Zeit', 'Time' ) ) . '</th><th>' . esc_html( n4s_t( 'Ereignis', 'Event' ) ) . '</th><th>IP</th></tr>';

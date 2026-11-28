@@ -976,29 +976,9 @@ function n4s_apps_update_section() {
 }
 
 /** Abschnitt „App-Katalog“ im Apps-Tab: Zugang, Update-Prüfung, Katalog laden und Apps installieren. */
-function n4s_apps_catalog_section( $can, $sigok ) {
-	$cfg = n4s_apps_catalog_cfg();
-	$cur = get_option( 'n4s_apps_catalog', array() );
-	$has = ! empty( $cur['key'] );
-	$upd = n4s_apps_updates( false, true );
-	echo '<div class="n4s-card"><h3>' . esc_html( n4s_t( 'Zugang und Sicherheit', 'Access and security' ) ) . '</h3>';
-	echo '<p>' . esc_html( n4s_t(
-		'Apps mit dem Dateikopf „Update URI:“ werden stündlich beim Katalog auf neue Versionen geprüft (nur Name und Version der App werden gesendet). Der Katalog wird nur auf Klick geladen. Dateien werden nur installiert, wenn ihre Signatur stimmt.',
-		'Apps with the file header "Update URI:" are checked against the catalog for new versions every hour (only app name and version are sent). The catalog is only loaded on click. Files are only installed if their signature is valid.'
-	) ) . '</p>';
-	if ( ! $sigok ) {
-		echo '<div class="notice notice-warning inline"><p>' . esc_html( n4s_t( 'Es ist kein Signaturschlüssel hinterlegt (includes/trust.php). Updates und Installationen aus dem Katalog sind deaktiviert.', 'No signing key is configured (includes/trust.php). Updates and installations from the catalog are disabled.' ) ) . '</p></div>';
-	}
-	if ( current_user_can( 'manage_options' ) ) {
-		n4s_apps_form_head( 'n4s_catalog_save', false, 'display:block;margin-bottom:8px' );
-		echo '<p><label>' . esc_html( n4s_t( 'Zugangsschlüssel (für private Apps): ', 'Access key (for private apps): ' ) ) . '<input type="password" name="key" autocomplete="off" class="regular-text" placeholder="' . esc_attr( $has ? n4s_t( 'gespeichert, leer lassen zum Behalten', 'saved, leave empty to keep' ) : '' ) . '"></label> ';
-		if ( $has ) {
-			echo '<label><input type="checkbox" name="key_clear" value="1"> ' . esc_html( n4s_t( 'Schlüssel entfernen', 'Remove key' ) ) . '</label> ';
-		}
-		submit_button( n4s_t( 'Speichern', 'Save' ), 'secondary', 'submit', false );
-		echo '</p></form>';
-	}
-	echo '</div><div class="n4s-card"><h3>' . esc_html( n4s_t( 'Katalog', 'Catalog' ) ) . '</h3>';
+/** Karte „Katalog“ (Katalog laden, letzte automatische Updates) – steht im Tab Apps direkt nach der App-Liste. */
+function n4s_apps_catalog_card( $can, $sigok ) {
+	echo '<div class="n4s-card"><h3>' . esc_html( n4s_t( 'Katalog', 'Catalog' ) ) . '</h3>';
 	if ( $can ) {
 		echo '<p style="display:flex;gap:6px;flex-wrap:wrap">';
 		n4s_apps_post_form( 'n4s_catalog_list', array(), n4s_t( 'Katalog laden', 'Load catalog' ) );
@@ -1029,6 +1009,31 @@ function n4s_apps_catalog_section( $can, $sigok ) {
 			echo '</td></tr>';
 		}
 		echo '</tbody></table>';
+	}
+	echo '</div>';
+}
+
+/** Karte „Zugang und Sicherheit“ (Zugangsschlüssel, Signatur) – steht im Tab Apps ganz unten. */
+function n4s_apps_access_card( $can, $sigok ) {
+	$cfg = n4s_apps_catalog_cfg();
+	$cur = get_option( 'n4s_apps_catalog', array() );
+	$has = ! empty( $cur['key'] );
+	echo '<div class="n4s-card"><h3>' . esc_html( n4s_t( 'Zugang und Sicherheit', 'Access and security' ) ) . '</h3>';
+	echo '<p>' . esc_html( n4s_t(
+		'Apps mit dem Dateikopf „Update URI:“ werden stündlich beim Katalog auf neue Versionen geprüft (nur Name und Version der App werden gesendet). Der Katalog wird nur auf Klick geladen. Dateien werden nur installiert, wenn ihre Signatur stimmt.',
+		'Apps with the file header "Update URI:" are checked against the catalog for new versions every hour (only app name and version are sent). The catalog is only loaded on click. Files are only installed if their signature is valid.'
+	) ) . '</p>';
+	if ( ! $sigok ) {
+		echo '<div class="notice notice-warning inline"><p>' . esc_html( n4s_t( 'Es ist kein Signaturschlüssel hinterlegt (includes/trust.php). Updates und Installationen aus dem Katalog sind deaktiviert.', 'No signing key is configured (includes/trust.php). Updates and installations from the catalog are disabled.' ) ) . '</p></div>';
+	}
+	if ( current_user_can( 'manage_options' ) ) {
+		n4s_apps_form_head( 'n4s_catalog_save', false, 'display:block;margin-bottom:8px' );
+		echo '<p><label>' . esc_html( n4s_t( 'Zugangsschlüssel (für private Apps): ', 'Access key (for private apps): ' ) ) . '<input type="password" name="key" autocomplete="off" class="regular-text" placeholder="' . esc_attr( $has ? n4s_t( 'gespeichert, leer lassen zum Behalten', 'saved, leave empty to keep' ) : '' ) . '"></label> ';
+		if ( $has ) {
+			echo '<label><input type="checkbox" name="key_clear" value="1"> ' . esc_html( n4s_t( 'Schlüssel entfernen', 'Remove key' ) ) . '</label> ';
+		}
+		submit_button( n4s_t( 'Speichern', 'Save' ), 'secondary', 'submit', false );
+		echo '</p></form>';
 	}
 	echo '</div>';
 }
@@ -1155,6 +1160,15 @@ function n4s_apps_tab_apps() {
 	}
 	echo '</tbody></table>';
 
+	if ( $cat && n4s_apps_update_sources() ) { // Abgleich mit dem Katalog direkt unter der Liste
+		echo '<p style="margin:12px 0 4px">';
+		n4s_apps_post_form( 'n4s_catalog_check', array(), n4s_t( 'Jetzt abgleichen', 'Sync now' ), 'button button-primary' );
+		echo ' <span class="description">' . esc_html( n4s_t( 'Prüft sofort, ob für die Apps neue Versionen im Katalog liegen.', 'Checks right away whether the catalog has new versions of the apps.' ) ) . '</span></p>';
+	}
+
+	/* Reihenfolge: App-Katalog, Neue App hinzufügen, ganz unten Zugang und Sicherheit */
+	echo '<h2>' . esc_html( n4s_t( 'App-Katalog', 'App catalog' ) ) . '</h2>';
+	n4s_apps_catalog_card( $cat, $sigok );
 	if ( $can ) {
 		echo '<div class="n4s-card" style="margin-top:14px"><h3>' . esc_html( n4s_t( 'Neue App hinzufügen', 'Add new app' ) ) . '</h3>';
 		echo '<p>' . esc_html( n4s_t(
@@ -1169,7 +1183,5 @@ function n4s_apps_tab_apps() {
 		'Custom apps live in wp-content/n4s-apps-data/apps/ and survive plugin updates. An app that causes a fatal error on load is deactivated automatically. Deleting is only possible after deactivating. Create a backup before making changes.'
 	) ) . '</p>';
 
-	/* App-Katalog ganz unten */
-	echo '<h2>' . esc_html( n4s_t( 'App-Katalog', 'App catalog' ) ) . '</h2>';
-	n4s_apps_catalog_section( $cat, $sigok );
+	n4s_apps_access_card( $cat, $sigok );
 }
