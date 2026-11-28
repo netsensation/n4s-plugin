@@ -139,7 +139,7 @@ function n4s_apps_tab_overview() {
 		foreach ( (array) $s['fails'] as $c ) {
 			$fails += (int) $c;
 		}
-		$log = array_slice( (array) $s['log'], 0, 4 );
+		$log = array_slice( (array) $s['log'], 0, 7 );
 	}
 	$pu     = get_site_transient( 'update_plugins' );
 	$self   = plugin_basename( N4S_APPS_FILE );
@@ -196,7 +196,7 @@ function n4s_apps_tab_overview() {
 		$cf_on += empty( $f[ $k ] ) ? 0 : 1;
 	}
 	echo n4s_apps_ui_status( $cf_on > 0, n4s_t( 'Weitere Customize-Funktionen', 'More Customize features' ), sprintf( n4s_t( '%1$d von %2$d an (Seite duplizieren, Mediendatei ersetzen, Login-Design, Admin-Dropdown, Seitenzugriff)', '%1$d of %2$d on (duplicate page, replace media file, login design, admin dropdown, page access)' ), $cf_on, count( $ckeys ) ), 'n4s-theme' ); // phpcs:ignore WordPress.Security.EscapeOutput
-	echo '</section><section class="n4s-card"><h3>' . esc_html( n4s_t( 'Sicherheit', 'Security' ) ) . '</h3>';
+	echo '</section><section class="n4s-card n4s-col"><h3>' . esc_html( n4s_t( 'Sicherheit', 'Security' ) ) . '</h3>';
 	if ( $log && function_exists( 'n4s_sec_dt' ) ) {
 		echo '<table class="n4s-tbl"><tr><th>' . esc_html( n4s_t( 'Zeit', 'Time' ) ) . '</th><th>' . esc_html( n4s_t( 'Ereignis', 'Event' ) ) . '</th><th>IP</th></tr>';
 		foreach ( $log as $l ) {
@@ -209,7 +209,7 @@ function n4s_apps_tab_overview() {
 	$act = get_option( 'n4s_apps_activity', array() );
 	echo '<h4 style="margin:16px 0 6px">' . esc_html( n4s_t( 'Aktivitäten', 'Activity' ) ) . '</h4>';
 	if ( is_array( $act ) && $act ) {
-		echo '<div class="n4s-actlog" style="max-height:260px;overflow:auto"><table class="n4s-tbl"><tr><th>' . esc_html( n4s_t( 'Zeit', 'Time' ) ) . '</th><th>' . esc_html( n4s_t( 'Aktivität', 'Activity' ) ) . '</th><th>' . esc_html( n4s_t( 'Von', 'By' ) ) . '</th></tr>';
+		echo '<div class="n4s-actlog"><table class="n4s-tbl"><tr><th>' . esc_html( n4s_t( 'Zeit', 'Time' ) ) . '</th><th>' . esc_html( n4s_t( 'Aktivität', 'Activity' ) ) . '</th><th>' . esc_html( n4s_t( 'Von', 'By' ) ) . '</th></tr>';
 		foreach ( $act as $a ) {
 			echo '<tr><td style="white-space:nowrap">' . esc_html( wp_date( n4s_t( 'd.m.Y H:i', 'Y-m-d H:i' ), (int) $a[0] ) ) . '</td><td>' . esc_html( $a[1] ) . '</td><td>' . esc_html( '' !== $a[2] ? $a[2] : n4s_t( 'automatisch', 'automatic' ) ) . '</td></tr>';
 		}
@@ -280,7 +280,10 @@ function n4s_apps_ui_css() {
 .n4s-ui .n4s-stat b{display:block;font-size:24px;line-height:1.2}.n4s-ui .n4s-stat span{color:#6b7385;font-size:12px}
 .n4s-ui .n4s-stat.ok b{color:#14833b}.n4s-ui .n4s-stat.warn b{color:#b45309}
 .n4s-ui .n4s-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media(max-width:1100px){.n4s-ui .n4s-grid2{grid-template-columns:1fr}}
+.n4s-ui .n4s-card.n4s-col{display:flex;flex-direction:column;min-height:0}
+.n4s-ui .n4s-col .n4s-actlog{flex:1 1 0;min-height:220px;overflow:auto}
+.n4s-ui .n4s-actlog .n4s-tbl th{position:sticky;top:0;z-index:1;background:#fff;box-shadow:0 1px 0 #e3e6ee}
+@media(max-width:1100px){.n4s-ui .n4s-grid2{grid-template-columns:1fr}.n4s-ui .n4s-col .n4s-actlog{flex:none;max-height:360px}}
 @media(max-width:782px){.n4s-ui .n4s-layout{flex-direction:column}.n4s-ui .n4s-side{flex:none;width:100%;position:static;display:flex;flex-wrap:wrap;gap:4px}}
 .n4s-ui .n4s-pill{padding:2px 10px;border-radius:10px;font-size:12px;font-weight:600}.n4s-ui .n4s-pill.g{background:#dcf5e3;color:#14833b}.n4s-ui .n4s-pill.x{background:#eceef3;color:#6b7385}
 .n4s-ui .n4s-tbl{width:100%;border-collapse:collapse}.n4s-ui .n4s-tbl th{text-align:left;color:#6b7385;font-weight:500;font-size:12px;padding:5px 8px;border-bottom:1px solid #e3e6ee}.n4s-ui .n4s-tbl td{padding:8px;border-bottom:1px solid #f0f2f7}
