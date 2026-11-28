@@ -34,8 +34,8 @@ function n4s_theme_color_fields() {
 function n4s_theme_defaults() {
 	return array(
 		'on'          => array( 'menus' => 0, 'items' => 0, 'loginout' => 0, 'newtab' => 0, 'adminbar' => 0, 'widget' => 0, 'above' => 0, 'abovefooter' => 0, 'page' => 0, 'schemes' => 0 ),
-		'above'       => array( 'align' => 'right', 'bg' => '', 'text' => '' ),
-		'abovefooter' => array( 'align' => 'right', 'bg' => '', 'text' => '' ),
+		'above'       => array( 'align' => 'right', 'bg' => '', 'text' => '', 'sticky' => 1 ),
+		'abovefooter' => array( 'align' => 'right', 'bg' => '', 'text' => '', 'sticky' => 0 ),
 		'adminbar'    => array( 'parent' => 'site-name', 'hide' => array() ),
 		'menus'   => array(),
 		'default' => 0,
@@ -372,9 +372,15 @@ function n4s_theme_bar_html( $which ) {
 			. 'sync(document.querySelector(".n4s-bar-header"),["header.header .header--row-inner","header.header","#masthead","header[role=banner]","header.wp-block-template-part","header"]);'
 			. 'var f=document.querySelector(".n4s-bar-footer");if(f){var fs=["footer.site-footer","#colophon","footer.wp-block-template-part","footer[role=contentinfo]","footer"],t=null;for(var k=0;k<fs.length&&!t;k++){t=document.querySelector(fs[k])}'
 			. 'if(t&&f.hasAttribute("data-n4s-move")&&t.parentNode){t.parentNode.insertBefore(f,t)}'
-			. 'var r=t&&(t.querySelector(".footer--row-inner")||t);if(r){f.style.setProperty("--n4s-bar-bg-auto",bg(r));f.style.setProperty("--n4s-bar-tx-auto",getComputedStyle(r).color)}}});</script>';
+			. 'var r=t&&(t.querySelector(".footer--row-inner")||t);if(r){f.style.setProperty("--n4s-bar-bg-auto",bg(r));f.style.setProperty("--n4s-bar-tx-auto",getComputedStyle(r).color)}}'
+			. 'pin(document.querySelector(".n4s-bar-header"),true);pin(document.querySelector(".n4s-bar-footer"),false)});'
+			. 'function pin(b,top){if(!b||!b.hasAttribute("data-n4s-sticky"))return;var s=document.createElement("div");s.className="n4s-bar-spacer";s.setAttribute("aria-hidden","true");b.parentNode.insertBefore(s,b);'
+			. 'var th=top?document.querySelector("header.header,#main-header,#masthead,header[role=banner],.elementor-location-header"):null,mine=false,raf=0;'
+			. 'function fit(){var ab=document.getElementById("wpadminbar"),abh=top&&ab&&getComputedStyle(ab).position==="fixed"?ab.offsetHeight:0;b.style.position="fixed";b.style.left="0";b.style.right="0";b.style.zIndex="99990";b.style[top?"top":"bottom"]=(top?abh:0)+"px";var h=b.offsetHeight;s.style.height=h+"px";'
+			. 'if(th){var p=getComputedStyle(th).position;if(p==="fixed"||p==="sticky"){th.style.setProperty("top",(abh+h)+"px","important");mine=true}else if(mine){th.style.removeProperty("top");mine=false}}}'
+			. 'function go(){if(!raf)raf=requestAnimationFrame(function(){raf=0;fit()})}fit();window.addEventListener("resize",go);if(top&&th)window.addEventListener("scroll",go,{passive:true});window.addEventListener("load",fit)}</script>';
 	}
-	return $out . '<div class="n4s-bar ' . ( $hdr ? 'n4s-bar-header' : 'n4s-bar-footer' ) . '"' . ( $style ? ' style="' . esc_attr( $style ) . '"' : '' ) . ( $hdr ? '' : ' data-n4s-move' ) . '><div class="n4s-bar-inner" style="justify-content:' . $just[ $al ] . '">' . $menu . '</div></div>';
+	return $out . '<div class="n4s-bar ' . ( $hdr ? 'n4s-bar-header' : 'n4s-bar-footer' ) . '"' . ( $style ? ' style="' . esc_attr( $style ) . '"' : '' ) . ( $hdr ? '' : ' data-n4s-move' ) . ( ! empty( $o['sticky'] ) ? ' data-n4s-sticky="1"' : '' ) . '><div class="n4s-bar-inner" style="justify-content:' . $just[ $al ] . '">' . $menu . '</div></div>';
 }
 
 add_action(
@@ -1224,7 +1230,7 @@ N4SJS;
 			foreach ( array( 'left' => n4s_t( 'Links', 'Left' ), 'center' => n4s_t( 'Mitte', 'Center' ), 'right' => n4s_t( 'Rechts', 'Right' ) ) as $k => $l ) {
 				echo '<option value="' . esc_attr( $k ) . '"' . selected( $o[ $key ]['align'], $k, false ) . '>' . esc_html( $l ) . '</option>';
 			}
-			echo '</select></label></p><p><label>' . esc_html( n4s_t( 'Hintergrund', 'Background' ) ) . '<br><input type="text" class="n4s-cp" name="' . esc_attr( $key ) . '[bg]" value="' . esc_attr( $o[ $key ]['bg'] ) . '"></label></p><p><label>' . esc_html( n4s_t( 'Text', 'Text' ) ) . '<br><input type="text" class="n4s-cp" name="' . esc_attr( $key ) . '[text]" value="' . esc_attr( $o[ $key ]['text'] ) . '"></label></p>';
+			echo '</select></label></p><p><label>' . esc_html( n4s_t( 'Hintergrund', 'Background' ) ) . '<br><input type="text" class="n4s-cp" name="' . esc_attr( $key ) . '[bg]" value="' . esc_attr( $o[ $key ]['bg'] ) . '"></label></p><p><label>' . esc_html( n4s_t( 'Text', 'Text' ) ) . '<br><input type="text" class="n4s-cp" name="' . esc_attr( $key ) . '[text]" value="' . esc_attr( $o[ $key ]['text'] ) . '"></label></p><p><label><input type="checkbox" name="' . esc_attr( $key ) . '[sticky]" value="1"' . checked( ! empty( $o[ $key ]['sticky'] ), true, false ) . '> ' . esc_html( 'above' === $key ? n4s_t( 'Beim Scrollen oben sichtbar halten', 'Keep visible at the top while scrolling' ) : n4s_t( 'Beim Scrollen unten sichtbar halten', 'Keep visible at the bottom while scrolling' ) ) . '</label></p>';
 		};
 		$help = function ( $text ) {
 			return function () use ( $text ) {
@@ -1504,6 +1510,7 @@ N4SJS;
 						'align' => in_array( $al, array( 'left', 'center', 'right' ), true ) ? $al : 'right',
 						'bg'    => isset( $pa['bg'] ) ? (string) sanitize_hex_color( trim( (string) $pa['bg'] ) ) : '',
 						'text'  => isset( $pa['text'] ) ? (string) sanitize_hex_color( trim( (string) $pa['text'] ) ) : '',
+						'sticky' => empty( $pa['sticky'] ) ? 0 : 1,
 					);
 				}
 			}
